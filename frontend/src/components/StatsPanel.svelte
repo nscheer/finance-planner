@@ -106,6 +106,9 @@
   </section>
 
   <section class="group">
+    <Charts {spending} />
+  </section>
+  <section class="group">
     <h3 title={t("stats.leversHint")}>{t("stats.levers")}</h3>
     {#if (stats.topSpendings ?? []).length === 0}
       <p class="note">{t("stats.leversEmpty")}</p>
@@ -136,9 +139,6 @@
     {/if}
   </section>
 
-  <section class="group">
-    <Charts {spending} />
-  </section>
 
   <p class="note">{t("stats.note")}</p>
 </aside>

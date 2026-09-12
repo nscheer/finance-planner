@@ -195,17 +195,17 @@ A sticky box on the right side with these sections:
 - Notes tell how many non-monthly entries have no due month (they are not
   in the timeline) and how many entries are paused.
 
+**Chart**
+- A donut of spending by category (largest first, at most eight slices, the
+  rest folded into "Other") with a legend naming every slice and its amount.
+  (Income vs. spending is not charted; the numbers are in the overview.)
+
 **Biggest levers**
 - The five active spendings with the highest yearly cost, each with rank,
   name, category, yearly amount and share of all spending; ties are broken
   by name. Clicking an entry opens its edit dialog.
 - The share bar of a spending category additionally reports the category's
   share of the monthly income in its tooltip.
-
-**Chart**
-- A donut of spending by category (largest first, at most eight slices, the
-  rest folded into "Other") with a legend naming every slice and its amount.
-  (Income vs. spending is not charted; the numbers are in the overview.)
 
 **Warnings** (banner above the blocks)
 - red when spending exceeds income, showing the monthly gap;
