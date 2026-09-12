@@ -509,7 +509,7 @@ wails3 task test    # Go tests + frontend unit tests
 | Top bar | 10 px 24 px padding, title left, search box (200–420 px) and the period filter dropdown as separate controls in the middle, actions and language dropdown right |
 | Table columns | `28px minmax(150px, 1fr) 120px 110px 125px 125px 120px` (handle, name, frequency, due, per month, per year, actions) |
 | Row height | 38 px min; category header 40 px |
-| Block header | 18 px gap between the block header (title, totals, buttons) and the column titles |
+| Block header | 28 px gap between the block header (title, totals, buttons) and the column titles (20 px margin + 8 px padding) |
 | Corner radius | 10 px cards and dialogs, 6 px buttons, badges and inputs |
 | Shadows | cards `0 1px 2px rgba(20,26,40,.06), 0 4px 16px rgba(20,26,40,.06)`; dialogs `0 12px 40px rgba(20,26,40,.22)` |
 

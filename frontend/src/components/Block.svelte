@@ -122,7 +122,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    margin-bottom: 18px;
+    margin-bottom: 20px;
   }
   .heading {
     display: flex;
@@ -167,7 +167,7 @@
   .columns {
     display: grid;
     grid-template-columns: var(--cols);
-    padding: 0 8px 6px 4px;
+    padding: 8px 8px 6px 4px; /* together with the header margin: 28 px above the titles */
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 0.06em;
