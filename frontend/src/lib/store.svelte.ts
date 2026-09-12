@@ -23,7 +23,8 @@ export type { State, CategoryView, EntryView, ImportPreview, Stats };
 /** Every user input happens in a modal; this union describes the open one. */
 export type Dialog =
   | { type: "entry"; kind: Kind; entry?: EntryView; categoryId?: string }
-  | { type: "category"; kind: Kind; category?: CategoryView }
+  /** returnToEntry: reopen the "new entry" dialog after the category was added. */
+  | { type: "category"; kind: Kind; category?: CategoryView; returnToEntry?: boolean }
   | {
       type: "confirm";
       title: string;

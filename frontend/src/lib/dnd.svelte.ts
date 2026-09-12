@@ -10,6 +10,7 @@
  */
 import { Service, Kind, type CategoryView, type EntryView } from "../../bindings/finance-planner/planner";
 import { applyOrAlert } from "./store.svelte";
+import { resolveMoveIndex } from "./reorder";
 
 export type DragSource =
   | { type: "category"; id: string; kind: Kind; index: number }
@@ -116,19 +117,15 @@ export async function drop(event: DragEvent): Promise<void> {
 
   if (source.type === "category" && target.type === "category") {
     if (source.kind !== target.kind) return;
-    let index = target.index;
-    if (index > source.index) index -= 1;
-    if (index === source.index) return;
+    const index = resolveMoveIndex(true, source.index, target.index);
+    if (index === null) return;
     await applyOrAlert(Service.MoveCategory(source.id, index), "Move failed");
     return;
   }
 
   if (source.type === "entry" && target.type === "entry") {
-    let index = target.index;
-    if (target.categoryId === source.categoryId) {
-      if (index > source.index) index -= 1;
-      if (index === source.index) return;
-    }
+    const index = resolveMoveIndex(target.categoryId === source.categoryId, source.index, target.index);
+    if (index === null) return;
     await applyOrAlert(Service.MoveEntry(source.id, target.categoryId, index), "Move failed");
   }
 }

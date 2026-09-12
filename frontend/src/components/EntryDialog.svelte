@@ -76,7 +76,7 @@
   }
 
   function addCategoryFirst() {
-    openDialog({ type: "category", kind });
+    openDialog({ type: "category", kind, returnToEntry: true });
   }
 </script>
 

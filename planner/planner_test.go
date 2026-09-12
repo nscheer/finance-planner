@@ -434,6 +434,22 @@ func TestPersistenceAndVersion(t *testing.T) {
 	}
 }
 
+// "The JSON file should be stored next to the binary and be called data.json"
+// - the file exists as soon as the service starts.
+func TestDataFileIsCreatedOnStartup(t *testing.T) {
+	_, path := newTestService(t)
+	if filepath.Base(path) != DefaultDataFileName {
+		t.Fatalf("file name = %s", filepath.Base(path))
+	}
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("data.json not created on startup: %v", err)
+	}
+	if _, err := Decode(raw); err != nil {
+		t.Fatalf("created file invalid: %v", err)
+	}
+}
+
 func TestLoadMissingFileGivesEmptyData(t *testing.T) {
 	d, err := LoadFile(filepath.Join(t.TempDir(), "nope.json"))
 	if err != nil {

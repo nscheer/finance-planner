@@ -34,6 +34,12 @@ tasks:
     cmds:
       - task: "{{.GOOS}}:run"
 
+  test:
+    summary: Runs the Go tests and the frontend unit tests
+    cmds:
+      - go test ./planner/...
+      - cd frontend && npm test
+
   dev:
     summary: Runs the application in development mode
     cmds:

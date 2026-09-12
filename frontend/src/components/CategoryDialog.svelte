@@ -10,11 +10,12 @@
     errorMessage,
     kindLabel,
     notify,
+    openDialog,
   } from "../lib/store.svelte";
 
   import { untrack } from "svelte";
 
-  let { kind, category }: { kind: Kind; category?: CategoryView } = $props();
+  let { kind, category, returnToEntry = false }: { kind: Kind; category?: CategoryView; returnToEntry?: boolean } = $props();
 
   // Seeded once from the initial props; the dialog is recreated on each open.
   const initial = untrack(() => category);
@@ -35,6 +36,10 @@
       } else {
         await apply(Service.AddCategory(kind, name));
         notify("success", `Added ${kindLabel(kind).toLowerCase()} category "${name.trim()}".`);
+      }
+      if (returnToEntry) {
+        openDialog({ type: "entry", kind });
+        return;
       }
       closeDialog();
     } catch (err) {

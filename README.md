@@ -1,59 +1,60 @@
-# Welcome to Your New Wails3 Project!
+# Finance Planner
 
-Congratulations on generating your Wails3 application! This README will guide you through the next steps to get your project up and running.
+A small desktop application to plan monthly and yearly income and spendings.
+Built with [Wails v3](https://v3.wails.io), Svelte 5 and TypeScript; the
+specification is in [project.md](project.md).
 
-## Getting Started
+## How it works
 
-1. Navigate to your project directory in the terminal.
+- Income and spendings are grouped by **categories** (separate categories for
+  income and spending). Categories have to exist before entries can be added
+  and can only be deleted when they are empty.
+- Each entry has a name, an amount in € and a **period** (per month or per
+  year). The period the user entered is the master; the other value is
+  calculated (× 12 or ÷ 12) and shown next to it.
+- Categories and entries can be reordered with **drag & drop**; entries can be
+  dragged into another category of the same kind. The order is saved.
+- The statistics box shows the two monthly transfers the planning approach
+  is built on: the sum of monthly spendings (to the bank account) and 1/12 of
+  the yearly spendings (to the savings account), plus the saldo per month and
+  per year.
+- All data is stored in `data.json` next to the binary. The file carries a
+  `version` number so the structure can be migrated later. Data can be
+  exported to and imported from JSON files (add to or replace current data).
 
-2. To run your application in development mode, use the following command:
+## Development
 
-   ```
-   wails3 dev
-   ```
+```sh
+wails3 dev          # run with hot reload
+wails3 build        # production build -> bin/finance-planner
+wails3 task test    # Go tests + frontend unit tests
+```
 
-   This will start your application and enable hot-reloading for both frontend and backend changes.
+The tests can also be run directly:
 
-3. To build your application for production, use:
+```sh
+go test ./planner/...          # backend: model, calculations, persistence, service
+cd frontend && npm test        # frontend helpers (Node's built-in test runner)
+cd frontend && npm run check   # svelte-check / TypeScript
+```
 
-   ```
-   wails3 build
-   ```
+Note: `go build`/`go vet` at the module root need `frontend/dist` to exist
+(it is embedded into the binary), so run `wails3 build` once first.
 
-   This will create a production-ready executable in the `build` directory.
+## Layout
 
-## Exploring Wails3 Features
-
-Now that you have your project set up, it's time to explore the features that Wails3 offers:
-
-1. **Check out the examples**: The best way to learn is by example. Visit the `examples` directory in the `v3/examples` directory to see various sample applications.
-
-2. **Run an example**: To run any of the examples, navigate to the example's directory and use:
-
-   ```
-   go run .
-   ```
-
-   Note: Some examples may be under development during the alpha phase.
-
-3. **Explore the documentation**: Visit the [Wails3 documentation](https://v3.wails.io/) for in-depth guides and API references.
-
-4. **Join the community**: Have questions or want to share your progress? Join the [Wails Discord](https://discord.gg/JDdSxwjhGf) or visit the [Wails discussions on GitHub](https://github.com/wailsapp/wails/discussions).
-
-## Project Structure
-
-Take a moment to familiarize yourself with your project structure:
-
-- `frontend/`: Contains your frontend code (HTML, CSS, JavaScript/TypeScript)
-- `main.go`: The entry point of your Go backend
-- `app.go`: Define your application structure and methods here
-- `wails.json`: Configuration file for your Wails project
-
-## Next Steps
-
-1. Modify the frontend in the `frontend/` directory to create your desired UI.
-2. Add backend functionality in `main.go`.
-3. Use `wails3 dev` to see your changes in real-time.
-4. When ready, build your application with `wails3 build`.
-
-Happy coding with Wails3! If you encounter any issues or have questions, don't hesitate to consult the documentation or reach out to the Wails community.
+```
+main.go                    window setup and service registration
+planner/
+  model.go                 data structures (Data, Category, Entry) and validation
+  calc.go                  monthly/yearly conversion, statistics, view models
+  store.go                 data.json loading, versioning/migration, atomic saving
+  service.go               the service used by the frontend (CRUD, moves, import/export)
+  planner_test.go          tests against project.md
+frontend/src/
+  App.svelte               shell: top bar, blocks, statistics, dialogs
+  lib/store.svelte.ts      application state and service calls
+  lib/dnd.svelte.ts        drag & drop state and drop handling
+  lib/money.ts             € parsing and formatting (cents based)
+  components/              Block, CategoryGroup, EntryRow, StatsPanel, dialogs
+```

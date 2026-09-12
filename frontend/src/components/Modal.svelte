@@ -27,9 +27,12 @@
     }
   }
 
-  /** Focus the first input or button when the dialog opens. */
+  /** Focus the first form field, else the primary button, when the dialog opens. */
   function autofocus(node: HTMLElement) {
-    const el = node.querySelector<HTMLElement>("input, select, textarea, button.btn-primary, button");
+    const el =
+      node.querySelector<HTMLElement>("input, select, textarea") ??
+      node.querySelector<HTMLElement>(".btn-primary") ??
+      node.querySelector<HTMLElement>("footer button");
     el?.focus();
   }
 </script>

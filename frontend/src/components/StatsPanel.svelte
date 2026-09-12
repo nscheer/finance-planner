@@ -72,7 +72,7 @@
 <style>
   .stats {
     position: sticky;
-    top: 0;
+    top: 20px; /* matches the content padding, so it never jumps when sticking */
     display: flex;
     flex-direction: column;
     gap: 18px;

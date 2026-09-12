@@ -15,7 +15,16 @@
   import AlertDialog from "./components/AlertDialog.svelte";
   import ImportDialog from "./components/ImportDialog.svelte";
   import { app, Kind, loadState, setAllCollapsed, exportData, startImport } from "./lib/store.svelte";
-  import { endDrag } from "./lib/dnd.svelte";
+  import { dnd, endDrag } from "./lib/dnd.svelte";
+
+  /**
+   * Runs last in the bubbling chain: if no row/category accepted the
+   * dragover, the pointer is over a non-droppable area and the indicator
+   * must disappear so it never suggests a drop that wouldn't happen.
+   */
+  function onWindowDragOver(event: DragEvent) {
+    if (!event.defaultPrevented && dnd.target) dnd.target = null;
+  }
 
   onMount(() => {
     loadState();
@@ -23,7 +32,7 @@
 </script>
 
 <!-- A drag that ends outside any drop zone must clear the indicators. -->
-<svelte:window ondragend={endDrag} ondrop={endDrag} />
+<svelte:window ondragend={endDrag} ondrop={endDrag} ondragover={onWindowDragOver} />
 
 <div class="app">
   <header class="topbar">
@@ -65,7 +74,7 @@
   {#if app.dialog.type === "entry"}
     <EntryDialog kind={app.dialog.kind} entry={app.dialog.entry} categoryId={app.dialog.categoryId} />
   {:else if app.dialog.type === "category"}
-    <CategoryDialog kind={app.dialog.kind} category={app.dialog.category} />
+    <CategoryDialog kind={app.dialog.kind} category={app.dialog.category} returnToEntry={app.dialog.returnToEntry} />
   {:else if app.dialog.type === "confirm"}
     <ConfirmDialog
       title={app.dialog.title}

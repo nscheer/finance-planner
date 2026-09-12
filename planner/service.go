@@ -48,7 +48,14 @@ func NewService(path string) (*Service, error) {
 	if err != nil {
 		return nil, fmt.Errorf("loading %s: %w", path, err)
 	}
-	return &Service{path: path, data: d}, nil
+	s := &Service{path: path, data: d}
+	// Create the file right away so the user can see where the data lives.
+	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
+		if err := s.save(); err != nil {
+			return nil, err
+		}
+	}
+	return s, nil
 }
 
 // ServiceName is shown in the Wails logs.
