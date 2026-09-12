@@ -166,8 +166,9 @@ func (s *Service) RestoreBackup(path string) (State, error) {
 	if _, err := s.backup(true); err != nil {
 		return s.state(), err
 	}
-	restored.Settings.Language = s.data.Settings.Language
-	restored.Settings.Window = s.data.Settings.Window
+	// Settings are preferences of this installation, not of the backup
+	// (same rule as a replace import).
+	restored.Settings = s.data.Settings
 	s.data = restored
 	if err := s.save(); err != nil {
 		return s.state(), err

@@ -1024,6 +1024,10 @@ func TestBackups(t *testing.T) {
 	if len(res.State.Spending) != 0 {
 		t.Fatal("replace import failed")
 	}
+	// Settings chosen after the backup was written survive a restore.
+	s.SetTheme("dark")
+	s.SetSavingsGoal(12345)
+	s.SetLanguage("en")
 	tick(time.Second)
 	st, err := s.RestoreBackup(res.BackupPath)
 	if err != nil {
@@ -1031,6 +1035,9 @@ func TestBackups(t *testing.T) {
 	}
 	if len(st.Spending) != 1 || len(st.Spending[0].Entries) != 2 || len(st.Income) != 0 {
 		t.Fatalf("restore did not undo the import: %+v", st)
+	}
+	if st.Settings.Theme != "dark" || st.Settings.SavingsGoalCents != 12345 || st.Settings.Language != "en" {
+		t.Fatalf("restore must keep the installation settings: %+v", st.Settings)
 	}
 	// Only files inside the backup folder can be restored.
 	if _, err := s.RestoreBackup(exportPath); err == nil {
