@@ -164,7 +164,7 @@
     cursor: pointer;
     font-weight: 700;
     font-size: 15px;
-    color: var(--block-color);
+    color: var(--text);
   }
   .chevron {
     display: flex;
@@ -187,7 +187,7 @@
     border: 1px solid var(--border);
     font-size: 11px;
     font-weight: 600;
-    color: var(--block-color);
+    color: var(--text-2);
   }
   .share-cell {
     display: flex;
