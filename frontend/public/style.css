@@ -171,13 +171,15 @@ select {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 7px 12px;
+  padding: 8px 12px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-strong);
   background: var(--surface);
   color: var(--text);
   font-weight: 500;
-  line-height: 1.2;
+  /* line-height 1: the text box equals the font size, so icon and label are
+     centered on the same axis and the label never sits visually low. */
+  line-height: 1;
   cursor: pointer;
   white-space: nowrap;
   transition: background 0.12s, border-color 0.12s, color 0.12s;
@@ -238,8 +240,12 @@ select:focus-visible {
   border-color: #a52622;
 }
 .btn-sm {
-  padding: 4px 9px;
+  padding: 5px 9px;
   font-size: 13px;
+}
+.btn svg {
+  flex-shrink: 0;
+  display: block;
 }
 
 /* Small square icon-only buttons used in table rows and headers. */

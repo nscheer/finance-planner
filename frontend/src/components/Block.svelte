@@ -122,7 +122,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    margin-bottom: 10px;
+    margin-bottom: 18px;
   }
   .heading {
     display: flex;
