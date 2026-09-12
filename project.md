@@ -702,7 +702,9 @@ header keeps a 24 px gap to the due column.
   with the formula), the two transfers, every overview row, the savings
   goal and remainder, the peak buffer, the timeline readout, the levers
   (yearly and monthly amount, share of spending and of income) and the
-  donut legend. The texts live under the `tip.*` keys of the language files.
+  donut legend. The texts live under the `tip.*` keys of the language files
+  and use line breaks to stay short per line; the levers headline carries
+  the explanation of the list, the items only their own values.
 
 - Actions in rows and category headers are hidden until hover to keep the
   table calm.

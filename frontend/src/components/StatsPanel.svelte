@@ -106,7 +106,7 @@
   </section>
 
   <section class="group">
-    <h3>{t("stats.levers")}</h3>
+    <h3 title={t("stats.leversHint")}>{t("stats.levers")}</h3>
     {#if (stats.topSpendings ?? []).length === 0}
       <p class="note">{t("stats.leversEmpty")}</p>
     {:else}
@@ -117,7 +117,7 @@
             <button
               type="button"
               class="lever"
-              title="{lever.shareOfIncome > 0 ? t('tip.lever', values) : t('tip.leverNoIncome', values)} {t('stats.leversHint')}"
+              title={lever.shareOfIncome > 0 ? t("tip.lever", values) : t("tip.leverNoIncome", values)}
               onclick={() => editLever(lever.id)}
             >
               <span class="rank">{i + 1}</span>
