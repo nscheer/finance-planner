@@ -121,7 +121,7 @@ Each entry row shows: drag handle · name (followed by a note icon with
 tooltip when notes exist) · a **period badge** (monthly / quarterly /
 half-yearly / yearly) · the **due month** as a full month name in its own
 column (empty for monthly entries and unset due months) · per month ·
-per year · actions (pause/resume, duplicate, edit, delete). The value the user
+per year · actions in this order: edit, duplicate, pause/resume, delete. The value the user
 entered (the master) is printed bold; the derived value is muted. Paused rows
 carry a subtle diagonal stripe pattern and muted text and badge.
 
@@ -137,8 +137,11 @@ planner contains no data at all, a "getting started" card offers to load
   highlighted, an empty or collapsed category shows a "drop here" area.
 - While dragging a category, an insertion line shows the target position
   between categories of the same block.
-- The indicator disappears as soon as the pointer is over an area where a
-  drop would not happen. Dropping an item on its own position is a no-op.
+- Inside a block every area accepts the drag: the gaps between categories
+  are drop positions for category drags, and other areas (block header,
+  padding) keep the last target, so the cursor never flips to "not allowed"
+  while moving across the block. Outside the blocks the indicator
+  disappears. Dropping an item on its own position is a no-op.
 - Drag & drop is disabled while a search or filter is active, because the
   visible order would not match the stored order.
 

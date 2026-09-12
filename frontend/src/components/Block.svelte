@@ -7,7 +7,7 @@
   import CategoryGroup from "./CategoryGroup.svelte";
   import { Kind, type CategoryView, kindLabel, kindKey, openDialog, setAllCollapsed, filterActive } from "../lib/store.svelte";
   import { t, formatEuro } from "../lib/i18n.svelte";
-  import { dnd, drop, hoverCategoryTarget, isCategoryTarget } from "../lib/dnd.svelte";
+  import { dnd, drop, hoverCategoryTarget, hoverKeepTarget, isCategoryTarget } from "../lib/dnd.svelte";
 
   let { kind, categories }: { kind: Kind; categories: CategoryView[] } = $props();
 
@@ -26,9 +26,21 @@
     if (filterActive()) return;
     if (dnd.source?.type === "category") hoverCategoryTarget(event, kind, categories.length);
   }
+
+  /** Gap before category i: a drop position for category drags. */
+  function onGapDragOver(event: DragEvent, index: number) {
+    if (filterActive()) return;
+    if (dnd.source?.type === "category") hoverCategoryTarget(event, kind, index);
+  }
+
+  /** Everything else inside the block keeps the last target (see hoverKeepTarget). */
+  function onBlockDragOver(event: DragEvent) {
+    if (filterActive()) return;
+    hoverKeepTarget(event, kind);
+  }
 </script>
 
-<section class="block" class:income={isIncome} class:spending={!isIncome} ondrop={drop} role="table" aria-label={kindLabel(kind)}>
+<section class="block" class:income={isIncome} class:spending={!isIncome} ondrop={drop} ondragover={onBlockDragOver} role="table" aria-label={kindLabel(kind)}>
   <header class="block-head">
     <div class="heading">
       <span class="dot"></span>
@@ -71,10 +83,10 @@
       <div class="empty">{t(kindKey("block.empty", kind))}</div>
     {/if}
     {#each categories as category, i (category.id)}
-      <div class="cat-drop" class:active={isCategoryTarget(kind, i)}></div>
+      <div class="cat-drop" class:active={isCategoryTarget(kind, i)} ondragover={(e) => onGapDragOver(e, i)} role="presentation"></div>
       <CategoryGroup {category} index={i} share={shareOf(category)} draggable={!filterActive()} />
     {/each}
-    <div class="cat-drop" class:active={isCategoryTarget(kind, categories.length)}></div>
+    <div class="cat-drop" class:active={isCategoryTarget(kind, categories.length)} ondragover={(e) => onGapDragOver(e, categories.length)} role="presentation"></div>
     <div class="tail" ondragover={onTailDragOver} role="presentation"></div>
   </div>
 </section>

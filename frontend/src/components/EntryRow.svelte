@@ -76,9 +76,9 @@
   <span class="money amount" class:master={monthlyIsMaster} class:derived={!monthlyIsMaster}>{formatEuro(entry.monthlyCents)}</span>
   <span class="money amount" class:master={entry.period === Period.PeriodYearly} class:derived={entry.period !== Period.PeriodYearly}>{formatEuro(entry.yearlyCents)}</span>
   <span class="actions">
-    <button class="icon-btn" type="button" title={entry.paused ? t("entry.resume") : t("entry.pause")} aria-label="{entry.paused ? t('entry.resume') : t('entry.pause')}: {entry.name}" onclick={() => pauseEntry(entry, !entry.paused)}><Icon name={entry.paused ? "play" : "pause"} /></button>
-    <button class="icon-btn" type="button" title={t("entry.duplicate")} aria-label="{t('entry.duplicate')}: {entry.name}" onclick={duplicate}><Icon name="copy" /></button>
     <button class="icon-btn" type="button" title={t("entry.edit")} aria-label="{t('entry.edit')}: {entry.name}" onclick={edit}><Icon name="edit" /></button>
+    <button class="icon-btn" type="button" title={t("entry.duplicate")} aria-label="{t('entry.duplicate')}: {entry.name}" onclick={duplicate}><Icon name="copy" /></button>
+    <button class="icon-btn" type="button" title={entry.paused ? t("entry.resume") : t("entry.pause")} aria-label="{entry.paused ? t('entry.resume') : t('entry.pause')}: {entry.name}" onclick={() => pauseEntry(entry, !entry.paused)}><Icon name={entry.paused ? "play" : "pause"} /></button>
     <button class="icon-btn danger" type="button" title={t("entry.delete")} aria-label="{t('entry.delete')}: {entry.name}" onclick={() => confirmDeleteEntry(entry, index)}><Icon name="trash" /></button>
   </span>
 </div>

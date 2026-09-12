@@ -83,6 +83,20 @@ export function hoverCategoryTarget(event: DragEvent, kind: Kind, index: number)
   }
 }
 
+/**
+ * Fallback for areas inside a block that are not drop positions themselves
+ * (block header, padding, gaps): keep the current target and allow the
+ * drop, so the cursor never flips to "not allowed" while moving across the
+ * block. Does nothing when no target has been chosen yet.
+ */
+export function hoverKeepTarget(event: DragEvent, kind: Kind): void {
+  if (event.defaultPrevented) return;
+  const source = dnd.source;
+  if (!source || source.kind !== kind || !dnd.target) return;
+  event.preventDefault();
+  if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
+}
+
 /** Whether an indicator should be shown before entry `index` of the category. */
 export function isEntryTarget(categoryId: string, index: number): boolean {
   const t = dnd.target;
