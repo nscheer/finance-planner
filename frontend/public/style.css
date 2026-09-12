@@ -336,8 +336,15 @@ option {
   color: var(--text-3);
 }
 .hint {
+  /* Always one reserved line, so a message appearing never moves the form. */
+  display: block;
+  min-height: 1.5em;
   font-size: 12px;
+  line-height: 1.5;
   color: var(--text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .hint.error {
   color: var(--danger);

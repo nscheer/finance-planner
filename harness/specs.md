@@ -305,8 +305,9 @@ priority.
   the error appears 400 ms after the last change or as soon as the field
   loses focus, and disappears immediately when the value becomes valid. An
   invalid field gets a red border and the message replaces the hint or
-  preview line below it; submitting with an invalid amount focuses the
-  field instead of saving.
+  preview line below it. That line is always reserved (one line, 12 px,
+  ellipsis on overflow), so a message appearing never moves the form.
+  Submitting with an invalid amount focuses the field instead of saving.
 - **Entry dialog**: name, amount with € suffix and a segmented control for
   the period, a live preview line "= x per month · y per year" while typing,
   the category (preselected when the dialog was opened from a category
