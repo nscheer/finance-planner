@@ -305,6 +305,18 @@ select:focus-visible {
 }
 .select {
   cursor: pointer;
+  /* Same inner padding on both sides; the extra right padding leaves room
+     for the native arrow so the text never touches it. */
+  padding-right: 30px;
+}
+.select-sm {
+  width: auto;
+  padding: 4px 28px 4px 8px;
+  font-size: 13px;
+  color: var(--text);
+}
+option {
+  padding: 4px 8px;
 }
 .input-suffix {
   position: relative;

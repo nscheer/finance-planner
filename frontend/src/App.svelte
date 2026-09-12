@@ -439,12 +439,6 @@
     gap: 6px;
     color: var(--text-2);
   }
-  .select-sm {
-    width: auto;
-    padding: 4px 8px;
-    font-size: 13px;
-    color: var(--text);
-  }
   .content {
     flex: 1;
     overflow: auto;

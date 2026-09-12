@@ -632,8 +632,10 @@ header keeps a 24 px gap to the due column.
   white surface, hover darkens the surface; primary in accent, income
   and spending buttons in their color, danger in red; icon buttons are
   28 × 28 px transparent squares that get a surface-3 background on hover.
-- **Inputs and selects**: 8 × 10 px padding, strong border, accent border on
-  focus, 2 px accent outline for keyboard focus; the amount input carries a
+- **Inputs and selects**: 8 × 10 px padding (selects 30 px on the right so
+  the text keeps the same distance from the native arrow as from the left
+  edge; small selects 4 × 8 px with 28 px right), strong border, accent
+  border on focus, 2 px accent outline for keyboard focus; the amount input carries a
   trailing € sign; the period choice is a segmented control (accent-soft
   background for the active segment).
 - **Badges**: pill, 11 px uppercase, semantic color pairs (monthly = accent,
