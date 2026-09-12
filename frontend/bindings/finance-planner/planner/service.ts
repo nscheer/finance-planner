@@ -115,10 +115,11 @@ export function RenameCategory(id: string, name: string): $CancellablePromise<$m
 }
 
 /**
- * SetAllCollapsed folds or unfolds all categories ("expand all"/"collapse all").
+ * SetAllCollapsed folds or unfolds all categories of one kind ("expand all"
+ * / "collapse all" at the top of the income and the spending block).
  */
-export function SetAllCollapsed(collapsed: boolean): $CancellablePromise<$models.State> {
-    return $Call.ByID(2246108268, collapsed);
+export function SetAllCollapsed(kind: $models.Kind, collapsed: boolean): $CancellablePromise<$models.State> {
+    return $Call.ByID(2246108268, kind, collapsed);
 }
 
 /**

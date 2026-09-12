@@ -365,30 +365,43 @@ func TestUpdateEntry(t *testing.T) {
 	}
 }
 
-// "Categories should be collapsible, and at the top there should be a
-// 'expand all', 'collapse all' function."
+// "Categories should be collapsible, and at the top of both blocks (i.e.
+// income and spending) there should be a 'expand all', 'collapse all'
+// function."
 func TestCollapse(t *testing.T) {
 	s, path := newTestService(t)
 	a := mustCategory(t, s, KindSpending, "A")
+	mustCategory(t, s, KindSpending, "A2")
 	mustCategory(t, s, KindIncome, "B")
 
 	st, err := s.SetCategoryCollapsed(a.ID, true)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !st.Spending[0].Collapsed || st.Income[0].Collapsed {
+	if !st.Spending[0].Collapsed || st.Spending[1].Collapsed || st.Income[0].Collapsed {
 		t.Fatal("single collapse wrong")
 	}
-	st, _ = s.SetAllCollapsed(true)
-	if !st.Spending[0].Collapsed || !st.Income[0].Collapsed {
-		t.Fatal("collapse all wrong")
+	// Collapse all only affects the block it was triggered in.
+	st, err = s.SetAllCollapsed(KindSpending, true)
+	if err != nil {
+		t.Fatal(err)
 	}
-	st, _ = s.SetAllCollapsed(false)
-	if st.Spending[0].Collapsed || st.Income[0].Collapsed {
-		t.Fatal("expand all wrong")
+	if !st.Spending[0].Collapsed || !st.Spending[1].Collapsed || st.Income[0].Collapsed {
+		t.Fatal("collapse all spending wrong")
+	}
+	st, _ = s.SetAllCollapsed(KindIncome, true)
+	if !st.Income[0].Collapsed {
+		t.Fatal("collapse all income wrong")
+	}
+	st, _ = s.SetAllCollapsed(KindSpending, false)
+	if st.Spending[0].Collapsed || st.Spending[1].Collapsed || !st.Income[0].Collapsed {
+		t.Fatal("expand all spending wrong")
+	}
+	if _, err := s.SetAllCollapsed(Kind("other"), true); err == nil {
+		t.Fatal("expected error for unknown kind")
 	}
 	reloaded, _ := LoadFile(path)
-	if reloaded.Categories[0].Collapsed {
+	if reloaded.Categories[0].Collapsed || !reloaded.Categories[2].Collapsed {
 		t.Fatal("collapsed state not persisted")
 	}
 }

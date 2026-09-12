@@ -138,8 +138,9 @@ export function setCollapsed(categoryId: string, collapsed: boolean): Promise<bo
   return applyOrAlert(Service.SetCategoryCollapsed(categoryId, collapsed));
 }
 
-export function setAllCollapsed(collapsed: boolean): Promise<boolean> {
-  return applyOrAlert(Service.SetAllCollapsed(collapsed));
+/** "Expand all" / "collapse all" for one block (income or spending). */
+export function setAllCollapsed(kind: Kind, collapsed: boolean): Promise<boolean> {
+  return applyOrAlert(Service.SetAllCollapsed(kind, collapsed));
 }
 
 export function confirmDeleteEntry(entry: EntryView): void {

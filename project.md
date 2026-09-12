@@ -28,7 +28,7 @@ Entries themselves should be sortable as well via drag & drop - within the respe
 It should be possible to drag & drop an entry to a different category - there does not need to be any confirmation or modal, but it should be clearly visible,
 where the target location of the dragged entry is.
 
-Categories should be collapsible, and at the top there should be a "expand all", "collapse all" function.
+Categories should be collapsible, and at the top of both blocks (i.e. income and spending) there should be a "expand all", "collapse all" function.
 
 On the right there should be a box with some statistics:
 

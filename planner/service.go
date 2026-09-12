@@ -158,11 +158,17 @@ func (s *Service) SetCategoryCollapsed(id string, collapsed bool) (State, error)
 	})
 }
 
-// SetAllCollapsed folds or unfolds all categories ("expand all"/"collapse all").
-func (s *Service) SetAllCollapsed(collapsed bool) (State, error) {
+// SetAllCollapsed folds or unfolds all categories of one kind ("expand all"
+// / "collapse all" at the top of the income and the spending block).
+func (s *Service) SetAllCollapsed(kind Kind, collapsed bool) (State, error) {
 	return s.mutate(func() error {
+		if !kind.Valid() {
+			return fmt.Errorf("unknown kind %q", kind)
+		}
 		for i := range s.data.Categories {
-			s.data.Categories[i].Collapsed = collapsed
+			if s.data.Categories[i].Kind == kind {
+				s.data.Categories[i].Collapsed = collapsed
+			}
 		}
 		return nil
 	})

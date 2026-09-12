@@ -14,7 +14,7 @@
   import ConfirmDialog from "./components/ConfirmDialog.svelte";
   import AlertDialog from "./components/AlertDialog.svelte";
   import ImportDialog from "./components/ImportDialog.svelte";
-  import { app, Kind, loadState, setAllCollapsed, exportData, startImport } from "./lib/store.svelte";
+  import { app, Kind, loadState, exportData, startImport } from "./lib/store.svelte";
   import { dnd, endDrag } from "./lib/dnd.svelte";
 
   /**
@@ -43,9 +43,6 @@
       {/if}
     </div>
     <div class="actions">
-      <button class="btn btn-sm" type="button" onclick={() => setAllCollapsed(false)}><Icon name="expand" size={14} /> Expand all</button>
-      <button class="btn btn-sm" type="button" onclick={() => setAllCollapsed(true)}><Icon name="collapse" size={14} /> Collapse all</button>
-      <span class="divider"></span>
       <button class="btn btn-sm" type="button" onclick={startImport}><Icon name="upload" size={14} /> Import</button>
       <button class="btn btn-sm" type="button" onclick={exportData}><Icon name="download" size={14} /> Export</button>
     </div>
@@ -130,12 +127,6 @@
     align-items: center;
     gap: 8px;
     flex-shrink: 0;
-  }
-  .divider {
-    width: 1px;
-    height: 22px;
-    margin: 0 4px;
-    background: var(--border);
   }
   .content {
     flex: 1;

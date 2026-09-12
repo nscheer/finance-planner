@@ -5,7 +5,7 @@
    */
   import Icon from "./Icon.svelte";
   import CategoryGroup from "./CategoryGroup.svelte";
-  import { Kind, type CategoryView, kindLabel, openDialog } from "../lib/store.svelte";
+  import { Kind, type CategoryView, kindLabel, openDialog, setAllCollapsed } from "../lib/store.svelte";
   import { formatEuro } from "../lib/money";
   import { dnd, drop, hoverCategoryTarget, isCategoryTarget } from "../lib/dnd.svelte";
 
@@ -33,6 +33,13 @@
       </span>
     </div>
     <div class="buttons">
+      <button class="btn btn-sm" type="button" title="Expand all categories" disabled={categories.length === 0} onclick={() => setAllCollapsed(kind, false)}>
+        <Icon name="expand" size={14} /> Expand all
+      </button>
+      <button class="btn btn-sm" type="button" title="Collapse all categories" disabled={categories.length === 0} onclick={() => setAllCollapsed(kind, true)}>
+        <Icon name="collapse" size={14} /> Collapse all
+      </button>
+      <span class="divider"></span>
       <button class="btn btn-sm" type="button" onclick={() => openDialog({ type: "category", kind })}>
         <Icon name="plus" size={14} /> Category
       </button>
@@ -117,8 +124,15 @@
   }
   .buttons {
     display: flex;
+    align-items: center;
     gap: 8px;
     flex-shrink: 0;
+  }
+  .divider {
+    width: 1px;
+    height: 20px;
+    margin: 0 2px;
+    background: var(--border);
   }
   .columns {
     display: grid;
