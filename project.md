@@ -653,8 +653,9 @@ header keeps a 24 px gap to the due column.
   transparent 3px 10px)`, stripe color `rgba(20,26,40,.07)` light /
   `rgba(255,255,255,.07)` dark) over the normal row background; name, amounts
   and due month in muted text; the period badge in surface-3 with muted text.
-- **Selection toolbar**: fixed at the bottom center (20 px from the bottom,
-  max width 760 px), surface background, strong border, large shadow, 10 px
+- **Selection toolbar**: fixed at the bottom center (20 px from the bottom),
+  sized by its content and wrapping onto a second line before it could
+  exceed the window width minus 40 px, surface background, strong border, large shadow, 10 px
   radius, count as an accent-soft pill; slides up over 160 ms. The content
   gets 96 px bottom padding while it is visible so the last rows can be
   scrolled above it.

@@ -33,7 +33,7 @@
   <button class="btn btn-sm" type="button" onclick={() => pauseSelection(true)}><Icon name="pause" size={14} /> {t("selection.pause")}</button>
   <button class="btn btn-sm" type="button" onclick={() => pauseSelection(false)}><Icon name="play" size={14} /> {t("selection.resume")}</button>
   <button class="btn btn-sm btn-danger" type="button" onclick={confirmDeleteSelection}><Icon name="trash" size={14} /> {t("selection.delete")}</button>
-  <span class="grow"></span>
+  <span class="divider"></span>
   <button class="btn btn-sm" type="button" onclick={clearSelection}><Icon name="close" size={14} /> {t("selection.clear")}</button>
 </div>
 
@@ -47,9 +47,13 @@
     z-index: 90;
     transform: translateX(-50%);
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
+    justify-content: center;
     gap: 8px;
-    max-width: min(760px, calc(100vw - 40px));
+    /* Sized by its content; wraps onto a second line before it could overflow. */
+    width: max-content;
+    max-width: calc(100vw - 40px);
     padding: 8px 12px;
     border: 1px solid var(--border-strong);
     border-radius: var(--radius);
@@ -76,7 +80,7 @@
     height: 20px;
     background: var(--border-strong);
   }
-  .grow {
-    flex: 1;
+  .selection-bar :global(select) {
+    max-width: 220px;
   }
 </style>
