@@ -194,7 +194,7 @@
     align-items: center;
     gap: 6px;
     width: 100%;
-    padding-right: 10px;
+    padding-right: 24px; /* clear gap to the due column */
   }
   .share-bar {
     flex: 1;

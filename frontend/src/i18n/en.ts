@@ -139,7 +139,6 @@ export const en = {
   "stats.timelineSaved": "on savings account",
   "stats.timelineEmpty": "Give non-monthly spendings a due month to see when they are due and how the savings account fills up.",
   "stats.byCategory": "Spending by category",
-  "stats.incomeVsSpending": "Income vs. spending per month",
   "stats.otherCategories": "Other",
   "stats.chartsEmpty": "No spending yet.",
   "warning.negativeSaldo": "Spending exceeds income by {amount} per month.",

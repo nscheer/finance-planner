@@ -99,7 +99,7 @@
   </section>
 
   <section class="group">
-    <Charts {spending} {stats} />
+    <Charts {spending} />
   </section>
 
   <p class="note">{t("stats.note")}</p>

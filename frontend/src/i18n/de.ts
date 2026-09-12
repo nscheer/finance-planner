@@ -127,7 +127,6 @@ export const de: Messages = {
   "stats.timelineSaved": "auf dem Sparkonto",
   "stats.timelineEmpty": "Gib nicht-monatlichen Ausgaben einen Fälligkeitsmonat, um zu sehen, wann sie fällig sind und wie sich das Sparkonto füllt.",
   "stats.byCategory": "Ausgaben nach Kategorie",
-  "stats.incomeVsSpending": "Einnahmen und Ausgaben pro Monat",
   "stats.otherCategories": "Sonstige",
   "stats.chartsEmpty": "Noch keine Ausgaben.",
   "warning.negativeSaldo": "Die Ausgaben übersteigen die Einnahmen um {amount} pro Monat.",

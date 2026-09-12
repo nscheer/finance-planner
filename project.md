@@ -167,10 +167,10 @@ A sticky box on the right side with these sections:
 - Notes tell how many non-monthly entries have no due month (they are not
   in the timeline) and how many entries are paused.
 
-**Charts**
+**Chart**
 - A donut of spending by category (largest first, at most eight slices, the
   rest folded into "Other") with a legend naming every slice and its amount.
-- Income vs. spending per month as two horizontal bars.
+  (Income vs. spending is not charted; the numbers are in the overview.)
 
 **Warnings** (banner above the blocks)
 - red when spending exceeds income, showing the monthly gap;
@@ -545,9 +545,9 @@ named with its amount in the legend.
 | Other | `#9aa3b5` | `#6b7385` |
 
 Chart marks: donut with a 12-unit stroke on a 100-unit view box, 2-unit gaps
-between slices, the hovered slice grows to 14; bars are 10 px high with
-4 px radius; the timeline uses thin bars (55 % of the column) and a 2 px step
-line.
+between slices, the hovered slice grows to 14; the timeline uses thin bars
+(55 % of the column) and a 2 px step line. The share bar in a category
+header keeps a 24 px gap to the due column.
 
 ### 5.6 Components
 

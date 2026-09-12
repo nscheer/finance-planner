@@ -1,15 +1,13 @@
 <script lang="ts">
   /**
-   * Two small charts for the statistics column:
-   *  - a donut of spending by category (largest first, at most 8 slots,
-   *    the rest folded into "Other"), with a legend that names every slice
-   *  - income vs. spending per month as two horizontal bars
-   * Everything is inline SVG using the categorical palette tokens.
+   * Donut of spending by category (largest first, at most 8 slots, the rest
+   * folded into "Other") with a legend that names every slice. Inline SVG
+   * using the categorical palette tokens.
    */
-  import type { CategoryView, Stats } from "../lib/store.svelte";
+  import type { CategoryView } from "../lib/store.svelte";
   import { t, formatEuro, formatPercent } from "../lib/i18n.svelte";
 
-  let { spending, stats }: { spending: CategoryView[]; stats: Stats } = $props();
+  let { spending }: { spending: CategoryView[] } = $props();
 
   interface Slice {
     name: string;
@@ -41,8 +39,6 @@
   });
 
   let hovered = $state<number | null>(null);
-
-  const barMax = $derived(Math.max(1, stats.incomeMonthlyCents, stats.spendingMonthlyCents));
 </script>
 
 <div class="charts">
@@ -86,19 +82,6 @@
     </div>
   {/if}
 
-  <h3>{t("stats.incomeVsSpending")}</h3>
-  <div class="bars">
-    <div class="bar-row">
-      <span class="bar-label">{t("kind.income")}</span>
-      <span class="bar-track"><span class="bar-fill income" style:width="{(stats.incomeMonthlyCents / barMax) * 100}%"></span></span>
-      <span class="bar-value money">{formatEuro(stats.incomeMonthlyCents)}</span>
-    </div>
-    <div class="bar-row">
-      <span class="bar-label">{t("kind.spending")}</span>
-      <span class="bar-track"><span class="bar-fill spending" style:width="{(stats.spendingMonthlyCents / barMax) * 100}%"></span></span>
-      <span class="bar-value money">{formatEuro(stats.spendingMonthlyCents)}</span>
-    </div>
-  </div>
 </div>
 
 <style>
@@ -174,41 +157,6 @@
   }
   .legend .value {
     color: var(--text);
-    font-weight: 500;
-  }
-  .bars {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    font-size: 11.5px;
-  }
-  .bar-row {
-    display: grid;
-    grid-template-columns: 62px 1fr auto;
-    align-items: center;
-    gap: 8px;
-  }
-  .bar-label {
-    color: var(--text-2);
-  }
-  .bar-track {
-    height: 10px;
-    border-radius: 4px;
-    background: var(--border);
-    overflow: hidden;
-  }
-  .bar-fill {
-    display: block;
-    height: 100%;
-    border-radius: 4px;
-  }
-  .bar-fill.income {
-    background: var(--income);
-  }
-  .bar-fill.spending {
-    background: var(--spending);
-  }
-  .bar-value {
     font-weight: 500;
   }
 </style>
