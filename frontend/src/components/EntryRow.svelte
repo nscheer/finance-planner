@@ -65,11 +65,11 @@
   <span class="handle" title={draggable ? t("entry.dragHint") : ""}><Icon name="grip" size={14} /></span>
   <span class="name" title={entry.notes || undefined}>
     <span class="name-text">{entry.name}</span>
-    {#if entry.notes}<span class="note-icon" aria-label={t("entry.notes")}><Icon name="note" size={13} /></span>{/if}
+    {#if entry.paused}<span class="name-icon" title={t("entry.paused")} aria-label={t("entry.paused")} role="img"><Icon name="pause" size={13} /></span>{/if}
+    {#if entry.notes}<span class="name-icon" aria-label={t("entry.notes")} role="img"><Icon name="note" size={13} /></span>{/if}
   </span>
   <span class="period">
     <span class="badge badge-{entry.period}">{t(periodKey(entry.period))}</span>
-    {#if entry.paused}<span class="badge badge-paused">{t("entry.paused")}</span>{/if}
   </span>
   <span class="due">
     {#if !monthlyIsMaster && (entry.dueMonth ?? 0) > 0}{monthName(entry.dueMonth ?? 0)}{/if}
@@ -133,7 +133,7 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  .note-icon {
+  .name-icon {
     display: inline-flex;
     flex-shrink: 0;
     color: var(--text-3);

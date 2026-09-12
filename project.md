@@ -117,9 +117,10 @@ Each block has:
 - for spending categories, the **share of all spending** as a thin bar with a
   percentage in the category header.
 
-Each entry row shows: drag handle · name (with a note icon and tooltip when
-notes exist) · a **period badge** (monthly / quarterly / half-yearly / yearly)
-plus a *paused* badge · the **due month** as a full month name in its own
+Each entry row shows: drag handle · name (followed by a pause icon with
+tooltip when the entry is paused, and a note icon with tooltip when notes
+exist) · a **period badge** (monthly / quarterly / half-yearly / yearly) ·
+the **due month** as a full month name in its own
 column (empty for monthly entries and unset due months) · per month ·
 per year · actions (pause/resume, duplicate, edit, delete). The value the user
 entered (the master) is printed bold; the derived value is muted. Paused rows
@@ -565,12 +566,14 @@ header keeps a 24 px gap to the due column.
   trailing € sign; the period choice is a segmented control (accent-soft
   background for the active segment).
 - **Badges**: pill, 11 px uppercase, semantic color pairs (monthly = accent,
-  quarterly, half-yearly, yearly = savings, paused = neutral).
+  quarterly, half-yearly, yearly = savings). A row never shows more than one
+  badge, so the frequency column never wraps.
 - **Category header**: surface-3 background, chevron that rotates 90° when
   expanded, count pill, subtotals right-aligned, actions appear on hover.
 - **Entry row**: separated by 1 px borders, hover surface-2, actions appear
   on hover, dragged rows at 35 % opacity, paused rows muted and struck
-  through.
+  through with a small pause icon after the name (muted, 13 px, like the
+  note icon).
 - **Drop indicators**: 3 px accent line between rows; 3 px line in the block
   color between categories; a target category gets an accent border and a
   soft accent ring; empty and collapsed targets show a soft accent area with

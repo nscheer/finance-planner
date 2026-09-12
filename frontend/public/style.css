@@ -374,10 +374,6 @@ select:focus-visible {
   background: var(--halfyearly-soft);
   color: var(--halfyearly);
 }
-.badge-paused {
-  background: var(--surface-3);
-  color: var(--text-2);
-}
 
 /* ---- misc --------------------------------------------------------------- */
 
