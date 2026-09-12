@@ -60,7 +60,7 @@
     <span></span>
     <span>{t("block.column.name")}</span>
     <span>{t("block.column.entered")}</span>
-    <span>{t("block.column.due")}</span>
+    <span class="center">{t("block.column.due")}</span>
     <span class="right">{t("block.column.perMonth")}</span>
     <span class="right">{t("block.column.perYear")}</span>
     <span></span>
@@ -153,6 +153,9 @@
   .columns .right {
     text-align: right;
     padding-right: 12px;
+  }
+  .columns .center {
+    text-align: center;
   }
   .categories {
     display: flex;

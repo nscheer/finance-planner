@@ -65,7 +65,6 @@
   <span class="handle" title={draggable ? t("entry.dragHint") : ""}><Icon name="grip" size={14} /></span>
   <span class="name" title={entry.notes || undefined}>
     <span class="name-text">{entry.name}</span>
-    {#if entry.paused}<span class="name-icon" title={t("entry.paused")} aria-label={t("entry.paused")} role="img"><Icon name="pause" size={13} /></span>{/if}
     {#if entry.notes}<span class="name-icon" aria-label={t("entry.notes")} role="img"><Icon name="note" size={13} /></span>{/if}
   </span>
   <span class="period">
@@ -104,11 +103,26 @@
   .row.dragging {
     opacity: 0.35;
   }
+  /* Paused: whole row slightly grey, text and badge muted, amounts struck through. */
+  .row.paused {
+    background: var(--surface-2);
+  }
+  .row.paused:hover {
+    background: var(--surface-3);
+  }
+  .row.paused .name,
+  .row.paused .amount,
+  .row.paused .due {
+    color: var(--text-3);
+  }
   .row.paused .name,
   .row.paused .amount {
-    color: var(--text-3);
     text-decoration: line-through;
     text-decoration-color: var(--border-strong);
+  }
+  .row.paused .badge {
+    background: var(--surface-3);
+    color: var(--text-3);
   }
   .row.locked .handle {
     opacity: 0.3;
@@ -146,6 +160,7 @@
   }
   .due {
     color: var(--text-2);
+    text-align: center;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
