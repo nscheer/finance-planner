@@ -14,6 +14,7 @@ export const de: Messages = {
   "app.shortcuts": "Tastenkürzel",
   "app.search": "Einträge suchen…",
   "app.searchClear": "Suche löschen",
+  "app.filterReset": "Suche und Filter zurücksetzen",
   "app.filter.all": "Alle Zeiträume",
   "app.filter.paused": "Nur pausierte",
   "app.filterResult": "{shown} von {total} Einträgen angezeigt",

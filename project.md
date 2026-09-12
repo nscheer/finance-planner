@@ -189,8 +189,10 @@ The top bar contains a search box and, as a separate control next to it, a
 period filter dropdown (all periods, monthly, quarterly, half-yearly, yearly,
 paused only). The search matches entry names
 and notes (case-insensitive). While a filter is active only matching entries
-are listed, categories without matches are hidden, a hint shows "x of y
-entries shown", and a clear button resets the filter. Subtotals stay those of
+are listed, categories without matches are hidden, and a hint shows "x of y
+entries shown". The search box has its own clear button (tooltip "Clear
+search"); next to the hint a reset button (tooltip "Reset search and filter")
+clears both the search text and the period filter. Subtotals stay those of
 the whole category.
 
 ### 2.9 Dialogs, notifications and undo

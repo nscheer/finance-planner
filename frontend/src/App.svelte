@@ -157,12 +157,16 @@
         <span class="search-icon"><Icon name="search" size={14} /></span>
         <input
           class="input search-input"
-          type="search"
+          type="text"
           placeholder={t("app.search")}
           aria-label={t("shortcuts.search")}
+          autocomplete="off"
           bind:value={app.filter.query}
           bind:this={searchEl}
         />
+        {#if app.filter.query !== ""}
+          <button class="icon-btn small" type="button" title={t("app.searchClear")} aria-label={t("app.searchClear")} onclick={() => { app.filter.query = ""; searchEl?.focus(); }}><Icon name="close" size={13} /></button>
+        {/if}
       </div>
       <select class="select select-sm period-filter" class:active={app.filter.period !== "all"} bind:value={app.filter.period} aria-label={t("app.filter.all")}>
         {#each periodFilters as f (f.value)}
@@ -172,7 +176,7 @@
       {#if filterActive()}
         {@const counts = filterCounts()}
         <span class="filter-result">{t("app.filterResult", counts)}</span>
-        <button class="icon-btn" type="button" title={t("app.searchClear")} aria-label={t("app.searchClear")} onclick={clearFilter}><Icon name="close" size={14} /></button>
+        <button class="icon-btn" type="button" title={t("app.filterReset")} aria-label={t("app.filterReset")} onclick={clearFilter}><Icon name="close" size={14} /></button>
       {/if}
     </div>
     <div class="actions">
@@ -340,6 +344,10 @@
   }
   .search-input:focus {
     outline: none;
+  }
+  .search .icon-btn.small {
+    width: 22px;
+    height: 22px;
   }
   .filter-result {
     font-size: 12px;

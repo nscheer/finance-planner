@@ -20,6 +20,7 @@ export const en = {
   "app.shortcuts": "Keyboard shortcuts",
   "app.search": "Search entries…",
   "app.searchClear": "Clear search",
+  "app.filterReset": "Reset search and filter",
   "app.filter.all": "All periods",
   "app.filter.paused": "Paused only",
   "app.filterResult": "{shown} of {total} entries shown",
