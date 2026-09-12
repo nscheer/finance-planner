@@ -241,7 +241,7 @@
     </div>
   </header>
 
-  <main class="content">
+  <main class="content" class:has-selection={selectionCount() > 0}>
     {#if app.state}
       <!-- Shown only on paper (see the print stylesheet). -->
       <header class="print-header">
@@ -267,9 +267,6 @@
             <Icon name="target" size={16} />
             <span>{t("warning.goal", { amount: formatEuro(-app.state.stats.remainingAfterGoalCents) })}</span>
           </div>
-        {/if}
-        {#if selectionCount() > 0}
-          <SelectionBar />
         {/if}
         {#if isEmpty()}
           <div class="get-started">
@@ -317,6 +314,10 @@
   {:else if dialog.type === "palette"}
     <CommandPalette />
   {/if}
+{/if}
+
+{#if selectionCount() > 0}
+  <SelectionBar />
 {/if}
 
 <Toasts />
@@ -464,6 +465,10 @@
     gap: 20px;
     min-width: 0;
     padding-top: 20px;
+  }
+  /* Room to scroll the last rows above the floating selection toolbar. */
+  .content.has-selection {
+    padding-bottom: 96px;
   }
   .banner {
     display: flex;

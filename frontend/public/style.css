@@ -445,7 +445,7 @@ select:focus-visible {
   .tail,
   .banner,
   .get-started,
-  .bar {
+  .selection-bar {
     display: none !important;
   }
   .app {

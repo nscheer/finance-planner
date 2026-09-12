@@ -89,8 +89,9 @@ Operations on entries:
 - **Multi-select**: the handle cell of a row turns into a checkbox on hover,
   when the row is selected or while any selection exists. Ctrl/Cmd+click
   toggles a row, Shift+click selects a range inside a category. Selected rows
-  are tinted in the soft accent color. While entries are selected a bar above
-  the blocks shows the count and offers: move to another category of the
+  are tinted in the soft accent color. While entries are selected a toolbar
+  floating at the bottom center of the window (it never moves the content)
+  shows the count and offers: move to another category of the
   same kind (disabled when income and spending entries are mixed), pause,
   resume, delete (with confirmation and an Undo that restores all entries at
   their former positions) and clear. *Esc* clears the selection; changing the
@@ -650,6 +651,11 @@ header keeps a 24 px gap to the due column.
   transparent 3px 10px)`, stripe color `rgba(20,26,40,.07)` light /
   `rgba(255,255,255,.07)` dark) over the normal row background; name, amounts
   and due month in muted text; the period badge in surface-3 with muted text.
+- **Selection toolbar**: fixed at the bottom center (20 px from the bottom,
+  max width 760 px), surface background, strong border, large shadow, 10 px
+  radius, count as an accent-soft pill; slides up over 160 ms. The content
+  gets 96 px bottom padding while it is visible so the last rows can be
+  scrolled above it.
 - **Due column**: text centered in its column, so it sits midway between the
   period badge and the right-aligned amounts.
 - **Drop indicators**: 3 px accent line between rows and 3 px line in the
