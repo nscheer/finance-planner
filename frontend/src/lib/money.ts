@@ -42,39 +42,32 @@ export function centsToInput(cents: number, decimalMark: "," | "." = ","): strin
 }
 
 /**
- * Parses user input into cents. Accepts "12", "12,5", "12.50", "1.234,56",
- * "1,234.56" and "1 234,56 €". When both "." and "," occur, the last one is
- * the decimal separator. A single separator followed by exactly three digits
- * is treated as a thousands separator ("1.234" = 1234 €).
- * Returns null for input that is not a number.
+ * Parses user input into cents according to the language's decimal mark.
+ * With "," (German): "12", "12,5", "1.234,56", "1 234,56 €" and "10.123"
+ * (= 10123 €). With "." (English): "12.5", "1,234.56" and "10,123".
+ * The other character is accepted only as a thousands separator, i.e. in
+ * front of exactly three digits; at most two decimals. Returns null for
+ * input that is not a number.
  */
-export function parseEuro(input: string): number | null {
+export function parseEuro(input: string, decimalMark: "," | "." = ","): number | null {
   let s = input.trim().replace(/[€\s]/g, "");
   if (s === "") return null;
   const negative = s.startsWith("-");
   if (negative) s = s.slice(1);
 
-  const lastDot = s.lastIndexOf(".");
-  const lastComma = s.lastIndexOf(",");
-  let decimalSep: "." | "," | null = null;
-  if (lastDot >= 0 && lastComma >= 0) {
-    decimalSep = lastDot > lastComma ? "." : ",";
-  } else if (lastDot >= 0 || lastComma >= 0) {
-    const sep = lastDot >= 0 ? "." : ",";
-    const parts = s.split(sep);
-    const groupsOfThree = parts.slice(1).every((p) => p.length === 3);
-    decimalSep = groupsOfThree ? null : sep;
-    if (decimalSep !== null && parts.length > 2) return null; // "1,2,3"
-  }
+  const groupMark = decimalMark === "," ? "." : ",";
+  const idx = s.indexOf(decimalMark);
+  if (idx >= 0 && s.indexOf(decimalMark, idx + 1) >= 0) return null; // two decimal marks
+  let integer = idx >= 0 ? s.slice(0, idx) : s;
+  let fraction = idx >= 0 ? s.slice(idx + 1) : "";
 
-  let integer = s;
-  let fraction = "";
-  if (decimalSep !== null) {
-    const idx = s.lastIndexOf(decimalSep);
-    integer = s.slice(0, idx);
-    fraction = s.slice(idx + 1);
+  // Thousands separators only in the integer part, each followed by 3 digits.
+  if (integer.includes(groupMark)) {
+    const groups = integer.split(groupMark);
+    if (groups.slice(1).some((g) => g.length !== 3) || !/^\d{1,3}$/.test(groups[0])) return null;
+    integer = groups.join("");
   }
-  integer = integer.replace(/[.,]/g, "");
+  if (fraction.includes(groupMark)) return null;
   if (integer === "") integer = "0";
   if (!/^\d+$/.test(integer) || !/^\d*$/.test(fraction)) return null;
   if (fraction.length > 2) return null;

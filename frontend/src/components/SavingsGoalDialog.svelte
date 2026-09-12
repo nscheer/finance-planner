@@ -2,8 +2,7 @@
   /** Sets the monthly savings goal shown in the statistics box. */
   import Modal from "./Modal.svelte";
   import { Service, app, apply, closeDialog, errorMessage, notify } from "../lib/store.svelte";
-  import { t, amountInput, amountPlaceholder } from "../lib/i18n.svelte";
-  import { parseEuro } from "../lib/money";
+  import { t, amountInput, amountPlaceholder, parseAmount } from "../lib/i18n.svelte";
   import { untrack } from "svelte";
 
   const initial = untrack(() => app.state?.stats.savingsGoalCents ?? 0);
@@ -14,7 +13,7 @@
   async function submit(event: SubmitEvent) {
     event.preventDefault();
     error = "";
-    const cents = amount.trim() === "" ? 0 : parseEuro(amount);
+    const cents = amount.trim() === "" ? 0 : parseAmount(amount);
     if (cents === null || cents < 0) {
       error = t("entryDialog.invalidAmount");
       return;

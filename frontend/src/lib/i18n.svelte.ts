@@ -15,7 +15,7 @@ import {
   type Params,
   type PluralKey,
 } from "../i18n";
-import { centsToInput, formatEuroIn, formatEuroSignedIn } from "./money";
+import { centsToInput, parseEuro, formatEuroIn, formatEuroSignedIn } from "./money";
 
 export { locales };
 export type { LocaleCode, MessageKey };
@@ -48,6 +48,11 @@ export function decimalMark(): "," | "." {
 /** Amount as shown in an edit field, in the language's decimal notation. */
 export function amountInput(cents: number): string {
   return centsToInput(cents, decimalMark());
+}
+
+/** Parses an amount typed by the user with the language's decimal mark. */
+export function parseAmount(input: string): number | null {
+  return parseEuro(input, decimalMark());
 }
 
 /** Placeholder of amount fields: "0,00" or "0.00". */

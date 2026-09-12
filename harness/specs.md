@@ -89,13 +89,15 @@ never be moved into a category of the other kind.
 | Paused | the entry stays in the table but is excluded from every subtotal and statistic |
 | Notes | optional free text (contract number, cancellation date, …) |
 
-Amount input: typed amounts accept comma or point. When both occur, the
-last one is the decimal mark (`1.234,56` and `1,234.56` are both
-1234.56). A single separator followed by exactly three digits is a
-thousands separator (`1.234` = 1234 €); otherwise it is the decimal mark
-(`12.5` = 12.50). At most two decimals; spaces and the € sign are ignored;
-a leading minus is parsed but rejected by validation (amounts must be
-positive). Edit fields show the stored amount with the decimal mark of the
+Amount input is interpreted according to the **language**: the language's
+decimal mark (`,` in German, `.` in English) is the decimal separator, the
+other character is accepted only as a thousands separator in front of
+exactly three digits. German: `12,5` = 12.50, `1.234,56` = 1234.56,
+`10.123` = 10123, `12.50` is invalid. English: `12.5` = 12.50,
+`1,234.56` = 1234.56, `10,123` = 10123, `12,50` is invalid. At most two
+decimals; spaces and the € sign are ignored; a leading minus is parsed but
+rejected by validation (amounts must be positive). Invalid input shows the
+message "Please enter a valid amount, e.g. 12.50." (German: "z. B. 12,50"). Edit fields show the stored amount with the decimal mark of the
 current language (`1234,56` in German, `1234.56` in English), and the
 placeholder of an empty amount field is `0,00` or `0.00` accordingly.
 

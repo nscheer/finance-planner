@@ -19,8 +19,7 @@
     openDialog,
     periodMonths,
   } from "../lib/store.svelte";
-  import { t, formatEuro, monthName, amountInput, amountPlaceholder } from "../lib/i18n.svelte";
-  import { parseEuro } from "../lib/money";
+  import { t, formatEuro, monthName, amountInput, amountPlaceholder, parseAmount } from "../lib/i18n.svelte";
   import { untrack } from "svelte";
 
   let {
@@ -63,7 +62,7 @@
 
   /** Live preview of the derived values while typing. */
   const preview = $derived.by(() => {
-    const cents = parseEuro(amount);
+    const cents = parseAmount(amount);
     if (cents === null || cents <= 0) return "";
     const n = periodMonths(period);
     return t("entryDialog.preview", {
@@ -79,7 +78,7 @@
   async function submit(event: SubmitEvent) {
     event.preventDefault();
     error = "";
-    const cents = parseEuro(amount);
+    const cents = parseAmount(amount);
     if (cents === null) {
       error = t("entryDialog.invalidAmount");
       return;
