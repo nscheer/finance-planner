@@ -37,6 +37,10 @@ const (
 	ErrImportModeUnknown     = "import.modeUnknown"
 	ErrImportInvalidFile     = "import.invalidFile"
 	ErrLanguageInvalid       = "language.invalid"
+	ErrEntryIDExists         = "entry.idExists"
+	ErrCategoryIDExists      = "category.idExists"
+	ErrSampleNotEmpty        = "sample.notEmpty"
+	ErrBackupInvalidPath     = "backup.invalidPath"
 )
 
 // newError creates a coded error. params are alternating key/value pairs.

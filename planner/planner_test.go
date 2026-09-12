@@ -3,11 +3,14 @@ package planner
 // Test cases against project.md. Each test names the requirement it covers.
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
+	"time"
 )
 
 // newTestService returns a service persisting to a temp file.
@@ -925,5 +928,219 @@ func TestWindowGeometry(t *testing.T) {
 	reloaded, _ := LoadFile(path)
 	if reloaded.Settings.Window != w {
 		t.Fatalf("window not persisted: %+v", reloaded.Settings.Window)
+	}
+}
+
+// Undo of deletions: entries and categories come back at their old position
+// with their old id.
+func TestRestoreEntryAndCategory(t *testing.T) {
+	s, _ := newTestService(t)
+	housing := mustCategory(t, s, KindSpending, "Housing")
+	leisure := mustCategory(t, s, KindSpending, "Leisure")
+	mustEntry(t, s, housing, "Rent", 100000, PeriodMonthly)
+	power := mustEntry(t, s, housing, "Power", 8000, PeriodMonthly)
+	mustEntry(t, s, housing, "Water", 3000, PeriodMonthly)
+
+	if _, err := s.DeleteEntry(power.ID); err != nil {
+		t.Fatal(err)
+	}
+	st, err := s.RestoreEntry(power, 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := names(st.Spending[0].Entries); !equalStrings(got, []string{"Rent", "Power", "Water"}) {
+		t.Fatalf("after restore: %v", got)
+	}
+	if st.Spending[0].Entries[1].ID != power.ID {
+		t.Fatal("restored entry lost its id")
+	}
+	if _, err := s.RestoreEntry(power, 1); err == nil {
+		t.Fatal("restoring an existing entry must fail")
+	}
+
+	// Category: delete the empty "Leisure" (index 1), restore at index 0.
+	if _, err := s.DeleteCategory(leisure.ID); err != nil {
+		t.Fatal(err)
+	}
+	st, err = s.RestoreCategory(leisure, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(st.Spending) != 2 || st.Spending[0].ID != leisure.ID || st.Spending[0].Name != "Leisure" {
+		t.Fatalf("category not restored at index 0: %+v", st.Spending)
+	}
+	if _, err := s.RestoreCategory(leisure, 0); err == nil {
+		t.Fatal("restoring an existing category must fail")
+	}
+}
+
+// Backups: automatic (rate limited), forced before import, list and restore.
+func TestBackups(t *testing.T) {
+	s, path := newTestService(t)
+	clock := time.Date(2026, 1, 1, 12, 0, 0, 0, time.Local)
+	s.now = func() time.Time { return clock }
+	tick := func(d time.Duration) { clock = clock.Add(d) }
+
+	cat := mustCategory(t, s, KindSpending, "Housing") // first edit -> backup of the empty file
+	tick(time.Second)
+	mustEntry(t, s, cat, "Rent", 100000, PeriodMonthly) // within the interval -> no backup
+	list, err := s.ListBackups()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(list) != 1 || list[0].Categories != 0 {
+		t.Fatalf("expected one backup of the empty file, got %+v", list)
+	}
+	tick(backupInterval)
+	mustEntry(t, s, cat, "Power", 8000, PeriodMonthly) // interval passed -> backup with 1 category / 1 entry
+	list, _ = s.ListBackups()
+	if len(list) != 2 || list[0].Entries != 1 || list[0].Categories != 1 {
+		t.Fatalf("expected a second backup with one entry, got %+v", list)
+	}
+	if !list[0].Time.After(list[1].Time) {
+		t.Fatal("backups must be newest first")
+	}
+
+	// Import always creates a backup and reports it; restoring it undoes the import.
+	other, _ := newTestService(t)
+	oc := mustCategory(t, other, KindIncome, "Salary")
+	mustEntry(t, other, oc, "Job", 300000, PeriodMonthly)
+	exportPath := filepath.Join(t.TempDir(), "x.json")
+	other.ExportTo(exportPath)
+	tick(time.Second)
+	res, err := s.ImportData(exportPath, ImportReplace)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.BackupPath == "" || !isBackupPath(path, res.BackupPath) {
+		t.Fatalf("import did not report its backup: %+v", res)
+	}
+	if len(res.State.Spending) != 0 {
+		t.Fatal("replace import failed")
+	}
+	tick(time.Second)
+	st, err := s.RestoreBackup(res.BackupPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(st.Spending) != 1 || len(st.Spending[0].Entries) != 2 || len(st.Income) != 0 {
+		t.Fatalf("restore did not undo the import: %+v", st)
+	}
+	// Only files inside the backup folder can be restored.
+	if _, err := s.RestoreBackup(exportPath); err == nil {
+		t.Fatal("restoring a file outside the backup folder must fail")
+	}
+	if _, err := s.RestoreBackup(filepath.Join(BackupDir(path), "missing.json")); err == nil {
+		t.Fatal("restoring a missing backup must fail")
+	}
+
+	// Pruning keeps MaxBackups files.
+	for i := 0; i < MaxBackups+5; i++ {
+		tick(backupInterval)
+		if _, err := s.SetCategoryCollapsed(cat.ID, i%2 == 0); err != nil {
+			t.Fatal(err)
+		}
+	}
+	list, _ = s.ListBackups()
+	if len(list) != MaxBackups {
+		t.Fatalf("expected %d backups after pruning, got %d", MaxBackups, len(list))
+	}
+}
+
+// CSV export: header, separators and decimal marks per language.
+func TestWriteCSV(t *testing.T) {
+	d := NewData()
+	d.Categories = []Category{
+		{ID: "c1", Name: "Housing", Kind: KindSpending},
+		{ID: "c2", Name: "Salary", Kind: KindIncome},
+	}
+	d.Entries = []Entry{
+		{ID: "e1", CategoryID: "c1", Name: "Rent; big", AmountCents: 123456, Period: PeriodMonthly, Notes: "note"},
+		{ID: "e2", CategoryID: "c1", Name: "Car", AmountCents: 60000, Period: PeriodYearly, DueMonth: 3, Paused: true},
+		{ID: "e3", CategoryID: "c2", Name: "Job", AmountCents: 300000, Period: PeriodMonthly},
+	}
+
+	var de bytes.Buffer
+	if err := WriteCSV(&de, d, "de"); err != nil {
+		t.Fatal(err)
+	}
+	got := de.String()
+	if !strings.HasPrefix(got, utf8BOM) {
+		t.Fatal("missing UTF-8 BOM")
+	}
+	lines := strings.Split(strings.TrimSpace(strings.TrimPrefix(got, utf8BOM)), "\r\n")
+	if len(lines) != 4 {
+		t.Fatalf("expected header + 3 rows, got %d: %q", len(lines), got)
+	}
+	if lines[0] != "Art;Kategorie;Name;Zeitraum;Betrag;Pro Monat;Pro Jahr;Fälligkeitsmonat;Pausiert;Notizen" {
+		t.Fatalf("header: %s", lines[0])
+	}
+	// Income first, then spending; German decimal comma; quoted field with separator.
+	if lines[1] != "Einnahme;Salary;Job;monatlich;3000,00;3000,00;36000,00;;nein;" {
+		t.Fatalf("row 1: %s", lines[1])
+	}
+	if lines[2] != `Ausgabe;Housing;"Rent; big";monatlich;1234,56;1234,56;14814,72;;nein;note` {
+		t.Fatalf("row 2: %s", lines[2])
+	}
+	if lines[3] != "Ausgabe;Housing;Car;jährlich;600,00;50,00;600,00;3;ja;" {
+		t.Fatalf("row 3: %s", lines[3])
+	}
+
+	var en bytes.Buffer
+	if err := WriteCSV(&en, d, "en"); err != nil {
+		t.Fatal(err)
+	}
+	enLines := strings.Split(strings.TrimSpace(strings.TrimPrefix(en.String(), utf8BOM)), "\r\n")
+	if enLines[0] != "Kind,Category,Name,Period,Amount,Per month,Per year,Due month,Paused,Notes" {
+		t.Fatalf("en header: %s", enLines[0])
+	}
+	if enLines[3] != "Spending,Housing,Car,yearly,600.00,50.00,600.00,3,yes," {
+		t.Fatalf("en row 3: %s", enLines[3])
+	}
+
+	// Service level: writes the file in the current language.
+	s, _ := newTestService(t)
+	s.SetLanguage("de")
+	c := mustCategory(t, s, KindSpending, "X")
+	mustEntry(t, s, c, "Y", 100, PeriodMonthly)
+	csvPath := filepath.Join(t.TempDir(), "out.csv")
+	if err := s.ExportCSVTo(csvPath); err != nil {
+		t.Fatal(err)
+	}
+	raw, _ := os.ReadFile(csvPath)
+	if !strings.Contains(string(raw), "Ausgabe;X;Y;monatlich;1,00") {
+		t.Fatalf("csv file content: %q", raw)
+	}
+}
+
+// Sample data only fills an empty planner and is valid in both languages.
+func TestSampleData(t *testing.T) {
+	for _, lang := range []string{"de", "en"} {
+		d := SampleData(lang)
+		if err := d.Validate(); err != nil {
+			t.Fatalf("%s sample invalid: %v", lang, err)
+		}
+		if len(d.CategoriesOf(KindIncome)) == 0 || len(d.CategoriesOf(KindSpending)) < 3 || len(d.Entries) < 10 {
+			t.Fatalf("%s sample too small: %d categories, %d entries", lang, len(d.Categories), len(d.Entries))
+		}
+	}
+	if SampleData("de").Categories[0].Name == SampleData("en").Categories[0].Name {
+		t.Fatal("sample data should be translated")
+	}
+
+	s, _ := newTestService(t)
+	s.SetLanguage("de")
+	res, err := s.LoadSampleData("de")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.Entries != len(SampleData("de").Entries) || res.State.Settings.Language != "de" {
+		t.Fatalf("sample result: %+v", res)
+	}
+	if st := res.State.Stats; st.PeakBufferCents <= 0 || st.ToBankMonthlyCents <= 0 {
+		t.Fatalf("sample should produce a timeline and bank transfer: %+v", st)
+	}
+	if _, err := s.LoadSampleData("de"); err == nil {
+		t.Fatal("sample data must not overwrite existing data")
 	}
 }

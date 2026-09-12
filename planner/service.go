@@ -1,12 +1,14 @@
 package planner
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
@@ -32,6 +34,13 @@ type ImportPreview struct {
 	Entries    int    `json:"entries"`
 }
 
+// SampleResult reports what LoadSampleData created.
+type SampleResult struct {
+	State      State `json:"state"`
+	Categories int   `json:"categories"`
+	Entries    int   `json:"entries"`
+}
+
 // ImportResult is returned by ImportData: the new state plus a report of
 // what the import did, shown to the user in a notification.
 type ImportResult struct {
@@ -40,6 +49,9 @@ type ImportResult struct {
 	CategoriesReused int   `json:"categoriesReused"`
 	EntriesAdded     int   `json:"entriesAdded"`
 	EntriesSkipped   int   `json:"entriesSkipped"`
+	// BackupPath is the backup written right before the import; restoring
+	// it undoes the import.
+	BackupPath string `json:"backupPath"`
 }
 
 // Service is the Wails service used by the frontend. Every mutating method
@@ -49,6 +61,10 @@ type Service struct {
 	mu   sync.Mutex
 	path string
 	data Data
+	// lastBackup is when the last automatic backup was written.
+	lastBackup time.Time
+	// now is replaceable in tests.
+	now func() time.Time
 }
 
 // NewService creates a service that persists to the given file. The file is
@@ -58,7 +74,7 @@ func NewService(path string) (*Service, error) {
 	if err != nil {
 		return nil, fmt.Errorf("loading %s: %w", path, err)
 	}
-	s := &Service{path: path, data: d}
+	s := &Service{path: path, data: d, now: time.Now}
 	// Create the file right away so the user can see where the data lives.
 	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
 		if err := s.save(); err != nil {
@@ -90,12 +106,68 @@ func (s *Service) save() error {
 }
 
 // mutate runs fn under the lock, saves on success and returns the new state.
+// Before the change an automatic backup is written (rate limited).
 func (s *Service) mutate(fn func() error) (State, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	if _, err := s.backup(false); err != nil {
+		return s.state(), err
+	}
 	if err := fn(); err != nil {
 		return s.state(), err
 	}
+	if err := s.save(); err != nil {
+		return s.state(), err
+	}
+	return s.state(), nil
+}
+
+// backup copies the data file into the backup folder. Ordinary edits only
+// create a backup when the last one is older than backupInterval; force
+// always creates one (used before imports and restores). Must be called
+// with the lock held. Returns the backup path ("" when none was written).
+func (s *Service) backup(force bool) (string, error) {
+	now := s.now()
+	if !force && now.Sub(s.lastBackup) < backupInterval {
+		return "", nil
+	}
+	path, err := WriteBackup(s.path, now)
+	if err != nil {
+		return "", fmt.Errorf("writing backup: %w", err)
+	}
+	if path != "" {
+		s.lastBackup = now
+	}
+	return path, nil
+}
+
+// ListBackups returns the available backups, newest first.
+func (s *Service) ListBackups() ([]BackupInfo, error) {
+	return ListBackups(s.path)
+}
+
+// RestoreBackup replaces the current data with a backup. The current data
+// is backed up first, so a restore can be undone as well.
+func (s *Service) RestoreBackup(path string) (State, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if !isBackupPath(s.path, path) {
+		return s.state(), newError(ErrBackupInvalidPath)
+	}
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		return s.state(), err
+	}
+	restored, err := Decode(raw)
+	if err != nil {
+		return s.state(), newError(ErrImportInvalidFile, "file", filepath.Base(path), "detail", err.Error())
+	}
+	if _, err := s.backup(true); err != nil {
+		return s.state(), err
+	}
+	restored.Settings.Language = s.data.Settings.Language
+	restored.Settings.Window = s.data.Settings.Window
+	s.data = restored
 	if err := s.save(); err != nil {
 		return s.state(), err
 	}
@@ -193,23 +265,8 @@ func (s *Service) MoveCategory(id string, toIndex int) (State, error) {
 			return newError(ErrCategoryNotFound)
 		}
 		moved := *c
-		rest := removeCategory(s.data.Categories, id)
-		// Find the global slice position of the toIndex-th category of the
-		// same kind; append after the last one if toIndex is past the end.
-		insertAt := len(rest)
-		seen := 0
-		for i, other := range rest {
-			if other.Kind != moved.Kind {
-				continue
-			}
-			if seen == toIndex {
-				insertAt = i
-				break
-			}
-			seen++
-			insertAt = i + 1
-		}
-		s.data.Categories = insertCategory(rest, insertAt, moved)
+		s.data.Categories = removeCategory(s.data.Categories, id)
+		s.data.Categories = insertCategory(s.data.Categories, s.categoryInsertPos(moved.Kind, toIndex), moved)
 		return nil
 	})
 }
@@ -273,6 +330,49 @@ func (s *Service) SetEntryPaused(id string, paused bool) (State, error) {
 	})
 }
 
+// RestoreEntry re-inserts a deleted entry with its original id at the given
+// position of its category ("undo" of DeleteEntry).
+func (s *Service) RestoreEntry(entry Entry, index int) (State, error) {
+	return s.mutate(func() error {
+		if entry.ID == "" || s.data.Entry(entry.ID) != nil {
+			return newError(ErrEntryIDExists)
+		}
+		in := EntryInput{
+			CategoryID: entry.CategoryID, Name: entry.Name, AmountCents: entry.AmountCents,
+			Period: entry.Period, DueMonth: entry.DueMonth, Paused: entry.Paused, Notes: entry.Notes,
+		}
+		if err := s.validateEntry(&in); err != nil {
+			return err
+		}
+		e := Entry{ID: entry.ID}
+		in.applyTo(&e)
+		s.data.Entries = insertEntry(s.data.Entries, s.entryInsertPos(e.CategoryID, index), e)
+		return nil
+	})
+}
+
+// RestoreCategory re-inserts a deleted (empty) category with its original
+// id at the given position among the categories of its kind.
+func (s *Service) RestoreCategory(category Category, index int) (State, error) {
+	return s.mutate(func() error {
+		category.Name = strings.TrimSpace(category.Name)
+		if category.ID == "" || s.data.Category(category.ID) != nil {
+			return newError(ErrCategoryIDExists)
+		}
+		if !category.Kind.Valid() {
+			return newError(ErrKindUnknown, "kind", category.Kind)
+		}
+		if category.Name == "" {
+			return newError(ErrCategoryNameEmpty)
+		}
+		if s.findCategoryByName(category.Kind, category.Name) != nil {
+			return newError(ErrCategoryExists, "kind", category.Kind, "name", category.Name)
+		}
+		s.data.Categories = insertCategory(s.data.Categories, s.categoryInsertPos(category.Kind, index), category)
+		return nil
+	})
+}
+
 // DeleteEntry removes an entry.
 func (s *Service) DeleteEntry(id string) (State, error) {
 	return s.mutate(func() error {
@@ -303,21 +403,8 @@ func (s *Service) MoveEntry(id, targetCategoryID string, toIndex int) (State, er
 		}
 		moved := *e
 		moved.CategoryID = targetCategoryID
-		rest := removeEntry(s.data.Entries, id)
-		insertAt := len(rest)
-		seen := 0
-		for i, other := range rest {
-			if other.CategoryID != targetCategoryID {
-				continue
-			}
-			if seen == toIndex {
-				insertAt = i
-				break
-			}
-			seen++
-			insertAt = i + 1
-		}
-		s.data.Entries = insertEntry(rest, insertAt, moved)
+		s.data.Entries = removeEntry(s.data.Entries, id)
+		s.data.Entries = insertEntry(s.data.Entries, s.entryInsertPos(targetCategoryID, toIndex), moved)
 		return nil
 	})
 }
@@ -394,6 +481,10 @@ func (s *Service) ImportData(path string, mode ImportMode) (ImportResult, error)
 		if err != nil {
 			return newError(ErrImportInvalidFile, "file", filepath.Base(path), "detail", err.Error())
 		}
+		backupPath, err := s.backup(true)
+		if err != nil {
+			return err
+		}
 		switch mode {
 		case ImportReplace:
 			// The language is a preference of this installation, not of the file.
@@ -405,6 +496,7 @@ func (s *Service) ImportData(path string, mode ImportMode) (ImportResult, error)
 		default:
 			return newError(ErrImportModeUnknown, "mode", mode)
 		}
+		result.BackupPath = backupPath
 		return nil
 	})
 	result.State = st
@@ -468,7 +560,54 @@ func Merge(base, extra Data) (Data, ImportResult) {
 	return out, report
 }
 
+// ExportCSVTo writes all entries as CSV to the given path.
+func (s *Service) ExportCSVTo(path string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	var buf bytes.Buffer
+	if err := WriteCSV(&buf, s.data, s.data.Settings.Language); err != nil {
+		return err
+	}
+	return os.WriteFile(path, buf.Bytes(), 0o644)
+}
+
+// LoadSampleData fills an empty planner with example data in the given
+// language. It refuses to run when there already are categories or entries.
+func (s *Service) LoadSampleData(lang string) (SampleResult, error) {
+	var result SampleResult
+	st, err := s.mutate(func() error {
+		if len(s.data.Categories) > 0 || len(s.data.Entries) > 0 {
+			return newError(ErrSampleNotEmpty)
+		}
+		sample := SampleData(lang)
+		sample.Settings = s.data.Settings
+		s.data = sample
+		result.Categories = len(sample.Categories)
+		result.Entries = len(sample.Entries)
+		return nil
+	})
+	result.State = st
+	return result, err
+}
+
 // ---- dialogs (need a running Wails application) ---------------------------
+
+// ExportCSV asks the user for a target file and writes the CSV to it.
+// It returns the chosen path, or "" if the user cancelled.
+func (s *Service) ExportCSV() (string, error) {
+	path, err := application.Get().Dialog.SaveFile().
+		SetMessage("Export CSV").
+		SetFilename("finance-planner-export.csv").
+		AddFilter("CSV files", "*.csv").
+		PromptForSingleSelection()
+	if err != nil || path == "" {
+		return "", err
+	}
+	if filepath.Ext(path) == "" {
+		path += ".csv"
+	}
+	return path, s.ExportCSVTo(path)
+}
 
 // ExportData asks the user for a target file and writes the data to it.
 // It returns the chosen path, or "" if the user cancelled.
@@ -546,6 +685,42 @@ func (in EntryInput) applyTo(e *Entry) {
 	e.DueMonth = in.DueMonth
 	e.Paused = in.Paused
 	e.Notes = in.Notes
+}
+
+// categoryInsertPos returns the global slice position at which a category
+// has to be inserted to become the index-th category of its kind; past the
+// end means "after the last one of that kind".
+func (s *Service) categoryInsertPos(kind Kind, index int) int {
+	insertAt := len(s.data.Categories)
+	seen := 0
+	for i, other := range s.data.Categories {
+		if other.Kind != kind {
+			continue
+		}
+		if seen == index {
+			return i
+		}
+		seen++
+		insertAt = i + 1
+	}
+	return insertAt
+}
+
+// entryInsertPos is the entry counterpart of categoryInsertPos.
+func (s *Service) entryInsertPos(categoryID string, index int) int {
+	insertAt := len(s.data.Entries)
+	seen := 0
+	for i, other := range s.data.Entries {
+		if other.CategoryID != categoryID {
+			continue
+		}
+		if seen == index {
+			return i
+		}
+		seen++
+		insertAt = i + 1
+	}
+	return insertAt
 }
 
 func removeCategory(list []Category, id string) []Category {
