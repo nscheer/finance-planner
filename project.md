@@ -201,7 +201,9 @@ the whole category.
 - **Undo**: the toast after deleting an entry or a category offers *Undo*,
   which restores the item with its original id at its original position. The
   toast after an import offers *Undo import*, which restores the backup that
-  was written right before the import.
+  was written right before the import. Toasts with an action show a thin
+  countdown bar at their bottom edge that shrinks over the toast's lifetime,
+  so it is visible how long the action is still available.
 - Unhandled errors in the UI are never silent: they are shown in an error
   modal.
 
@@ -580,7 +582,9 @@ header keeps a 24 px gap to the due column.
   footer with right-aligned buttons; short fade and pop-in animation.
 - **Toasts**: lower right, dark surface with white text, success in
   income-strong, error in danger, optional outlined action button, close
-  icon; slide-in animation.
+  icon; slide-in animation; toasts with an action have a 3 px white
+  (70 % opacity) countdown bar along the bottom edge that scales from full
+  width to zero linearly over the toast's duration.
 - **Key caps** in the shortcut list: bordered inline blocks in the monospace
   font.
 

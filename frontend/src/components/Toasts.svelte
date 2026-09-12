@@ -12,6 +12,9 @@
       <span>{toast.message}</span>
       {#if toast.action}
         <button class="action" type="button" onclick={() => { const a = toast.action; dismissToast(toast.id); a?.run(); }}>{toast.action.label}</button>
+        <!-- Countdown: the bar shrinks over the toast's lifetime, so it is
+             visible how long the action is still available. -->
+        <span class="countdown" style:animation-duration="{toast.durationMs}ms" aria-hidden="true"></span>
       {/if}
       <button class="icon-btn" type="button" aria-label={t("dialog.dismiss")} onclick={() => dismissToast(toast.id)}><Icon name="close" size={14} /></button>
     </div>
@@ -30,6 +33,8 @@
     max-width: 420px;
   }
   .toast {
+    position: relative;
+    overflow: hidden;
     display: flex;
     align-items: center;
     gap: 10px;
@@ -69,6 +74,22 @@
   }
   .toast.error {
     background: var(--danger);
+  }
+  .countdown {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 3px;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.7);
+    transform-origin: left;
+    animation-name: countdown;
+    animation-timing-function: linear;
+    animation-fill-mode: forwards;
+  }
+  @keyframes countdown {
+    from { transform: scaleX(1); }
+    to { transform: scaleX(0); }
   }
   @keyframes slide {
     from { transform: translateY(8px); opacity: 0; }

@@ -50,6 +50,8 @@ export interface Toast {
   message: string;
   /** Optional action button, e.g. "Undo". */
   action?: { label: string; run: () => void | Promise<void> };
+  /** How long the toast stays, in milliseconds (drives the countdown bar). */
+  durationMs: number;
 }
 
 /** Period filter values of the search bar. */
@@ -75,8 +77,9 @@ let toastSeq = 0;
  */
 export function notify(kind: Toast["kind"], message: string, action?: Toast["action"]): void {
   const id = ++toastSeq;
-  app.toasts.push({ id, kind, message, action });
-  setTimeout(() => dismissToast(id), kind === "error" || action ? 9000 : 3500);
+  const durationMs = kind === "error" || action ? 9000 : 3500;
+  app.toasts.push({ id, kind, message, action, durationMs });
+  setTimeout(() => dismissToast(id), durationMs);
 }
 
 // ---- search / filter ----------------------------------------------------
