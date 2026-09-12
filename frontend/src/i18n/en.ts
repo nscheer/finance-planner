@@ -10,6 +10,10 @@ export const en = {
   // ---- application shell ----
   "app.title": "Finance Planner",
   "app.language": "Language",
+  "app.theme": "Appearance",
+  "theme.light": "Light",
+  "theme.dark": "Dark",
+  "theme.system": "System",
   "app.loading": "Loading…",
   "app.loadError": "Could not load the data file.",
   "app.retry": "Retry",
@@ -271,6 +275,7 @@ export const en = {
   "errors.entry.idExists": "The entry already exists.",
   "errors.category.idExists": "The category already exists.",
   "errors.settings.savingsGoalNegative": "The savings goal must not be negative.",
+  "errors.settings.themeInvalid": "Unknown appearance \"{theme}\".",
   "errors.sample.notEmpty": "Sample data can only be loaded into an empty planner.",
   "errors.backup.invalidPath": "Only files from the backup folder can be restored.",
   "errors.entry.kindMismatch": "An {from} entry can't be moved into a {to} category.",

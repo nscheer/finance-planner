@@ -228,6 +228,12 @@ export interface Settings {
     "language": string;
 
     /**
+     * Theme is the color scheme: "light" (default when empty), "dark" or
+     * "system" (follow the operating system).
+     */
+    "theme": string;
+
+    /**
      * SavingsGoalCents is the amount the user wants to put aside per month.
      */
     "savingsGoalCents": number;

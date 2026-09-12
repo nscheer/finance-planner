@@ -205,6 +205,13 @@ export function SetSavingsGoal(cents: number): $CancellablePromise<$models.State
 }
 
 /**
+ * SetTheme stores the chosen color scheme ("light", "dark" or "system").
+ */
+export function SetTheme(theme: string): $CancellablePromise<$models.State> {
+    return $Call.ByID(2148831501, theme);
+}
+
+/**
  * SetWindow remembers the window geometry. It is called often while the
  * window is resized, so nothing is written when the geometry is unchanged.
  */

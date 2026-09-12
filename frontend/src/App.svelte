@@ -38,6 +38,7 @@
     type PeriodFilter,
   } from "./lib/store.svelte";
   import { i18n, t, locales, setLocale, formatEuro, type LocaleCode } from "./lib/i18n.svelte";
+  import { theme, themes, setTheme, type Theme } from "./lib/theme.svelte";
   import { dnd, endDrag } from "./lib/dnd.svelte";
 
   onMount(() => {
@@ -127,6 +128,12 @@
     event.preventDefault();
   }
 
+  async function onThemeChange(event: Event) {
+    const value = (event.currentTarget as HTMLSelectElement).value as Theme;
+    const err = await setTheme(value);
+    if (err) alert(t("alert.generic"), errorMessage(err));
+  }
+
   async function onLanguageChange(event: Event) {
     const code = (event.currentTarget as HTMLSelectElement).value as LocaleCode;
     const err = await setLocale(code);
@@ -186,6 +193,14 @@
       <button class="btn btn-sm" type="button" onclick={() => openDialog({ type: "backups" })}><Icon name="history" size={14} /> {t("app.backups")}</button>
       <button class="icon-btn" type="button" title={t("app.shortcuts")} aria-label={t("app.shortcuts")} onclick={() => openDialog({ type: "shortcuts" })}><Icon name="keyboard" size={16} /></button>
       <span class="divider"></span>
+      <label class="language" title={t("app.theme")}>
+        <Icon name="sun" size={14} />
+        <select class="select select-sm" value={theme.current} onchange={onThemeChange} aria-label={t("app.theme")}>
+          {#each themes as value (value)}
+            <option {value}>{t(`theme.${value}`)}</option>
+          {/each}
+        </select>
+      </label>
       <label class="language" title={t("app.language")}>
         <Icon name="globe" size={14} />
         <select class="select select-sm" value={i18n.locale.code} onchange={onLanguageChange} aria-label={t("app.language")}>

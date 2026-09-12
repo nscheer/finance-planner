@@ -33,6 +33,7 @@ const (
 	ErrEntryAmountPositive   = "entry.amountPositive"
 	ErrEntryDueMonthInvalid  = "entry.dueMonthInvalid"
 	ErrSavingsGoalNegative   = "settings.savingsGoalNegative"
+	ErrThemeInvalid          = "settings.themeInvalid"
 	ErrEntryKindMismatch     = "entry.kindMismatch"
 	ErrImportModeUnknown     = "import.modeUnknown"
 	ErrImportInvalidFile     = "import.invalidFile"

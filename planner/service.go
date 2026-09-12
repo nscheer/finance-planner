@@ -411,6 +411,17 @@ func (s *Service) MoveEntry(id, targetCategoryID string, toIndex int) (State, er
 
 // ---- settings -------------------------------------------------------------
 
+// SetTheme stores the chosen color scheme ("light", "dark" or "system").
+func (s *Service) SetTheme(theme string) (State, error) {
+	return s.mutate(func() error {
+		if theme == "" || !ValidTheme(theme) {
+			return newError(ErrThemeInvalid, "theme", theme)
+		}
+		s.data.Settings.Theme = theme
+		return nil
+	})
+}
+
 // SetSavingsGoal stores the monthly savings goal.
 func (s *Service) SetSavingsGoal(cents int64) (State, error) {
 	return s.mutate(func() error {

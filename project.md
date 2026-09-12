@@ -262,7 +262,16 @@ only be loaded when there are no categories and entries.
   keys (see 4.5); adding a language means adding one file and one registry
   line.
 
-### 2.12 Keyboard shortcuts
+### 2.12 Appearance
+
+- A dropdown in the top right corner (next to the language dropdown)
+  selects the color scheme: **Light**, **Dark** or **System** (follow the
+  operating system). The choice is saved in `data.json`.
+- **Light is the default** until a choice has been made (empty value in the
+  file). "System" is resolved in the frontend and follows changes of the
+  operating system setting live.
+
+### 2.13 Keyboard shortcuts
 
 | Key | Action |
 |---|---|
@@ -275,7 +284,7 @@ only be loaded when there are no categories and entries.
 
 Shortcuts are ignored while a dialog is open or an input field has the focus.
 
-### 2.13 Window
+### 2.14 Window
 
 - Default size 1440 × 900, minimum 1200 × 700, so the table with all its
   columns and the statistics box always fit side by side.
@@ -304,6 +313,7 @@ rename) after every change, and human-readable (indented).
   "version": 3,
   "settings": {
     "language": "de",
+    "theme": "dark",
     "savingsGoalCents": 30000,
     "window": { "width": 1440, "height": 900, "x": 120, "y": 80 }
   },
@@ -328,7 +338,9 @@ rename) after every change, and human-readable (indented).
 - Ids are random 16-hex-character strings.
 - The order of `categories` (per kind) and of `entries` (per category) is the
   display order.
-- `language` is empty until the user chose a language.
+- `language` is empty until the user chose a language; `theme` is empty
+  until the user chose a color scheme (empty means light). `theme` was added
+  to version 3 without a version bump, since an absent value is valid.
 - `dueMonth`, `paused` and `notes` are omitted when they have their zero value.
 
 ### 3.2 Versioning and migration
@@ -362,7 +374,8 @@ The backend never returns free-text errors for user mistakes. It returns a
 `entry.categoryRequired`, `entry.nameEmpty`, `entry.amountPositive`,
 `entry.dueMonthInvalid`, `entry.kindMismatch`, `entry.idExists`,
 `import.modeUnknown`, `import.invalidFile`, `language.invalid`,
-`settings.savingsGoalNegative`, `sample.notEmpty`, `backup.invalidPath`.
+`settings.savingsGoalNegative`, `settings.themeInvalid`, `sample.notEmpty`,
+`backup.invalidPath`.
 
 ---
 
@@ -479,8 +492,9 @@ wails3 task test    # Go tests + frontend unit tests
   actions, violet = savings), generous but compact spacing.
 - Color never carries information alone: badges have text, chart slices have
   a legend with names and amounts, status banners have icons.
-- Dark mode follows the system setting with its own token values (not an
-  inverted palette); chart colors are re-stepped for the dark surface.
+- Dark mode is an explicit choice (light by default, dark, or follow the
+  system) with its own token values (not an inverted palette); chart colors
+  are re-stepped for the dark surface.
 - Every visual value is a CSS custom property in `frontend/public/style.css`;
   components use tokens only.
 
@@ -515,7 +529,8 @@ wails3 task test    # Go tests + frontend unit tests
 
 ### 5.4 Color tokens
 
-Light mode (default) and dark mode (`prefers-color-scheme: dark`):
+Light mode (default) and dark mode (applied as `data-theme="dark"` on the
+root element; "system" is resolved to one of the two in the frontend):
 
 | Token | Light | Dark | Use |
 |---|---|---|---|
@@ -615,8 +630,8 @@ header keeps a 24 px gap to the due column.
 
 - Actions in rows and category headers are hidden until hover to keep the
   table calm.
-- The language dropdown sits at the far right of the top bar with a globe
-  icon.
+- The appearance dropdown (sun icon) and the language dropdown (globe icon)
+  sit at the far right of the top bar.
 - The current month is printed bold in the timeline axis; the readout below
   the timeline always uses two fixed lines (due, on savings account) so
   hovering never reflows the box.

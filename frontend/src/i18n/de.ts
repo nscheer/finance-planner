@@ -4,6 +4,10 @@ import type { Messages } from "./index.ts";
 export const de: Messages = {
   "app.title": "Finanzplaner",
   "app.language": "Sprache",
+  "app.theme": "Darstellung",
+  "theme.light": "Hell",
+  "theme.dark": "Dunkel",
+  "theme.system": "System",
   "app.loading": "Lädt…",
   "app.loadError": "Die Datendatei konnte nicht geladen werden.",
   "app.retry": "Erneut versuchen",
@@ -251,6 +255,7 @@ export const de: Messages = {
   "errors.entry.idExists": "Der Eintrag existiert bereits.",
   "errors.category.idExists": "Die Kategorie existiert bereits.",
   "errors.settings.savingsGoalNegative": "Das Sparziel darf nicht negativ sein.",
+  "errors.settings.themeInvalid": "Unbekannte Darstellung „{theme}“.",
   "errors.sample.notEmpty": "Beispieldaten können nur in einen leeren Planer geladen werden.",
   "errors.backup.invalidPath": "Es können nur Dateien aus dem Backup-Ordner wiederhergestellt werden.",
   "errors.entry.kindMismatch": "Ein {from}-Eintrag kann nicht in eine {to}-Kategorie verschoben werden.",

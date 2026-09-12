@@ -102,6 +102,9 @@ type Settings struct {
 	// "de". It stays empty until a choice was made; the frontend then uses
 	// its default language (German).
 	Language string `json:"language"`
+	// Theme is the color scheme: "light" (default when empty), "dark" or
+	// "system" (follow the operating system).
+	Theme string `json:"theme"`
 	// SavingsGoalCents is the amount the user wants to put aside per month.
 	SavingsGoalCents int64 `json:"savingsGoalCents"`
 	// Window is the last window geometry (zero = use the default size).
@@ -123,6 +126,22 @@ func NewData() Data {
 		Categories: []Category{},
 		Entries:    []Entry{},
 	}
+}
+
+// Themes lists the accepted values of Settings.Theme.
+var Themes = []string{"light", "dark", "system"}
+
+// ValidTheme reports whether s is a known theme ("" counts as light).
+func ValidTheme(s string) bool {
+	if s == "" {
+		return true
+	}
+	for _, t := range Themes {
+		if t == s {
+			return true
+		}
+	}
+	return false
 }
 
 // ValidLanguage reports whether s looks like a language code ("en", "de",
@@ -235,6 +254,9 @@ func (d *Data) Validate() error {
 	}
 	if d.Settings.SavingsGoalCents < 0 {
 		return fmt.Errorf("negative savings goal")
+	}
+	if !ValidTheme(d.Settings.Theme) {
+		return fmt.Errorf("unknown theme %q in settings", d.Settings.Theme)
 	}
 	entryIDs := map[string]bool{}
 	for _, e := range d.Entries {

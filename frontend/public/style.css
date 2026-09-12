@@ -65,10 +65,11 @@
   --stats-width: 320px;
 }
 
-/* Dark mode follows the system setting. Chart series are re-stepped for the
-   dark surface (validated), not simply inverted. */
-@media (prefers-color-scheme: dark) {
-  :root {
+/* Dark mode is selected explicitly (Settings > theme) and applied as
+   data-theme="dark" on the root element; "system" is resolved to light or
+   dark in the frontend. Chart series are re-stepped for the dark surface
+   (validated), not simply inverted. */
+:root[data-theme="dark"] {
     color-scheme: dark;
     --bg: #12151c;
     --surface: #1b1f2a;
@@ -118,7 +119,6 @@
 
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 16px rgba(0, 0, 0, 0.3);
     --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.6);
-  }
 }
 
 *,

@@ -19,6 +19,7 @@ import type { MessageKey } from "../i18n";
 
 import { hasKey, type Params } from "../i18n";
 import { t, plural, applyLocale, currentLanguage } from "./i18n.svelte";
+import { applyTheme } from "./theme.svelte";
 
 export { Service, Kind, Period, ImportMode };
 export type { State, CategoryView, EntryView, ImportPreview, Stats, BackupInfo };
@@ -213,8 +214,9 @@ export async function applyOrAlert(call: Promise<State>, titleKey: MessageKey = 
 export async function loadState(): Promise<void> {
   try {
     const state = await Service.GetState();
-    // Apply the saved language before rendering the data.
+    // Apply the saved language and theme before rendering the data.
     applyLocale(state.settings?.language);
+    applyTheme(state.settings?.theme);
     app.state = state;
     app.loadError = "";
   } catch (err) {

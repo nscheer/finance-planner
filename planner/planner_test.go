@@ -1144,3 +1144,36 @@ func TestSampleData(t *testing.T) {
 		t.Fatal("sample data must not overwrite existing data")
 	}
 }
+
+// The color scheme is an explicit choice saved in the settings; light is
+// the default until one is made.
+func TestThemeSetting(t *testing.T) {
+	s, path := newTestService(t)
+	if s.GetState().Settings.Theme != "" {
+		t.Fatalf("theme before any choice = %q, want empty (light)", s.GetState().Settings.Theme)
+	}
+	for _, theme := range Themes {
+		st, err := s.SetTheme(theme)
+		if err != nil {
+			t.Fatalf("SetTheme(%s): %v", theme, err)
+		}
+		if st.Settings.Theme != theme {
+			t.Fatalf("theme = %q, want %q", st.Settings.Theme, theme)
+		}
+	}
+	for _, bad := range []string{"", "blue", "Dark"} {
+		if _, err := s.SetTheme(bad); err == nil {
+			t.Errorf("expected error for theme %q", bad)
+		}
+	}
+	reloaded, err := LoadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if reloaded.Settings.Theme != "system" {
+		t.Fatalf("theme not persisted: %q", reloaded.Settings.Theme)
+	}
+	if _, err := Decode([]byte(`{"version":3,"settings":{"theme":"purple"},"categories":[],"entries":[]}`)); err == nil {
+		t.Fatal("unknown theme must be rejected when loading")
+	}
+}
