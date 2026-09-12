@@ -8,10 +8,11 @@
   let working = $state(false);
 
   async function run(mode: ImportMode) {
+    // Read the prop before closing: props are getters into the dialog state.
+    const path = preview.path;
     working = true;
     closeDialog();
-    await importData(preview.path, mode);
-    working = false;
+    await importData(path, mode);
   }
 
   const fileName = $derived(preview.path.split(/[\\/]/).pop() ?? preview.path);

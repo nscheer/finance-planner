@@ -23,6 +23,21 @@
   });
 
   /**
+   * Last line of defence: an exception inside an event handler would
+   * otherwise fail silently. Show it, so a broken action is never invisible.
+   */
+  function onUnhandledError(event: Event) {
+    const err =
+      event instanceof PromiseRejectionEvent
+        ? event.reason
+        : event instanceof ErrorEvent
+          ? (event.error ?? event.message)
+          : event;
+    console.error(err);
+    alert(t("alert.generic"), errorMessage(err));
+  }
+
+  /**
    * Runs last in the bubbling chain: if no row/category accepted the
    * dragover, the pointer is over a non-droppable area and the indicator
    * must disappear so it never suggests a drop that wouldn't happen.
@@ -39,7 +54,13 @@
 </script>
 
 <!-- A drag that ends outside any drop zone must clear the indicators. -->
-<svelte:window ondragend={endDrag} ondrop={endDrag} ondragover={onWindowDragOver} />
+<svelte:window
+  ondragend={endDrag}
+  ondrop={endDrag}
+  ondragover={onWindowDragOver}
+  onerror={onUnhandledError}
+  onunhandledrejection={onUnhandledError}
+/>
 
 <div class="app">
   <header class="topbar">
@@ -83,22 +104,23 @@
   </main>
 </div>
 
+<!--
+  The dialog is bound to a local constant on purpose: Svelte 5 passes props as
+  getters, and a getter like `app.dialog.preview` would throw once the dialog
+  closed itself (app.dialog = null) but still needs its props afterwards.
+-->
 {#if app.dialog}
-  {#if app.dialog.type === "entry"}
-    <EntryDialog kind={app.dialog.kind} entry={app.dialog.entry} categoryId={app.dialog.categoryId} />
-  {:else if app.dialog.type === "category"}
-    <CategoryDialog kind={app.dialog.kind} category={app.dialog.category} returnToEntry={app.dialog.returnToEntry} />
-  {:else if app.dialog.type === "confirm"}
-    <ConfirmDialog
-      title={app.dialog.title}
-      message={app.dialog.message}
-      confirmLabel={app.dialog.confirmLabel}
-      onConfirm={app.dialog.onConfirm}
-    />
-  {:else if app.dialog.type === "alert"}
-    <AlertDialog title={app.dialog.title} message={app.dialog.message} />
-  {:else if app.dialog.type === "import"}
-    <ImportDialog preview={app.dialog.preview} />
+  {@const dialog = app.dialog}
+  {#if dialog.type === "entry"}
+    <EntryDialog kind={dialog.kind} entry={dialog.entry} categoryId={dialog.categoryId} />
+  {:else if dialog.type === "category"}
+    <CategoryDialog kind={dialog.kind} category={dialog.category} returnToEntry={dialog.returnToEntry} />
+  {:else if dialog.type === "confirm"}
+    <ConfirmDialog title={dialog.title} message={dialog.message} confirmLabel={dialog.confirmLabel} onConfirm={dialog.onConfirm} />
+  {:else if dialog.type === "alert"}
+    <AlertDialog title={dialog.title} message={dialog.message} />
+  {:else if dialog.type === "import"}
+    <ImportDialog preview={dialog.preview} />
   {/if}
 {/if}
 

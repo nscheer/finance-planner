@@ -14,13 +14,11 @@
   let working = $state(false);
 
   async function confirm() {
+    // Read the prop before closing: props are getters into the dialog state.
+    const action = onConfirm;
     working = true;
-    try {
-      closeDialog();
-      await onConfirm();
-    } finally {
-      working = false;
-    }
+    closeDialog();
+    await action();
   }
 </script>
 
