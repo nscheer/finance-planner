@@ -111,8 +111,6 @@ export const en = {
   "category.noEntries": "No entries yet",
   "category.dropHere": "Drop here",
   "category.dropInto": "Drop to add to \"{name}\"",
-  "category.share": "{percent} of all spending · {income} of income",
-  "category.shareNoIncome": "{percent} of all spending",
 
   // ---- entries ----
   "entry.dragHint": "Drag to reorder or move to another category",
@@ -300,6 +298,33 @@ export const en = {
   "toast.importedMerge.categories.one": "{count} new category",
   "toast.importedMerge.categories.other": "{count} new categories",
   "toast.importedReplace": "Data replaced by import: {entries} in {categories}.",
+
+  // ---- explanatory tooltips for values ----
+  "tip.blockMonthly": "Sum of all active {kind} entries per month (yearly, half-yearly and quarterly amounts converted to their monthly share). Paused entries are not counted.",
+  "tip.blockYearly": "Sum of all active {kind} entries per year (monthly amounts × 12). Paused entries are not counted.",
+  "tip.categoryMonthly": "Monthly total of the active entries in \"{name}\". Paused entries are not counted.",
+  "tip.categoryYearly": "Yearly total of the active entries in \"{name}\". Paused entries are not counted.",
+  "tip.categoryShare": "The monthly total of \"{name}\" is {percent} of all monthly spending and {income} of the monthly income.",
+  "tip.categoryShareNoIncome": "The monthly total of \"{name}\" is {percent} of all monthly spending.",
+  "tip.entryMaster": "Amount as entered: {amount} {period}.",
+  "tip.entryMonthlyDerived": "Calculated: {amount} {period} ÷ {months} months.",
+  "tip.entryYearlyDerived": "Calculated: {amount} {period} × {payments} payments per year.",
+  "tip.toBank": "Sum of all spendings that are paid monthly. Transfer this amount to the bank account every month.",
+  "tip.toSavings": "Monthly share of all spendings that are not paid monthly (quarterly ÷ 3, half-yearly ÷ 6, yearly ÷ 12). Put this amount aside on the savings account every month.",
+  "tip.incomePerMonth": "Sum of all active income per month (non-monthly income converted to its monthly share).",
+  "tip.avgCostPerMonth": "Sum of all active spendings per month: the transfer to the bank account plus the transfer to the savings account.",
+  "tip.saldoPerMonth": "Income per month minus average cost per month.",
+  "tip.goal": "The amount you want to put aside every month, on top of all spendings.",
+  "tip.remainingAfterGoal": "Saldo per month minus the savings goal. Negative means the goal is not reachable.",
+  "tip.incomePerYear": "Sum of all active income per year.",
+  "tip.costPerYear": "Sum of all active spendings per year.",
+  "tip.saldoPerYear": "Income per year minus cost per year.",
+  "tip.peakBuffer": "Highest balance the savings account reaches during the year, i.e. the buffer it needs so that every scheduled payment can be covered.",
+  "tip.timelineDue": "Sum of the non-monthly spendings that are paid in this month.",
+  "tip.timelineSaved": "Balance of the savings account at the end of this month: what was put aside minus what was paid out.",
+  "tip.lever": "{yearly} per year ({monthly} per month). That is {share} of all monthly spending and {income} of the monthly income.",
+  "tip.leverNoIncome": "{yearly} per year ({monthly} per month). That is {share} of all monthly spending.",
+  "tip.donutSlice": "{name}: {amount} per month, {percent} of all monthly spending.",
 
   // ---- error dialog titles ----
   "alert.generic": "Something went wrong",

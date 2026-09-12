@@ -87,8 +87,8 @@
         <span
           class="share"
           title={category.shareOfIncome > 0
-            ? t("category.share", { percent: formatPercent(share), income: formatPercent(category.shareOfIncome) })
-            : t("category.shareNoIncome", { percent: formatPercent(share) })}
+            ? t("tip.categoryShare", { name: category.name, percent: formatPercent(share), income: formatPercent(category.shareOfIncome) })
+            : t("tip.categoryShareNoIncome", { name: category.name, percent: formatPercent(share) })}
         >
           <span class="share-bar"><span class="share-fill" style:width="{Math.round(share * 100)}%"></span></span>
           <span class="share-text">{formatPercent(share)}</span>
@@ -96,8 +96,8 @@
       {/if}
     </span>
     <span></span>
-    <span class="money subtotal">{formatEuro(category.monthlyCents)}</span>
-    <span class="money subtotal">{formatEuro(category.yearlyCents)}</span>
+    <span class="money subtotal" title={t("tip.categoryMonthly", { name: category.name })}>{formatEuro(category.monthlyCents)}</span>
+    <span class="money subtotal" title={t("tip.categoryYearly", { name: category.name })}>{formatEuro(category.yearlyCents)}</span>
     <span class="actions">
       <button class="icon-btn" type="button" title={t("category.addEntry")} aria-label="{t('category.addEntry')}: {category.name}" onclick={() => openDialog({ type: "entry", kind: category.kind, categoryId: category.id })}><Icon name="plus" /></button>
       <button class="icon-btn" type="button" title={t("category.rename")} aria-label="{t('category.rename')}: {category.name}" onclick={() => openDialog({ type: "category", kind: category.kind, category })}><Icon name="edit" /></button>

@@ -92,9 +92,9 @@
       <span class="dot"></span>
       <h2>{kindLabel(kind)}</h2>
       <span class="totals">
-        <span class="money">{formatEuro(monthly)}</span> {t("block.perMonth")}
+        <span title={t("tip.blockMonthly", { kind: kindLabel(kind) })}><span class="money">{formatEuro(monthly)}</span> {t("block.perMonth")}</span>
         <span class="sep">·</span>
-        <span class="money">{formatEuro(yearly)}</span> {t("block.perYear")}
+        <span title={t("tip.blockYearly", { kind: kindLabel(kind) })}><span class="money">{formatEuro(yearly)}</span> {t("block.perYear")}</span>
       </span>
     </div>
     <div class="buttons">

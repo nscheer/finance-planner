@@ -29,12 +29,12 @@
 
   <section class="group">
     <h3>{t("stats.transfers")}</h3>
-    <div class="tile bank">
+    <div class="tile bank" title={t("tip.toBank")}>
       <span class="label">{t("stats.toBank")}</span>
       <span class="value money">{formatEuro(stats.toBankMonthlyCents)}</span>
       <span class="sub">{t("stats.toBankSub")}</span>
     </div>
-    <div class="tile savings">
+    <div class="tile savings" title={t("tip.toSavings")}>
       <span class="label">{t("stats.toSavings")}</span>
       <span class="value money">{formatEuro(stats.toSavingsMonthlyCents)}</span>
       <span class="sub">{t("stats.toSavingsSub")}</span>
@@ -44,19 +44,19 @@
   <section class="group">
     <h3>{t("stats.overview")}</h3>
     <dl>
-      <div>
+      <div title={t("tip.incomePerMonth")}>
         <dt>{t("stats.incomePerMonth")}</dt>
         <dd class="money">{formatEuro(stats.incomeMonthlyCents)}</dd>
       </div>
-      <div>
+      <div title={t("tip.avgCostPerMonth")}>
         <dt>{t("stats.avgCostPerMonth")}</dt>
         <dd class="money">{formatEuro(stats.spendingMonthlyCents)}</dd>
       </div>
-      <div class="total">
+      <div class="total" title={t("tip.saldoPerMonth")}>
         <dt>{t("stats.saldoPerMonth")}</dt>
         <dd class="money {sign(stats.saldoMonthlyCents)}">{formatEuroSigned(stats.saldoMonthlyCents)}</dd>
       </div>
-      <div class="goal">
+      <div class="goal" title={t("tip.goal")}>
         <dt>
           {t("stats.goal")}
           <button class="icon-btn small" type="button" title={t("stats.goalEdit")} aria-label={t("stats.goalEdit")} onclick={() => openDialog({ type: "goal" })}><Icon name="target" size={13} /></button>
@@ -64,22 +64,22 @@
         <dd class="money">{stats.savingsGoalCents > 0 ? formatEuro(stats.savingsGoalCents) : t("stats.goalNone")}</dd>
       </div>
       {#if stats.savingsGoalCents > 0}
-        <div class="total">
+        <div class="total" title={t("tip.remainingAfterGoal")}>
           <dt>{t("stats.remainingAfterGoal")}</dt>
           <dd class="money {sign(stats.remainingAfterGoalCents)}">{formatEuroSigned(stats.remainingAfterGoalCents)}</dd>
         </div>
       {/if}
     </dl>
     <dl>
-      <div>
+      <div title={t("tip.incomePerYear")}>
         <dt>{t("stats.incomePerYear")}</dt>
         <dd class="money">{formatEuro(stats.incomeYearlyCents)}</dd>
       </div>
-      <div>
+      <div title={t("tip.costPerYear")}>
         <dt>{t("stats.costPerYear")}</dt>
         <dd class="money">{formatEuro(stats.spendingYearlyCents)}</dd>
       </div>
-      <div class="total">
+      <div class="total" title={t("tip.saldoPerYear")}>
         <dt>{t("stats.saldoPerYear")}</dt>
         <dd class="money {sign(stats.saldoYearlyCents)}">{formatEuroSigned(stats.saldoYearlyCents)}</dd>
       </div>
@@ -91,7 +91,7 @@
     <Timeline {stats} />
     {#if stats.peakBufferCents > 0}
       <dl class="compact">
-        <div class="total">
+        <div class="total" title={t("tip.peakBuffer")}>
           <dt>{t("stats.peakBuffer")}</dt>
           <dd class="money">{formatEuro(stats.peakBufferCents)}</dd>
         </div>
@@ -110,10 +110,16 @@
     {#if (stats.topSpendings ?? []).length === 0}
       <p class="note">{t("stats.leversEmpty")}</p>
     {:else}
-      <ol class="levers" title={t("stats.leversHint")}>
+      <ol class="levers">
         {#each stats.topSpendings ?? [] as lever, i (lever.id)}
+          {@const values = { yearly: formatEuro(lever.yearlyCents), monthly: formatEuro(lever.monthlyCents), share: formatPercent(lever.shareOfSpending), income: formatPercent(lever.shareOfIncome) }}
           <li>
-            <button type="button" class="lever" onclick={() => editLever(lever.id)}>
+            <button
+              type="button"
+              class="lever"
+              title="{lever.shareOfIncome > 0 ? t('tip.lever', values) : t('tip.leverNoIncome', values)} {t('stats.leversHint')}"
+              onclick={() => editLever(lever.id)}
+            >
               <span class="rank">{i + 1}</span>
               <span class="lever-text">
                 <span class="lever-name">{lever.name}</span>

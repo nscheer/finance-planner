@@ -72,7 +72,7 @@
       </svg>
       <ul class="legend">
         {#each slices as s, i (i)}
-          <li class:hover={hovered === i} onmouseenter={() => (hovered = i)} onmouseleave={() => (hovered = null)}>
+          <li class:hover={hovered === i} title={t("tip.donutSlice", { name: s.name, amount: formatEuro(s.cents), percent: formatPercent(s.cents / total) })} onmouseenter={() => (hovered = i)} onmouseleave={() => (hovered = null)}>
             <span class="swatch" style:background={s.color}></span>
             <span class="name">{s.name}</span>
             <span class="value money">{formatEuro(s.cents)}</span>

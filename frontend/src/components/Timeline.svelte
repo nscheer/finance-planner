@@ -59,12 +59,12 @@
     </svg>
     <!-- Always two lines, so hovering never reflows the box. -->
     <div class="readout" aria-live="polite">
-      <div class="line">
+      <div class="line" title={t("tip.timelineDue")}>
         <span class="swatch due"></span>
         <span class="label">{t("stats.timelineDue")}{hovered !== null ? ` (${monthName(hovered + 1)})` : ""}</span>
         <span class="money value">{hovered !== null ? formatEuro(months[hovered].dueCents) : ""}</span>
       </div>
-      <div class="line">
+      <div class="line" title={t("tip.timelineSaved")}>
         <span class="swatch saved"></span>
         <span class="label">{t("stats.timelineSaved")}</span>
         <span class="money value">{hovered !== null ? formatEuro(months[hovered].savedCents) : ""}</span>

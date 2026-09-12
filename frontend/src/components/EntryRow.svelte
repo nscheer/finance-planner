@@ -13,6 +13,7 @@
     confirmDeleteEntry,
     pauseEntry,
     periodKey,
+    periodMonths,
     app,
     isSelected,
     setSelected,
@@ -59,6 +60,18 @@
       event.preventDefault();
     }
   }
+
+  /** Tooltips that explain the entered and the calculated amount. */
+  const entered = $derived(t("tip.entryMaster", { amount: formatEuro(entry.amountCents), period: t(periodKey(entry.period)) }));
+  const months = $derived(periodMonths(entry.period));
+  const monthlyTip = $derived(
+    monthlyIsMaster ? entered : t("tip.entryMonthlyDerived", { amount: formatEuro(entry.amountCents), period: t(periodKey(entry.period)), months }),
+  );
+  const yearlyTip = $derived(
+    entry.period === Period.PeriodYearly
+      ? entered
+      : t("tip.entryYearlyDerived", { amount: formatEuro(entry.amountCents), period: t(periodKey(entry.period)), payments: 12 / months }),
+  );
 
   const selected = $derived(isSelected(entry.id));
   const showCheckbox = $derived(app.selectMode);
@@ -108,8 +121,8 @@
   <span class="due">
     {#if !monthlyIsMaster && (entry.dueMonth ?? 0) > 0}{monthName(entry.dueMonth ?? 0)}{/if}
   </span>
-  <span class="money amount" class:master={monthlyIsMaster} class:derived={!monthlyIsMaster}>{formatEuro(entry.monthlyCents)}</span>
-  <span class="money amount" class:master={entry.period === Period.PeriodYearly} class:derived={entry.period !== Period.PeriodYearly}>{formatEuro(entry.yearlyCents)}</span>
+  <span class="money amount" class:master={monthlyIsMaster} class:derived={!monthlyIsMaster} title={monthlyTip}>{formatEuro(entry.monthlyCents)}</span>
+  <span class="money amount" class:master={entry.period === Period.PeriodYearly} class:derived={entry.period !== Period.PeriodYearly} title={yearlyTip}>{formatEuro(entry.yearlyCents)}</span>
   <span class="actions">
     <button class="icon-btn" type="button" title={t("entry.edit")} aria-label="{t('entry.edit')}: {entry.name}" onclick={edit}><Icon name="edit" /></button>
     <button class="icon-btn" type="button" title={t("entry.duplicate")} aria-label="{t('entry.duplicate')}: {entry.name}" onclick={duplicate}><Icon name="copy" /></button>
