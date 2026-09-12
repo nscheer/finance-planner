@@ -103,22 +103,18 @@
   .row.dragging {
     opacity: 0.35;
   }
-  /* Paused: whole row slightly grey, text and badge muted, amounts struck through. */
+  /* Paused: diagonal stripes over the row background, text and badge muted. */
   .row.paused {
-    background: var(--surface-2);
-  }
-  .row.paused:hover {
-    background: var(--surface-3);
+    background-image: repeating-linear-gradient(
+      135deg,
+      var(--stripe) 0 3px,
+      transparent 3px 10px
+    );
   }
   .row.paused .name,
   .row.paused .amount,
   .row.paused .due {
     color: var(--text-3);
-  }
-  .row.paused .name,
-  .row.paused .amount {
-    text-decoration: line-through;
-    text-decoration-color: var(--border-strong);
   }
   .row.paused .badge {
     background: var(--surface-3);

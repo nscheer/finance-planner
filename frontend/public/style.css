@@ -40,6 +40,8 @@
   --halfyearly: #8a5a10;
   --halfyearly-soft: #fbf0e0;
   --toast-bg: #1c2130;
+  /* Diagonal stripe color for paused rows (drawn over the row background). */
+  --stripe: rgba(20, 26, 40, 0.07);
 
   /* Categorical chart palette (validated with the dataviz palette checker). */
   --series-1: #2a78d6;
@@ -102,6 +104,7 @@
     --halfyearly: #e0b25c;
     --halfyearly-soft: #3a2f16;
     --toast-bg: #2a3040;
+    --stripe: rgba(255, 255, 255, 0.07);
 
     --series-1: #3987e5;
     --series-2: #d95926;

@@ -123,8 +123,7 @@ half-yearly / yearly) · the **due month** as a full month name in its own
 column (empty for monthly entries and unset due months) · per month ·
 per year · actions (pause/resume, duplicate, edit, delete). The value the user
 entered (the master) is printed bold; the derived value is muted. Paused rows
-have a slightly grey background, muted text and badge, and struck-through
-name and amounts.
+carry a subtle diagonal stripe pattern and muted text and badge.
 
 An empty block explains that a category has to be added first. When the
 planner contains no data at all, a "getting started" card offers to load
@@ -571,9 +570,11 @@ header keeps a 24 px gap to the due column.
 - **Category header**: surface-3 background, chevron that rotates 90° when
   expanded, count pill, subtotals right-aligned, actions appear on hover.
 - **Entry row**: separated by 1 px borders, hover surface-2, actions appear
-  on hover, dragged rows at 35 % opacity. Paused rows: surface-2 background
-  (surface-3 on hover), name, amounts and due month in muted text, the
-  period badge in surface-3 with muted text, name and amounts struck through.
+  on hover, dragged rows at 35 % opacity. Paused rows: a diagonal stripe
+  pattern (`repeating-linear-gradient(135deg, var(--stripe) 0 3px,
+  transparent 3px 10px)`, stripe color `rgba(20,26,40,.07)` light /
+  `rgba(255,255,255,.07)` dark) over the normal row background; name, amounts
+  and due month in muted text; the period badge in surface-3 with muted text.
 - **Due column**: text centered in its column, so it sits midway between the
   period badge and the right-aligned amounts.
 - **Drop indicators**: 3 px accent line between rows; 3 px line in the block
