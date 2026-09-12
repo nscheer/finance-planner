@@ -38,9 +38,21 @@
     if (filterActive()) return;
     hoverKeepTarget(event, kind);
   }
+
+  /**
+   * WebKit fires dragenter when the pointer crosses into a new element and
+   * shows the "not allowed" cursor until a dragover cancels the default.
+   * Cancelling dragenter for compatible drags anywhere in the block (it
+   * bubbles from every row) keeps the cursor steady across row boundaries.
+   */
+  function onBlockDragEnter(event: DragEvent) {
+    if (filterActive()) return;
+    const source = dnd.source;
+    if (source && source.kind === kind) event.preventDefault();
+  }
 </script>
 
-<section class="block" class:income={isIncome} class:spending={!isIncome} ondrop={drop} ondragover={onBlockDragOver} role="table" aria-label={kindLabel(kind)}>
+<section class="block" class:income={isIncome} class:spending={!isIncome} ondrop={drop} ondragover={onBlockDragOver} ondragenter={onBlockDragEnter} role="table" aria-label={kindLabel(kind)}>
   <header class="block-head">
     <div class="heading">
       <span class="dot"></span>

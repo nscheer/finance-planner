@@ -140,7 +140,9 @@ planner contains no data at all, a "getting started" card offers to load
 - Inside a block every area accepts the drag: the gaps between categories
   are drop positions for category drags, and other areas (block header,
   padding) keep the last target, so the cursor never flips to "not allowed"
-  while moving across the block. Outside the blocks the indicator
+  while moving across the block. `dragenter` is cancelled at block level for
+  compatible drags, because WebKit otherwise shows "not allowed" for a
+  moment at every element boundary. Outside the blocks the indicator
   disappears. Dropping an item on its own position is a no-op.
 - Drag & drop is disabled while a search or filter is active, because the
   visible order would not match the stored order.
