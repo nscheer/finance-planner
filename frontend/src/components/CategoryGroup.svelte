@@ -231,21 +231,24 @@
   .body {
     position: relative;
   }
-  /* The insertion indicator between rows: a 0-height line that grows and
-     lights up when it is the active target. */
+  /* The insertion indicator between rows. It has no height of its own and
+     the active line is an absolutely positioned overlay, so showing or
+     moving it never changes the layout (no flicker while dragging). */
   .drop-line {
-    height: 0;
-    margin: 0 6px;
-    border-top: 0 solid var(--accent);
-    transition: border-width 0.08s;
-  }
-  .drop-line.active {
-    border-top-width: 3px;
-    margin-top: -1.5px;
-    margin-bottom: -1.5px;
     position: relative;
-    z-index: 1;
+    height: 0;
+  }
+  .drop-line.active::before {
+    content: "";
+    position: absolute;
+    left: 6px;
+    right: 6px;
+    top: -1.5px;
+    height: 3px;
     border-radius: 2px;
+    background: var(--accent);
+    z-index: 1;
+    pointer-events: none;
   }
   .empty {
     padding: 10px 14px;

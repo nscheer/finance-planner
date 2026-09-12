@@ -577,8 +577,9 @@ header keeps a 24 px gap to the due column.
   and due month in muted text; the period badge in surface-3 with muted text.
 - **Due column**: text centered in its column, so it sits midway between the
   period badge and the right-aligned amounts.
-- **Drop indicators**: 3 px accent line between rows; 3 px line in the block
-  color between categories; a target category gets an accent border and a
+- **Drop indicators**: 3 px accent line between rows and 3 px line in the
+  block color between categories, both drawn as absolutely positioned
+  overlays without transitions so the table never shifts while dragging; a target category gets an accent border and a
   soft accent ring; empty and collapsed targets show a soft accent area with
   "Drop here".
 - **Statistics tiles**: surface-2 with a 4 px left border in accent (bank)
