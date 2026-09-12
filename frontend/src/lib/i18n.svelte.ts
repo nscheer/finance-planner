@@ -54,6 +54,17 @@ export function monthShort(month: number): string {
   return monthName(month).slice(0, 3);
 }
 
+/** The code of the current language, e.g. "de". */
+export function currentLanguage(): LocaleCode {
+  return i18n.locale.code;
+}
+
+/** Formats a date and time in the current language, e.g. "12.09.2026, 21:04". */
+export function formatDateTime(value: string | Date): string {
+  const date = typeof value === "string" ? new Date(value) : value;
+  return new Intl.DateTimeFormat(i18n.locale.numberLocale, { dateStyle: "medium", timeStyle: "short" }).format(date);
+}
+
 /** Applies a language locally (used when the saved choice is loaded). */
 export function applyLocale(code: string): void {
   i18n.locale = findLocale(code);

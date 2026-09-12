@@ -97,7 +97,7 @@
   }
   .saved {
     fill: none;
-    stroke: #6b3fa0;
+    stroke: var(--savings);
     stroke-width: 2;
     stroke-linejoin: round;
   }
@@ -129,7 +129,7 @@
     background: var(--spending);
   }
   .swatch.saved {
-    background: #6b3fa0;
+    background: var(--savings);
   }
   .empty {
     margin: 0;

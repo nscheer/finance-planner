@@ -148,7 +148,7 @@
     border-left-color: var(--accent);
   }
   .tile.savings {
-    border-left-color: #6b3fa0;
+    border-left-color: var(--savings);
   }
   .label {
     font-size: 12.5px;

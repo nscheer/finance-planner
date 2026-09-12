@@ -13,14 +13,15 @@ import {
   type EntryView,
   type ImportPreview,
   type Stats,
+  type BackupInfo,
 } from "../../bindings/finance-planner/planner";
 import type { MessageKey } from "../i18n";
 
 import { hasKey, type Params } from "../i18n";
-import { t, plural, applyLocale } from "./i18n.svelte";
+import { t, plural, applyLocale, currentLanguage } from "./i18n.svelte";
 
 export { Service, Kind, Period, ImportMode };
-export type { State, CategoryView, EntryView, ImportPreview, Stats };
+export type { State, CategoryView, EntryView, ImportPreview, Stats, BackupInfo };
 
 // ---- dialogs ---------------------------------------------------------------
 
@@ -39,13 +40,20 @@ export type Dialog =
     }
   | { type: "alert"; title: string; message: string }
   | { type: "goal" }
+  | { type: "backups" }
+  | { type: "shortcuts" }
   | { type: "import"; preview: ImportPreview };
 
 export interface Toast {
   id: number;
   kind: "success" | "info" | "error";
   message: string;
+  /** Optional action button, e.g. "Undo". */
+  action?: { label: string; run: () => void | Promise<void> };
 }
+
+/** Period filter values of the search bar. */
+export type PeriodFilter = "all" | Period | "paused";
 
 // ---- state -------------------------------------------------------------------
 
@@ -55,15 +63,68 @@ export const app = $state({
   busy: false,
   dialog: null as Dialog | null,
   toasts: [] as Toast[],
+  /** Search text and period filter of the top bar. */
+  filter: { query: "", period: "all" as PeriodFilter },
 });
 
 let toastSeq = 0;
 
-/** Shows a short popup notification. Errors stay longer. */
-export function notify(kind: Toast["kind"], message: string): void {
+/**
+ * Shows a short popup notification. Errors and toasts with an action stay
+ * longer so the user has time to react.
+ */
+export function notify(kind: Toast["kind"], message: string, action?: Toast["action"]): void {
   const id = ++toastSeq;
-  app.toasts.push({ id, kind, message });
-  setTimeout(() => dismissToast(id), kind === "error" ? 8000 : 3500);
+  app.toasts.push({ id, kind, message, action });
+  setTimeout(() => dismissToast(id), kind === "error" || action ? 9000 : 3500);
+}
+
+// ---- search / filter ----------------------------------------------------
+
+export function filterActive(): boolean {
+  return app.filter.query.trim() !== "" || app.filter.period !== "all";
+}
+
+export function clearFilter(): void {
+  app.filter.query = "";
+  app.filter.period = "all";
+}
+
+function entryMatches(e: EntryView): boolean {
+  const q = app.filter.query.trim().toLowerCase();
+  if (q && !e.name.toLowerCase().includes(q) && !(e.notes ?? "").toLowerCase().includes(q)) return false;
+  const p = app.filter.period;
+  if (p === "paused") return !!e.paused;
+  if (p !== "all" && e.period !== p) return false;
+  return true;
+}
+
+/**
+ * Categories of a kind as shown in the table: with an active filter only
+ * the matching entries are listed and categories without matches are
+ * hidden. Subtotals stay those of the whole category.
+ */
+export function visibleCategories(kind: Kind): CategoryView[] {
+  const all = categoriesOf(kind);
+  if (!filterActive()) return all;
+  return all
+    .map((c) => ({ ...c, entries: (c.entries ?? []).filter(entryMatches) }))
+    .filter((c) => (c.entries?.length ?? 0) > 0);
+}
+
+/** Count of entries shown vs. all entries (for the filter hint). */
+export function filterCounts(): { shown: number; total: number } {
+  let shown = 0;
+  let total = 0;
+  for (const kind of [Kind.KindIncome, Kind.KindSpending]) {
+    for (const c of categoriesOf(kind)) {
+      for (const e of c.entries ?? []) {
+        total++;
+        if (entryMatches(e)) shown++;
+      }
+    }
+  }
+  return { shown, total };
 }
 
 export function dismissToast(id: number): void {
@@ -219,8 +280,18 @@ export function setAllCollapsed(kind: Kind, collapsed: boolean): Promise<boolean
   return applyOrAlert(Service.SetAllCollapsed(kind, collapsed));
 }
 
-export function confirmDeleteEntry(entry: EntryView, index = 0): void {
-  void index; // used by the undo action (stage 5)
+export function confirmDeleteEntry(entry: EntryView, index: number): void {
+  // Snapshot for the undo action: the view object may be gone after the delete.
+  const restore = {
+    id: entry.id,
+    categoryId: entry.categoryId,
+    name: entry.name,
+    amountCents: entry.amountCents,
+    period: entry.period,
+    dueMonth: entry.dueMonth ?? 0,
+    paused: entry.paused ?? false,
+    notes: entry.notes ?? "",
+  };
   openDialog({
     type: "confirm",
     title: t("confirm.deleteEntry.title"),
@@ -228,18 +299,24 @@ export function confirmDeleteEntry(entry: EntryView, index = 0): void {
     confirmLabel: t("dialog.delete"),
     onConfirm: async () => {
       if (await applyOrAlert(Service.DeleteEntry(entry.id), "alert.deleteFailed")) {
-        notify("success", t("toast.entryDeleted", { name: entry.name }));
+        notify("success", t("toast.entryDeleted", { name: entry.name }), {
+          label: t("toast.undo"),
+          run: async () => {
+            if (await applyOrAlert(Service.RestoreEntry(restore, index))) notify("info", t("toast.restored"));
+          },
+        });
       }
     },
   });
 }
 
-export function confirmDeleteCategory(category: CategoryView): void {
+export function confirmDeleteCategory(category: CategoryView, index: number): void {
   const count = category.entries?.length ?? 0;
   if (count > 0) {
     alert(t("confirm.categoryInUse.title"), plural("confirm.categoryInUse.message", count, { name: category.name }));
     return;
   }
+  const restore = { id: category.id, name: category.name, kind: category.kind, collapsed: category.collapsed };
   openDialog({
     type: "confirm",
     title: t("confirm.deleteCategory.title"),
@@ -247,10 +324,59 @@ export function confirmDeleteCategory(category: CategoryView): void {
     confirmLabel: t("dialog.delete"),
     onConfirm: async () => {
       if (await applyOrAlert(Service.DeleteCategory(category.id), "alert.deleteFailed")) {
-        notify("success", t("toast.categoryDeleted", { name: category.name }));
+        notify("success", t("toast.categoryDeleted", { name: category.name }), {
+          label: t("toast.undo"),
+          run: async () => {
+            if (await applyOrAlert(Service.RestoreCategory(restore, index))) notify("info", t("toast.restored"));
+          },
+        });
       }
     },
   });
+}
+
+export async function exportCSV(): Promise<void> {
+  try {
+    const path = await Service.ExportCSV();
+    if (path) notify("success", t("toast.exportedCsv", { path }));
+  } catch (err) {
+    alert(t("alert.exportFailed"), errorMessage(err));
+  }
+}
+
+export async function restoreBackup(path: string): Promise<boolean> {
+  const ok = await applyOrAlert(Service.RestoreBackup(path), "alert.importFailed");
+  if (ok) notify("success", t("toast.backupRestored"));
+  return ok;
+}
+
+export function confirmLoadSampleData(): void {
+  openDialog({
+    type: "confirm",
+    title: t("confirm.sample.title"),
+    message: t("confirm.sample.message"),
+    confirmLabel: t("confirm.sample.confirm"),
+    onConfirm: async () => {
+      try {
+        const result = await Service.LoadSampleData(currentLanguage());
+        app.state = result.state;
+        notify(
+          "success",
+          t("toast.sampleLoaded", {
+            categories: plural("importDialog.categories", result.categories),
+            entries: plural("importDialog.entries", result.entries),
+          }),
+        );
+      } catch (err) {
+        alert(t("alert.generic"), errorMessage(err));
+      }
+    },
+  });
+}
+
+/** Whether the planner has no categories and no entries at all. */
+export function isEmpty(): boolean {
+  return categoriesOf(Kind.KindIncome).length === 0 && categoriesOf(Kind.KindSpending).length === 0;
 }
 
 export async function exportData(): Promise<void> {
@@ -272,6 +398,17 @@ export async function startImport(): Promise<void> {
   }
 }
 
+/** Toast action that restores the backup written before an import. */
+function undoImport(backupPath: string): Toast["action"] | undefined {
+  if (!backupPath) return undefined;
+  return {
+    label: t("toast.undoImport"),
+    run: async () => {
+      await restoreBackup(backupPath);
+    },
+  };
+}
+
 export async function importData(path: string, mode: ImportMode): Promise<void> {
   app.busy = true;
   try {
@@ -284,6 +421,7 @@ export async function importData(path: string, mode: ImportMode): Promise<void> 
           entries: plural("importDialog.entries", result.entriesAdded),
           categories: plural("importDialog.categories", result.categoriesAdded),
         }),
+        undoImport(result.backupPath),
       );
     } else {
       notify(
@@ -293,6 +431,7 @@ export async function importData(path: string, mode: ImportMode): Promise<void> 
           skipped: plural("toast.importedMerge.skipped", result.entriesSkipped),
           categories: plural("toast.importedMerge.categories", result.categoriesAdded),
         }),
+        undoImport(result.backupPath),
       );
     }
   } catch (err) {

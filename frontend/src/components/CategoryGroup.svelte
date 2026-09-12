@@ -94,7 +94,7 @@
     <span class="actions">
       <button class="icon-btn" type="button" title={t("category.addEntry")} aria-label="{t('category.addEntry')}: {category.name}" onclick={() => openDialog({ type: "entry", kind: category.kind, categoryId: category.id })}><Icon name="plus" /></button>
       <button class="icon-btn" type="button" title={t("category.rename")} aria-label="{t('category.rename')}: {category.name}" onclick={() => openDialog({ type: "category", kind: category.kind, category })}><Icon name="edit" /></button>
-      <button class="icon-btn danger" type="button" title={count > 0 ? t("category.inUse") : t("category.delete")} aria-label="{t('category.delete')}: {category.name}" onclick={() => confirmDeleteCategory(category)}><Icon name="trash" /></button>
+      <button class="icon-btn danger" type="button" title={count > 0 ? t("category.inUse") : t("category.delete")} aria-label="{t('category.delete')}: {category.name}" onclick={() => confirmDeleteCategory(category, index)}><Icon name="trash" /></button>
     </span>
   </header>
 

@@ -31,6 +31,15 @@
   --negative: #c9302c;
   --danger: #c9302c;
   --danger-soft: #fbe7e6;
+  --warn: #8a5a10;
+  --warn-soft: #fff4dc;
+  --savings: #6b3fa0;
+  --savings-soft: #f3ecfb;
+  --quarterly: #1b6f7d;
+  --quarterly-soft: #e6f4f6;
+  --halfyearly: #8a5a10;
+  --halfyearly-soft: #fbf0e0;
+  --toast-bg: #1c2130;
 
   /* Categorical chart palette (validated with the dataviz palette checker). */
   --series-1: #2a78d6;
@@ -52,6 +61,61 @@
   --page-max: 1600px;
   --page-min: 1040px;
   --stats-width: 320px;
+}
+
+/* Dark mode follows the system setting. Chart series are re-stepped for the
+   dark surface (validated), not simply inverted. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg: #12151c;
+    --surface: #1b1f2a;
+    --surface-2: #202533;
+    --surface-3: #2a3040;
+    --border: #2f3646;
+    --border-strong: #3d4557;
+    --text: #e8ebf2;
+    --text-2: #aab2c3;
+    --text-3: #7c8598;
+
+    --accent: #5b8def;
+    --accent-soft: #1f2c47;
+    --accent-strong: #7fa6f5;
+
+    --income: #3cbf82;
+    --income-soft: #17302a;
+    --income-strong: #5ed39c;
+    --spending: #e07a55;
+    --spending-soft: #3a241c;
+    --spending-strong: #f0956f;
+
+    --positive: #3cbf82;
+    --negative: #ef6b6b;
+    --danger: #ef6b6b;
+    --danger-soft: #3a1f21;
+    --warn: #e0b25c;
+    --warn-soft: #3a2f16;
+    --savings: #a98ae6;
+    --savings-soft: #2b2340;
+    --quarterly: #5fc0cf;
+    --quarterly-soft: #172e33;
+    --halfyearly: #e0b25c;
+    --halfyearly-soft: #3a2f16;
+    --toast-bg: #2a3040;
+
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --series-3: #199e70;
+    --series-4: #c98500;
+    --series-5: #d55181;
+    --series-6: #008300;
+    --series-7: #9085e9;
+    --series-8: #e66767;
+    --series-other: #6b7385;
+
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 16px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.6);
+  }
 }
 
 *,
@@ -299,16 +363,16 @@ select:focus-visible {
   color: var(--accent-strong);
 }
 .badge-yearly {
-  background: #f3ecfb;
-  color: #6b3fa0;
+  background: var(--savings-soft);
+  color: var(--savings);
 }
 .badge-quarterly {
-  background: #e6f4f6;
-  color: #1b6f7d;
+  background: var(--quarterly-soft);
+  color: var(--quarterly);
 }
 .badge-halfyearly {
-  background: #fbf0e0;
-  color: #8a5a10;
+  background: var(--halfyearly-soft);
+  color: var(--halfyearly);
 }
 .badge-paused {
   background: var(--surface-3);

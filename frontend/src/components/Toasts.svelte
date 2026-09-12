@@ -10,6 +10,9 @@
     <div class="toast {toast.kind}">
       <Icon name={toast.kind === "error" ? "alert" : toast.kind === "success" ? "check" : "info"} />
       <span>{toast.message}</span>
+      {#if toast.action}
+        <button class="action" type="button" onclick={() => { const a = toast.action; dismissToast(toast.id); a?.run(); }}>{toast.action.label}</button>
+      {/if}
       <button class="icon-btn" type="button" aria-label={t("dialog.dismiss")} onclick={() => dismissToast(toast.id)}><Icon name="close" size={14} /></button>
     </div>
   {/each}
@@ -32,7 +35,7 @@
     gap: 10px;
     padding: 10px 8px 10px 14px;
     border-radius: var(--radius-sm);
-    background: #1c2130;
+    background: var(--toast-bg);
     color: #fff;
     box-shadow: var(--shadow-lg);
     animation: slide 0.16s ease-out;
@@ -40,6 +43,19 @@
   .toast span {
     flex: 1;
     user-select: text;
+  }
+  .action {
+    padding: 4px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .action:hover {
+    background: rgba(255, 255, 255, 0.24);
   }
   .toast .icon-btn {
     color: rgba(255, 255, 255, 0.7);

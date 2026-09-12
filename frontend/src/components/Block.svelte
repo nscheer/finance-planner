@@ -5,7 +5,7 @@
    */
   import Icon from "./Icon.svelte";
   import CategoryGroup from "./CategoryGroup.svelte";
-  import { Kind, type CategoryView, kindLabel, kindKey, openDialog, setAllCollapsed } from "../lib/store.svelte";
+  import { Kind, type CategoryView, kindLabel, kindKey, openDialog, setAllCollapsed, filterActive } from "../lib/store.svelte";
   import { t, formatEuro } from "../lib/i18n.svelte";
   import { dnd, drop, hoverCategoryTarget, isCategoryTarget } from "../lib/dnd.svelte";
 
@@ -23,6 +23,7 @@
 
   /** Space below the last category: dropping a category there appends it. */
   function onTailDragOver(event: DragEvent) {
+    if (filterActive()) return;
     if (dnd.source?.type === "category") hoverCategoryTarget(event, kind, categories.length);
   }
 </script>
@@ -70,7 +71,7 @@
     {/if}
     {#each categories as category, i (category.id)}
       <div class="cat-drop" class:active={isCategoryTarget(kind, i)}></div>
-      <CategoryGroup {category} index={i} share={shareOf(category)} />
+      <CategoryGroup {category} index={i} share={shareOf(category)} draggable={!filterActive()} />
     {/each}
     <div class="cat-drop" class:active={isCategoryTarget(kind, categories.length)}></div>
     <div class="tail" ondragover={onTailDragOver} role="presentation"></div>

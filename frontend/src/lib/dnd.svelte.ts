@@ -9,7 +9,7 @@
  *    of the same kind)
  */
 import { Service, Kind, type CategoryView, type EntryView } from "../../bindings/finance-planner/planner";
-import { applyOrAlert } from "./store.svelte";
+import { applyOrAlert, filterActive } from "./store.svelte";
 import { resolveMoveIndex } from "./reorder";
 
 export type DragSource =
@@ -28,6 +28,11 @@ export const dnd = $state({
 });
 
 export function startDrag(event: DragEvent, source: DragSource): void {
+  // With a filter active the visible indices don't match the stored order.
+  if (filterActive()) {
+    event.preventDefault();
+    return;
+  }
   dnd.source = source;
   dnd.target = null;
   if (event.dataTransfer) {

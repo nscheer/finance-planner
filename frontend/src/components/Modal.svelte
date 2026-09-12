@@ -63,7 +63,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(20, 26, 40, 0.45);
+    background: rgba(10, 13, 20, 0.55);
     animation: fade 0.12s ease-out;
   }
   .panel {

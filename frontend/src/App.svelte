@@ -15,7 +15,28 @@
   import AlertDialog from "./components/AlertDialog.svelte";
   import ImportDialog from "./components/ImportDialog.svelte";
   import SavingsGoalDialog from "./components/SavingsGoalDialog.svelte";
-  import { app, Kind, loadState, exportData, startImport, alert, errorMessage } from "./lib/store.svelte";
+  import BackupsDialog from "./components/BackupsDialog.svelte";
+  import ShortcutsDialog from "./components/ShortcutsDialog.svelte";
+  import {
+    app,
+    Kind,
+    Period,
+    loadState,
+    exportData,
+    exportCSV,
+    startImport,
+    alert,
+    errorMessage,
+    openDialog,
+    closeDialog,
+    visibleCategories,
+    filterActive,
+    filterCounts,
+    clearFilter,
+    isEmpty,
+    confirmLoadSampleData,
+    type PeriodFilter,
+  } from "./lib/store.svelte";
   import { i18n, t, locales, setLocale, formatEuro, type LocaleCode } from "./lib/i18n.svelte";
   import { dnd, endDrag } from "./lib/dnd.svelte";
 
@@ -47,6 +68,65 @@
     if (!event.defaultPrevented && dnd.target) dnd.target = null;
   }
 
+  let searchEl: HTMLInputElement | undefined = $state();
+
+  const periodFilters: { value: PeriodFilter; label: string }[] = $derived([
+    { value: "all", label: t("app.filter.all") },
+    { value: Period.PeriodMonthly, label: t("entry.monthly") },
+    { value: Period.PeriodQuarterly, label: t("entry.quarterly") },
+    { value: Period.PeriodHalfYearly, label: t("entry.halfyearly") },
+    { value: Period.PeriodYearly, label: t("entry.yearly") },
+    { value: "paused", label: t("app.filter.paused") },
+  ]);
+
+  /**
+   * Keyboard shortcuts. They are ignored while a dialog is open or an input
+   * has the focus, so typing never triggers them.
+   */
+  function onKeydown(event: KeyboardEvent) {
+    const target = event.target as HTMLElement | null;
+    const inField = !!target && (["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName) || target.isContentEditable);
+    const ctrlF = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "f";
+
+    if (ctrlF) {
+      event.preventDefault();
+      if (!app.dialog) searchEl?.focus();
+      return;
+    }
+    if (event.key === "Escape") {
+      if (app.dialog) return; // Modal.svelte handles it
+      if (inField && target === searchEl) {
+        clearFilter();
+        searchEl?.blur();
+        event.preventDefault();
+      }
+      return;
+    }
+    if (app.dialog || inField || event.ctrlKey || event.metaKey || event.altKey) return;
+    if (!app.state) return;
+
+    switch (event.key) {
+      case "n":
+        openDialog({ type: "entry", kind: Kind.KindSpending });
+        break;
+      case "i":
+        openDialog({ type: "entry", kind: Kind.KindIncome });
+        break;
+      case "c":
+        openDialog({ type: "category", kind: Kind.KindSpending });
+        break;
+      case "/":
+        searchEl?.focus();
+        break;
+      case "?":
+        openDialog({ type: "shortcuts" });
+        break;
+      default:
+        return;
+    }
+    event.preventDefault();
+  }
+
   async function onLanguageChange(event: Event) {
     const code = (event.currentTarget as HTMLSelectElement).value as LocaleCode;
     const err = await setLocale(code);
@@ -61,6 +141,7 @@
   ondragover={onWindowDragOver}
   onerror={onUnhandledError}
   onunhandledrejection={onUnhandledError}
+  onkeydown={onKeydown}
 />
 
 <div class="app">
@@ -71,9 +152,33 @@
         <span class="path" title={app.state.dataPath}>{app.state.dataPath}</span>
       {/if}
     </div>
+    <div class="search" class:active={filterActive()}>
+      <span class="search-icon"><Icon name="search" size={14} /></span>
+      <input
+        class="input search-input"
+        type="search"
+        placeholder={t("app.search")}
+        aria-label={t("shortcuts.search")}
+        bind:value={app.filter.query}
+        bind:this={searchEl}
+      />
+      <select class="select select-sm" bind:value={app.filter.period} aria-label={t("app.filter.all")}>
+        {#each periodFilters as f (f.value)}
+          <option value={f.value}>{f.label}</option>
+        {/each}
+      </select>
+      {#if filterActive()}
+        {@const counts = filterCounts()}
+        <span class="filter-result">{t("app.filterResult", counts)}</span>
+        <button class="icon-btn" type="button" title={t("app.searchClear")} aria-label={t("app.searchClear")} onclick={clearFilter}><Icon name="close" size={14} /></button>
+      {/if}
+    </div>
     <div class="actions">
       <button class="btn btn-sm" type="button" onclick={startImport}><Icon name="upload" size={14} /> {t("app.import")}</button>
       <button class="btn btn-sm" type="button" onclick={exportData}><Icon name="download" size={14} /> {t("app.export")}</button>
+      <button class="btn btn-sm" type="button" onclick={exportCSV}><Icon name="download" size={14} /> {t("app.exportCsv")}</button>
+      <button class="btn btn-sm" type="button" onclick={() => openDialog({ type: "backups" })}><Icon name="history" size={14} /> {t("app.backups")}</button>
+      <button class="icon-btn" type="button" title={t("app.shortcuts")} aria-label={t("app.shortcuts")} onclick={() => openDialog({ type: "shortcuts" })}><Icon name="keyboard" size={16} /></button>
       <span class="divider"></span>
       <label class="language" title={t("app.language")}>
         <Icon name="globe" size={14} />
@@ -106,8 +211,18 @@
             <span>{t("warning.goal", { amount: formatEuro(-app.state.stats.remainingAfterGoalCents) })}</span>
           </div>
         {/if}
-        <Block kind={Kind.KindIncome} categories={app.state.income ?? []} />
-        <Block kind={Kind.KindSpending} categories={app.state.spending ?? []} />
+        {#if isEmpty()}
+          <div class="get-started">
+            <span class="icon"><Icon name="sparkles" size={22} /></span>
+            <div>
+              <strong>{t("app.getStarted.title")}</strong>
+              <p>{t("app.getStarted.text")}</p>
+              <button class="btn btn-primary btn-sm" type="button" onclick={confirmLoadSampleData}>{t("app.getStarted.sample")}</button>
+            </div>
+          </div>
+        {/if}
+        <Block kind={Kind.KindIncome} categories={visibleCategories(Kind.KindIncome)} />
+        <Block kind={Kind.KindSpending} categories={visibleCategories(Kind.KindSpending)} />
       </div>
       <StatsPanel stats={app.state.stats} spending={app.state.spending ?? []} />
     {:else}
@@ -135,6 +250,10 @@
     <ImportDialog preview={dialog.preview} />
   {:else if dialog.type === "goal"}
     <SavingsGoalDialog />
+  {:else if dialog.type === "backups"}
+    <BackupsDialog />
+  {:else if dialog.type === "shortcuts"}
+    <ShortcutsDialog />
   {/if}
 {/if}
 
@@ -179,6 +298,56 @@
     align-items: center;
     gap: 8px;
     flex-shrink: 0;
+  }
+  .search {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    max-width: 560px;
+    min-width: 260px;
+    padding: 2px 4px 2px 8px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface-2);
+  }
+  .search.active {
+    border-color: var(--accent);
+  }
+  .search-icon {
+    display: flex;
+    color: var(--text-3);
+  }
+  .search-input {
+    flex: 1;
+    min-width: 80px;
+    padding: 4px 6px;
+    border: 0;
+    background: transparent;
+  }
+  .search-input:focus {
+    outline: none;
+  }
+  .filter-result {
+    font-size: 12px;
+    color: var(--text-2);
+    white-space: nowrap;
+  }
+  .get-started {
+    display: flex;
+    gap: 14px;
+    padding: 16px 18px;
+    border: 1px dashed var(--border-strong);
+    border-radius: var(--radius);
+    background: var(--surface);
+  }
+  .get-started .icon {
+    color: var(--accent);
+    margin-top: 2px;
+  }
+  .get-started p {
+    margin: 4px 0 10px;
+    color: var(--text-2);
   }
   .divider {
     width: 1px;
@@ -229,8 +398,8 @@
     color: var(--danger);
   }
   .banner.warn {
-    background: #fff4dc;
-    color: #8a5a10;
+    background: var(--warn-soft);
+    color: var(--warn);
   }
   .load-error {
     grid-column: 1 / -1;
