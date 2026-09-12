@@ -43,6 +43,7 @@ export type Dialog =
   | { type: "goal" }
   | { type: "backups" }
   | { type: "shortcuts" }
+  | { type: "palette" }
   | { type: "import"; preview: ImportPreview };
 
 export interface Toast {

@@ -18,6 +18,7 @@
   import BackupsDialog from "./components/BackupsDialog.svelte";
   import ShortcutsDialog from "./components/ShortcutsDialog.svelte";
   import SelectionBar from "./components/SelectionBar.svelte";
+  import CommandPalette from "./components/CommandPalette.svelte";
   import {
     app,
     Kind,
@@ -100,7 +101,13 @@
     const inField = !!target && (["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName) || target.isContentEditable);
     const ctrlF = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "f";
     const ctrlP = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "p";
+    const ctrlK = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k";
 
+    if (ctrlK) {
+      event.preventDefault();
+      if (app.state) openDialog({ type: "palette" });
+      return;
+    }
     if (ctrlF) {
       event.preventDefault();
       if (!app.dialog) searchEl?.focus();
@@ -212,6 +219,7 @@
       <button class="btn btn-sm" type="button" onclick={exportCSV}><Icon name="download" size={14} /> {t("app.exportCsv")}</button>
       <button class="btn btn-sm" type="button" onclick={() => openDialog({ type: "backups" })}><Icon name="history" size={14} /> {t("app.backups")}</button>
       <button class="btn btn-sm" type="button" onclick={printPlanner}><Icon name="printer" size={14} /> {t("app.print")}</button>
+      <button class="icon-btn" type="button" title="{t('shortcuts.palette')} (Ctrl+K)" aria-label={t("shortcuts.palette")} onclick={() => openDialog({ type: "palette" })}><Icon name="search" size={16} /></button>
       <button class="icon-btn" type="button" title={t("app.shortcuts")} aria-label={t("app.shortcuts")} onclick={() => openDialog({ type: "shortcuts" })}><Icon name="keyboard" size={16} /></button>
       <span class="divider"></span>
       <label class="language" title={t("app.theme")}>
@@ -306,6 +314,8 @@
     <BackupsDialog />
   {:else if dialog.type === "shortcuts"}
     <ShortcutsDialog />
+  {:else if dialog.type === "palette"}
+    <CommandPalette />
   {/if}
 {/if}
 

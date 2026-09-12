@@ -67,6 +67,7 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <section
   class="group"
+  id="category-{category.id}"
   class:collapsed={category.collapsed}
   class:dragging={isDraggedCategory(category)}
   class:drop-target={isCategoryHighlighted(category.id)}

@@ -50,6 +50,7 @@ specification is in [project.md](project.md).
 - **CSV export** for spreadsheets (UTF-8 with BOM; `;` and decimal comma in
   German, `,` and decimal point otherwise).
 - **Multi-select** with bulk move, pause, resume and delete (with undo).
+- **Command palette** (`Ctrl+K`) over actions, categories and entries.
 - **Print / PDF** via the system print dialog (`Ctrl+P`); all categories are
   expanded, one column, light colors.
 - **Sample data** for an empty planner, **search and period filter**,
@@ -64,6 +65,7 @@ specification is in [project.md](project.md).
 | `i` | New income |
 | `c` | New spending category |
 | `/` or `Ctrl+F` | Search |
+| `Ctrl+K` | Command palette |
 | `Ctrl+P` | Print |
 | `Esc` | Clear search / clear selection / close dialog |
 | `?` | Show shortcuts |

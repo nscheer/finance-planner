@@ -296,12 +296,24 @@ only be loaded when there are no categories and entries.
 | `c` | New spending category |
 | `/` or `Ctrl+F` | Focus the search box |
 | `Esc` | Clear the search (when the search box is focused) / clear the selection / close a dialog |
+| `Ctrl+K` | Command palette |
 | `Ctrl+P` | Print |
 | `?` | Show the list of shortcuts |
 
 Shortcuts are ignored while a dialog is open or an input field has the focus.
 
-### 2.14 Print and PDF
+### 2.14 Command palette
+
+`Ctrl+K` (or the search icon in the top bar) opens a palette: one text box
+that searches, case-insensitively, over **actions** (new entry or category
+per kind, import, export, CSV export, print, backups, savings goal, expand
+and collapse all per block, shortcuts, appearance and language choices,
+sample data on an empty planner), all **categories** (activating one expands
+it and scrolls it into view) and all **entries** (activating one opens its
+edit dialog). Results are grouped by section, at most 30 are shown, arrow
+keys move the highlight, Enter runs the highlighted item, Esc closes.
+
+### 2.15 Print and PDF
 
 - A *Print* button in the top bar (and `Ctrl+P`) opens the system print
   dialog, which also allows saving as PDF. While printing, every category is
@@ -313,7 +325,7 @@ Shortcuts are ignored while a dialog is open or an input field has the focus.
   even in dark mode; category groups and statistics sections avoid page
   breaks inside; page margins are 15 mm.
 
-### 2.15 Window
+### 2.16 Window
 
 - Default size 1440 × 900, minimum 1200 × 700, so the table with all its
   columns and the statistics box always fit side by side.
