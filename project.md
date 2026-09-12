@@ -583,9 +583,11 @@ header keeps a 24 px gap to the due column.
 
 ### 5.6 Components
 
-- **Buttons**: 8 × 12 px padding (small: 5 × 9 px, 13 px text), line height
-  1 so icon and label share one center line, 1 px strong border, white
-  surface, hover darkens the surface; primary in accent, income
+- **Buttons**: padding 6 px top / 8 px bottom / 12 px sides (small: 3 / 5 /
+  9 px, 13 px text), line height 1.2. The top padding is 1 px smaller than
+  the bottom on purpose: system fonts such as Segoe UI render low in their
+  line box, so symmetric padding looks bottom-heavy. 1 px strong border,
+  white surface, hover darkens the surface; primary in accent, income
   and spending buttons in their color, danger in red; icon buttons are
   28 × 28 px transparent squares that get a surface-3 background on hover.
 - **Inputs and selects**: 8 × 10 px padding, strong border, accent border on
