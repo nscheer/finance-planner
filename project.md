@@ -3,9 +3,22 @@
 A small desktop application to plan a household budget: income and spendings
 are entered once, grouped by category, and the application derives what has
 to be transferred to the bank account and to the savings account every month.
+
 This document is the complete specification of the application as it is
 implemented. It is the reference for behaviour, data, technology and visual
 design, so that the application could be rebuilt from it.
+
+**Contents**
+
+1. Purpose and planning model
+2. Data model and rules
+3. User interface
+4. Data exchange and safety
+5. Settings
+6. Persistence
+7. Technical implementation
+8. Design and styling
+9. Working agreement
 
 ---
 
@@ -19,9 +32,10 @@ Enter all recurring income and spendings, categorise them, and see at a glance:
 - the saldo per month and per year,
 - how much has to be transferred to the **bank account** each month,
 - how much has to be put aside on the **savings account** each month,
-- when non-monthly payments are due and how large the savings buffer has to be.
+- when non-monthly payments are due and how large the savings buffer has to be,
+- which spendings are the biggest levers.
 
-### 1.2 The planning model (background)
+### 1.2 The planning model
 
 Spendings that are paid **monthly** are paid from the bank account, so their
 sum is the amount that has to be transferred to the bank account every month.
@@ -37,7 +51,7 @@ shows the resulting balance of the savings account over a year.
 
 ---
 
-## 2. Functional specification
+## 2. Data model and rules
 
 ### 2.1 Kinds
 
@@ -47,259 +61,230 @@ never be moved into a category of the other kind.
 
 ### 2.2 Categories
 
-- A category has a **name** and a **kind** (income or spending).
+- A category has a **name** and a **kind**.
 - Categories must exist before entries can be added. If the user wants to add
   an entry while no category of that kind exists, the entry dialog explains
-  this and offers to create a category first; after the category was created,
-  the entry dialog opens again.
+  this and offers to create a category first; afterwards the entry dialog
+  opens again.
 - Names are trimmed, must not be empty and must be unique per kind
   (case-insensitive). A category can be **renamed**.
-- A category can only be **deleted** when it contains no entries. Deleting a
-  category that still has entries is refused with an explanation.
-- Categories can be **collapsed** and expanded individually; the collapsed
-  state is saved. At the top of each block (income and spending) there are
-  **expand all** and **collapse all** buttons for that block.
-- Categories can be **reordered by drag & drop** within their block; the
-  order is saved.
+- A category can only be **deleted** when it contains no entries; otherwise
+  the deletion is refused with an explanation.
+- Categories can be **collapsed** individually; the collapsed state is saved.
+- The order of categories inside a block is the user's order (drag & drop)
+  and is saved.
 
 ### 2.3 Entries
-
-An entry (income or spending) has these fields:
 
 | Field | Rule |
 |---|---|
 | Name | required, trimmed |
 | Amount in € | required, greater than 0, stored as integer cents |
-| Period | one of **monthly**, **quarterly**, **half-yearly**, **yearly**; this is the *master* value the user entered |
+| Period | **monthly**, **quarterly**, **half-yearly** or **yearly**; the *master* value the user entered |
 | Category | required, of the same kind |
-| Due month | 1–12 or unset; only for non-monthly periods (monthly entries never keep a due month). Quarterly and half-yearly entries pay every 3 or 6 months starting at that month |
-| Paused | if set, the entry stays in the table but is excluded from every subtotal and statistic |
+| Due month | 1–12 or unset; only for non-monthly periods (monthly entries never keep one). Quarterly and half-yearly entries pay every 3 or 6 months starting at that month |
+| Paused | the entry stays in the table but is excluded from every subtotal and statistic |
 | Notes | optional free text (contract number, cancellation date, …) |
 
-Operations on entries:
-
-- **Add**, **edit** and **delete** (delete asks for confirmation).
-- **Duplicate**: opens the entry dialog prefilled with the values of an
-  existing entry (name with a "(copy)" suffix) to create a new one.
-- **Pause / resume** directly from the table row.
-- **Reorder by drag & drop** within the category and **move by drag & drop**
-  into another category of the same kind. No confirmation is required, but
-  the target position must be clearly visible while dragging.
-- Double-clicking a row opens the edit dialog.
-- **Multi-select**: a small checkbox in the column-title row of each block,
-  in the handle column right above the rows, switches the **selection
-  mode** on, in which the handle cell of every row shows a checkbox instead
-  of the drag grip. In the mode that header checkbox is tri-state for its
-  block (none / some / all of the visible entries selected); clicking it
-  selects all entries of the block, or deselects them when all are
-  selected. Ctrl/Cmd+click on a row toggles it and enters the mode as well,
-  Shift+click selects a range inside a category; the command palette offers
-  "Select entries" too. Hovering never changes a row. The floating toolbar
-  is visible for the whole time the mode is on: with nothing selected it
-  says so and its action buttons are disabled, and its last button reads
-  *Done* (or *Clear selection* once entries are selected). That button and
-  *Esc* leave the mode and the grips return. *Esc* works even while a
-  checkbox or button has the focus; only text fields swallow it. Selected rows
-  are tinted in the soft accent color. While entries are selected a toolbar
-  floating at the bottom center of the window (it never moves the content)
-  shows the count and offers: move to another category of the
-  same kind (disabled when income and spending entries are mixed), pause,
-  resume, delete (with confirmation and an Undo that restores all entries at
-  their former positions) and clear. *Esc* clears the selection; changing the
-  search or filter clears it too.
+Operations: add, edit, delete (with confirmation and undo), duplicate
+(dialog prefilled with the values, name with a "(copy)" suffix), pause and
+resume, reorder within the category and move to another category of the
+same kind (drag & drop or bulk action). The order of entries inside a
+category is saved.
 
 ### 2.4 Calculations
 
 All amounts are integer cents. With *n* = months between two payments
 (1, 3, 6 or 12):
 
-- per month = round(amount / n) (rounded half away from zero to whole cents)
+- per month = round(amount / n), rounded half away from zero to whole cents
 - per year = amount × 12 / n (exact)
 
-Subtotals of a category and all statistics are sums of these per-entry
+Subtotals, block totals and all statistics are sums of these per-entry
 values, so the table columns always add up to the shown totals. Paused
 entries contribute nothing.
 
-### 2.5 Main view
+Derived statistics (see 3.7 for their presentation):
 
-The main view shows two blocks, **income first, spendings below**, and the
-statistics box on the right.
+- *to bank account* = sum of the monthly values of all spendings paid monthly
+- *to savings account* = sum of the monthly values of all other spendings
+- *average cost per month* = bank + savings; *saldo* = income − cost
+- *remaining after goal* = saldo per month − savings goal
+- *timeline*: for a scheduled entry with due month *d* and period *n* the
+  savings balance at the end of month *t* is monthly × ((t − d) mod n); the
+  due amount of month *t* is the full amount when (t − d) mod n = 0. Entries
+  without due month are not part of the timeline. *Peak buffer* = highest
+  balance of the twelve months.
+- *biggest levers* = the five active spendings with the highest yearly cost
+  (ties broken by name), with their share of all monthly spending and of the
+  monthly income
+- *share of a spending category* = its monthly total / all monthly spending,
+  and / monthly income
 
-Each block has:
+---
+
+## 3. User interface
+
+### 3.1 Window and layout
+
+- Default window size 1440 × 900, minimum 1200 × 700, so the table with all
+  its columns and the statistics box always fit side by side. Size and
+  position are restored on the next start (see 5.3).
+- The page is centered and capped at 1600 px width; below 1140 px it keeps
+  its layout instead of squishing. The full-width main area scrolls, so the
+  scrollbar sits at the window edge.
+- Layout: a top bar, below it the income block, the spending block and,
+  on the right, the sticky statistics box.
+
+### 3.2 Top bar
+
+From left to right:
+
+1. Application title and the path of the data file.
+2. **Search box** with its own clear button, and next to it the **period
+   filter** dropdown (all periods, monthly, quarterly, half-yearly, yearly,
+   paused only). While a filter is active a hint shows "x of y entries
+   shown" and a reset button clears search and filter (see 3.6).
+3. Buttons **Import**, **Export**, **Export CSV**, **Backups**, **Print**;
+   icon buttons for the **command palette** (prompt icon `>_`) and the
+   **shortcut list** (keyboard icon).
+4. The **appearance** dropdown (sun icon) and the **language** dropdown
+   (globe icon).
+
+### 3.3 Main view
+
+Two blocks, **income first, spendings below**. Each block has:
 
 - a header with the kind, the block totals per month and per year, and the
   buttons *Expand all*, *Collapse all*, *Category* (new category) and
-  *Income* / *Spending* (new entry; in German the singular *Einnahme* /
-  *Ausgabe*, while the block titles use the plural *Einnahmen* / *Ausgaben*);
-- a column header: Name · Frequency (German: Zahlweise) · Due · Per month · Per year;
+  *Income* / *Spending* (new entry; German uses the singular *Einnahme* /
+  *Ausgabe* on the buttons and the plural *Einnahmen* / *Ausgaben* as block
+  title);
+- a column-title row: selection checkbox (see 3.5) · Name · Frequency
+  (German: Zahlweise) · Due · Per month · Per year;
 - the categories in their saved order, each as a collapsible group with a
-  drag handle, the name, the number of entries, its subtotals per month and
-  per year and the actions *add entry*, *rename*, *delete*;
-- for spending categories, the **share of all spending** as a thin bar with a
-  percentage in the category header.
+  drag handle, the name, the number of entries, for spending categories the
+  **share of all spending** as a thin bar with a percentage, its subtotals
+  per month and per year, and the actions *add entry*, *rename*, *delete*
+  (visible on hover).
 
-Each entry row shows: drag handle · name (followed by a note icon with
-tooltip when notes exist) · a **period badge** (monthly / quarterly /
-half-yearly / yearly) · the **due month** as a full month name in its own
-column (empty for monthly entries and unset due months) · per month ·
-per year · actions in this order: edit, duplicate, pause/resume, delete. The value the user
-entered (the master) is printed bold; the derived value is muted. Paused rows
-carry a subtle diagonal stripe pattern and muted text and badge.
+Each entry row shows: drag handle (or checkbox in selection mode) · name,
+followed by a note icon with tooltip when notes exist · a **period badge**
+(monthly / quarterly / half-yearly / yearly) · the **due month** as a full
+month name, centered, empty for monthly entries and unset due months ·
+per month · per year · the actions edit, duplicate, pause/resume, delete
+(visible on hover). The value the user entered is printed bold, the derived
+value is muted. Paused rows carry a subtle diagonal stripe pattern and muted
+text and badge. Double-clicking a row opens the edit dialog.
 
-An empty block explains that a category has to be added first; while a
-search or filter is active and nothing matches, it says so instead. When the
-planner contains no data at all, a "getting started" card offers to load
-**sample data**.
+Empty states: a block without categories explains that a category has to be
+added first; while a search or filter matches nothing it says so instead.
+A planner without any data shows a "getting started" card that offers to
+load **sample data** (see 4.4).
 
-### 2.6 Drag & drop
+Every displayed money value or percentage carries a tooltip that explains
+what it means and how it was calculated (block and category totals, entered
+vs. calculated entry amounts with the formula, the two transfers, every
+overview row, savings goal and remainder, peak buffer, timeline readout,
+levers and donut legend). Tooltips use line breaks to stay short per line.
 
-- Categories are dragged by their header, entries by their row.
-- While dragging an entry, a horizontal insertion line shows the exact target
-  position between rows; a category that would receive the entry is
+### 3.4 Drag & drop
+
+- Categories are dragged by their header and reordered within their block;
+  entries are dragged by their row, reordered within their category or moved
+  into another category of the same kind. No confirmation is needed.
+- While dragging an entry, a horizontal insertion line shows the exact
+  target position between rows; a category that would receive the entry is
   highlighted, an empty or collapsed category shows a "drop here" area.
-- While dragging a category, an insertion line shows the target position
-  between categories of the same block.
+  While dragging a category, an insertion line shows the target position
+  between categories.
 - Inside a block every area accepts the drag: the gaps between categories
-  are drop positions for category drags, and other areas (block header,
-  padding) keep the last target, so the cursor never flips to "not allowed"
-  while moving across the block. `dragenter` is cancelled at block level for
-  compatible drags, because WebKit otherwise shows "not allowed" for a
-  moment at every element boundary. Outside the blocks the indicator
-  disappears. Dropping an item on its own position is a no-op.
+  are drop positions for category drags, all other areas keep the last
+  target, so the cursor never flips to "not allowed" while moving across the
+  block. Outside the blocks the indicator disappears. Dropping an item on its
+  own position is a no-op.
 - Drag & drop is disabled while a search or filter is active, because the
   visible order would not match the stored order.
 
-### 2.7 Statistics box
+### 3.5 Selection mode and bulk actions
 
-A sticky box on the right side with these sections:
+- The checkbox in the column-title row of a block switches the **selection
+  mode** on: every row shows a checkbox instead of the drag grip. Hovering
+  never changes a row. Ctrl/Cmd+click on a row toggles it and enters the
+  mode as well; Shift+click selects a range inside a category; the command
+  palette offers "Select entries".
+- In the mode the header checkbox is tri-state for its block (none / some /
+  all visible entries selected); clicking it selects all entries of the
+  block, or deselects them when all are selected.
+- Selected rows are tinted in the soft accent color.
+- A **toolbar floats at the bottom center** of the window for the whole time
+  the mode is on; it never moves the content. It shows the count ("No
+  entries selected" while empty) and offers: move to another category of
+  the same kind (disabled when income and spending entries are mixed),
+  pause, resume, delete (confirmation, then an Undo that restores all
+  entries at their former positions), and a last button that reads *Done*
+  while nothing is selected and *Clear selection* otherwise. The action
+  buttons are disabled while nothing is selected.
+- *Esc* and the *Done* / *Clear selection* button leave the mode; the grips
+  return. Changing the search or filter clears the selection.
 
-**Monthly transfers**
-- *To bank account*: sum of all spendings paid monthly.
-- *To savings account*: sum of the monthly share (amount / n) of all
-  spendings that are not paid monthly.
+### 3.6 Search and filter
 
-**Overview**
-- Income per month, average cost per month, saldo per month.
-- *Savings goal per month*: an amount the user wants to put aside, editable
-  in a modal (0 removes the goal); when set, *remaining after goal*
-  (saldo − goal) is shown, red when negative.
-- Income per year, cost per year, saldo per year.
-
-**Payment timeline**
-- Twelve columns (January–December): bars show the payments due in each
-  month, a step line shows the balance of the savings account at the end of
-  each month in the steady state. For an entry with due month *d* and
-  period *n* the balance at the end of month *t* is
-  monthly × ((t − d) mod n). Hovering a month shows its values.
-- *Savings buffer needed (peak)*: the highest balance of the year.
-- Notes tell how many non-monthly entries have no due month (they are not
-  in the timeline) and how many entries are paused.
-
-**Chart**
-- A donut of spending by category (largest first, at most eight slices, the
-  rest folded into "Other") with a legend naming every slice and its amount.
-  (Income vs. spending is not charted; the numbers are in the overview.)
-
-**Biggest levers**
-- The five active spendings with the highest yearly cost, each with rank,
-  name, category, yearly amount and share of all spending; ties are broken
-  by name. Clicking an entry opens its edit dialog.
-- The share bar of a spending category additionally reports the category's
-  share of the monthly income in its tooltip.
-
-**Warnings** (banner above the blocks)
-- red when spending exceeds income, showing the monthly gap;
-- amber when the savings goal is not reachable, showing the shortfall.
-
-### 2.8 Search and filter
-
-The top bar contains a search box and, as a separate control next to it, a
-period filter dropdown (all periods, monthly, quarterly, half-yearly, yearly,
-paused only). The search matches entry names
-and notes (case-insensitive). While a filter is active only matching entries
-are listed, categories without matches are hidden, and a hint shows "x of y
-entries shown". The search box has its own clear button (tooltip "Clear
-search"); next to the hint a reset button (tooltip "Reset search and filter")
-clears both the search text and the period filter. Subtotals stay those of
+The search matches entry names and notes (case-insensitive); the period
+filter restricts to one period or to paused entries. While a filter is
+active only matching entries are listed, categories without matches are
+hidden, and the hint "x of y entries shown" appears. Subtotals stay those of
 the whole category.
 
-### 2.9 Dialogs, notifications and undo
+### 3.7 Statistics box
+
+A sticky box on the right with these sections, in this order:
+
+1. **Monthly transfers**: tiles *To bank account* and *To savings account*.
+2. **Overview**: income per month, average cost per month, saldo per month;
+   *savings goal per month* (editable in a modal, 0 removes it) and, when
+   set, *remaining after goal* (red when negative); income per year, cost per
+   year, saldo per year.
+3. **Payment timeline**: twelve columns (January–December) with bars for the
+   payments due per month and a step line for the savings balance at the end
+   of each month; the current month is printed bold. Hovering a month fills
+   the two fixed readout lines below (*due*, *on savings account*). Below:
+   *Savings buffer needed (peak)* and notes on how many non-monthly entries
+   have no due month and how many entries are paused.
+4. **Spending by category**: a donut (largest first, at most eight slices,
+   the rest folded into "Other") with a legend naming every slice and its
+   amount; hovering highlights a slice and shows its share in the center.
+5. **Biggest levers**: the five most expensive active spendings per year with
+   rank, name, category, yearly amount and share of all spending; the
+   headline's tooltip explains the list, each item's tooltip shows its own
+   values; clicking an item opens its edit dialog.
+6. A short note explaining the planning model.
+
+**Warnings** appear as a banner above the blocks: red when spending exceeds
+income (with the monthly gap), amber when the savings goal is not reachable
+(with the shortfall).
+
+### 3.8 Dialogs, notifications and undo
 
 - **Every data entry happens in a modal dialog** (entry, category, savings
-  goal). Dialogs close with the *Escape* key, the close icon or a click on
-  the backdrop; the first form field gets the focus.
-- **Deletions and destructive actions ask for confirmation** in a modal
-  (delete entry, delete category, load sample data, restore backup).
-- **Errors** are shown in a modal (for actions outside a form) or inline in
-  the form they belong to.
-- **Success and information** are shown as popup toasts in the lower right
-  corner. Toasts with an action stay 9 seconds, others 3.5 seconds, errors
-  8 seconds.
-- **Undo**: the toast after deleting an entry or a category offers *Undo*,
-  which restores the item with its original id at its original position. The
-  toast after an import offers *Undo import*, which restores the backup that
-  was written right before the import. Toasts with an action show a thin
-  countdown bar at their bottom edge that shrinks over the toast's lifetime,
-  so it is visible how long the action is still available.
-- Unhandled errors in the UI are never silent: they are shown in an error
-  modal.
+  goal). Dialogs close with *Esc*, the close icon or a click on the backdrop;
+  the first form field gets the focus. Validation errors appear inline in the
+  form.
+- **Confirmations** in a modal: delete entry, delete category, delete
+  selection, load sample data, restore backup.
+- **Errors** outside a form are shown in a modal; unhandled errors in the UI
+  are never silent.
+- **Success and information** are popup toasts in the lower right corner:
+  3.5 s, errors 8 s, toasts with an action 9 s. Toasts with an action show a
+  thin countdown bar that shrinks over the toast's lifetime.
+- **Undo**: deleting an entry, a category or a selection offers *Undo*, which
+  restores the items with their original ids at their original positions. An
+  import offers *Undo import*, which restores the backup written right before
+  it.
+- Further dialogs: import (add or replace), backups (list and restore),
+  shortcuts, command palette.
 
-### 2.10 Import and export
-
-**JSON export** writes the complete data file to a location chosen in a
-native save dialog.
-
-**JSON import** opens a native file dialog, validates the file, shows what it
-contains (categories, entries, file version) and asks whether the data should
-be **added** to or **replace** the current data:
-
-- *Replace* discards all current categories and entries. The language,
-  savings goal and window settings of this installation are kept.
-- *Add* (merge): categories are matched by id (same id and kind) first, then
-  by kind and name (case-insensitive); unmatched categories are added and keep
-  their id. Entries whose id already exists are **skipped**; all others are
-  added with their original id. The toast reports how many entries were
-  added, how many already existed and how many categories were created.
-
-**CSV export** writes all entries as a flat table (kind, category, name,
-period, amount, per month, per year, due month, paused, notes) in UTF-8 with
-byte order mark. In German the separator is `;` with a decimal comma,
-otherwise `,` with a decimal point.
-
-**Backups**: before ordinary changes (at most once every 10 minutes) and
-always before an import or a restore, the current data file is copied to
-`backups/data-<YYYYMMDD-HHMMSS.mmm>.json` next to the data file. The last 20
-backups are kept. A *Backups* dialog lists them (time, number of categories
-and entries) and restores one after confirmation; only files inside the
-backup folder can be restored.
-
-**Sample data**: an empty planner offers a small example set (income and
-spending categories with typical household entries, including quarterly,
-half-yearly and yearly ones with due months) in the current language. It can
-only be loaded when there are no categories and entries.
-
-### 2.11 Language
-
-- The UI is available in **German** and **English**; a dropdown in the top
-  right corner switches the language and the choice is saved.
-- **German is the default** until a choice has been made: the saved language
-  stays empty, and an empty or unknown language maps to German.
-- Number and currency formatting follow the language (`1.234,56 €` in
-  German, `€1,234.56` in English); amounts can be typed with comma or point.
-- All texts, including backend error messages, come from language files with
-  keys (see 4.5); adding a language means adding one file and one registry
-  line.
-
-### 2.12 Appearance
-
-- A dropdown in the top right corner (next to the language dropdown)
-  selects the color scheme: **Light**, **Dark** or **System** (follow the
-  operating system). The choice is saved in `data.json`.
-- **Light is the default** until a choice has been made (empty value in the
-  file). "System" is resolved in the frontend and follows changes of the
-  operating system setting live.
-
-### 2.13 Keyboard shortcuts
+### 3.9 Keyboard shortcuts and command palette
 
 | Key | Action |
 |---|---|
@@ -307,55 +292,120 @@ only be loaded when there are no categories and entries.
 | `i` | New income |
 | `c` | New spending category |
 | `/` or `Ctrl+F` | Focus the search box |
-| `Esc` | Clear the search (when the search box is focused) / clear the selection / close a dialog |
 | `Ctrl+K` | Command palette |
 | `Ctrl+P` | Print |
+| `Esc` | Clear the search (when the search box is focused) / leave selection mode / close a dialog |
 | `?` | Show the list of shortcuts |
 
-Shortcuts are ignored while a dialog is open or an input field has the focus.
+Single-key shortcuts are ignored while a dialog is open or a text field
+(input, textarea, select) has the focus; a focused checkbox or button does
+not block them.
 
-### 2.14 Command palette
+The **command palette** (`Ctrl+K` or the prompt icon) is one text box that
+searches, case-insensitively, over **actions** (new entry or category per
+kind, import, export, CSV export, print, backups, savings goal, expand and
+collapse all per block, select entries, shortcuts, appearance and language
+choices, sample data on an empty planner), all **categories** (activating
+one expands it and scrolls it into view) and all **entries** (activating one
+opens its edit dialog). Results are grouped by section, at most 30 are
+shown; arrow keys move the highlight, Enter runs it, Esc closes.
 
-`Ctrl+K` (or the prompt icon `>_` in the top bar) opens a palette: one text box
-that searches, case-insensitively, over **actions** (new entry or category
-per kind, import, export, CSV export, print, backups, savings goal, expand
-and collapse all per block, shortcuts, appearance and language choices,
-sample data on an empty planner), all **categories** (activating one expands
-it and scrolls it into view) and all **entries** (activating one opens its
-edit dialog). Results are grouped by section, at most 30 are shown, arrow
-keys move the highlight, Enter runs the highlighted item, Esc closes.
+### 3.10 Print and PDF
 
-### 2.15 Print and PDF
-
-- A *Print* button in the top bar (and `Ctrl+P`) opens the system print
-  dialog, which also allows saving as PDF. While printing, every category is
-  rendered expanded regardless of its collapsed state.
-- The print layout is a single column: a header with the application name,
-  print date and data file path, then the income and spending tables, then
-  the statistics box. Buttons, drag handles, the top bar, banners, toasts
-  and dialogs are hidden; shadows become borders; light colors are forced
-  even in dark mode; category groups and statistics sections avoid page
-  breaks inside; page margins are 15 mm.
-
-### 2.16 Window
-
-- Default size 1440 × 900, minimum 1200 × 700, so the table with all its
-  columns and the statistics box always fit side by side.
-- The last window size and position are saved and restored on the next start.
-- The page content is centered and capped at 1600 px width so it does not
-  stretch endlessly on very wide screens; below 1140 px the page keeps its
-  layout instead of squishing.
-- The application icon is a blue rounded square (`#2f5fd6`) with a white
-  € sign (`build/appicon.png`, 1024 × 1024). The Windows `icon.ico`
-  (embedded into the executable, shown by Explorer) contains the sizes 16,
-  24, 32, 48 and 64 as uncompressed 32-bit bitmaps and 128 and 256 as PNG;
-  the macOS `.icns` is generated from the PNG.
+*Print* in the top bar (or `Ctrl+P`) opens the system print dialog, which
+also allows saving as PDF. While printing every category is rendered
+expanded. The print layout is a single column: a header with application
+name, print date and data file path, then the income and spending tables,
+then the statistics box. Buttons, drag handles, the top bar, banners, toasts
+and dialogs are hidden; shadows become borders; light colors are forced even
+in dark mode; category groups and statistics sections avoid page breaks
+inside; page margins are 15 mm.
 
 ---
 
-## 3. Data and persistence
+## 4. Data exchange and safety
 
-### 3.1 Data file
+### 4.1 JSON export and import
+
+**Export** writes the complete data file to a location chosen in a native
+save dialog.
+
+**Import** opens a native file dialog, validates the file, shows what it
+contains (categories, entries, file version) and asks whether the data should
+be **added** to or **replace** the current data:
+
+- *Replace* discards all current categories and entries; the settings of this
+  installation (language, appearance, savings goal, window) are kept.
+- *Add* (merge): categories are matched by id (same id and kind) first, then
+  by kind and name (case-insensitive); unmatched categories are added and keep
+  their id. Entries whose id already exists are **skipped**; all others are
+  added with their original id. The toast reports how many entries were
+  added, how many already existed and how many categories were created.
+
+Both modes can be undone via the backup written right before the import.
+
+### 4.2 CSV export
+
+All entries as a flat table (kind, category, name, period, amount, per month,
+per year, due month, paused, notes) in UTF-8 with byte order mark. In German
+the separator is `;` with a decimal comma, otherwise `,` with a decimal point.
+
+### 4.3 Backups
+
+Before ordinary changes (at most once every 10 minutes) and always before an
+import or a restore, the data file is copied to
+`backups/data-<YYYYMMDD-HHMMSS.mmm>.json` next to it. The last 20 backups are
+kept. The *Backups* dialog lists them (time, number of categories and
+entries) and restores one after confirmation; only files inside the backup
+folder can be restored, and the current data is backed up before a restore.
+
+### 4.4 Sample data
+
+An empty planner offers a small example set (income and spending categories
+with typical household entries, including quarterly, half-yearly and yearly
+ones with due months) in the current language. It can only be loaded when
+there are no categories and entries.
+
+---
+
+## 5. Settings
+
+All settings are stored in `data.json` (see 6.1).
+
+### 5.1 Language
+
+- German and English; the dropdown in the top bar switches the language and
+  the choice is saved.
+- **German is the default** until a choice has been made (empty value in the
+  file); an empty or unknown language maps to German.
+- Number and currency formatting follow the language (`1.234,56 €` in
+  German, `€1,234.56` in English); amounts can be typed with comma or point.
+- All texts, including backend error messages, come from language files with
+  keys (see 7.5); adding a language means adding one file and one registry
+  line.
+
+### 5.2 Appearance
+
+- **Light**, **Dark** or **System** (follow the operating system) via the
+  dropdown in the top bar.
+- **Light is the default** until a choice has been made (empty value).
+  "System" is resolved in the frontend and follows changes of the operating
+  system setting live.
+
+### 5.3 Window geometry
+
+The last window size and position are saved (debounced, only when changed)
+and restored on the next start; sizes below the minimum are ignored.
+
+### 5.4 Savings goal
+
+A monthly amount, edited in a modal from the statistics box; 0 removes it.
+
+---
+
+## 6. Persistence
+
+### 6.1 Data file
 
 All data lives in a single JSON file **`data.json` next to the binary**. It
 is created on the first start, written atomically (temporary file, then
@@ -391,12 +441,11 @@ rename) after every change, and human-readable (indented).
 - Ids are random 16-hex-character strings.
 - The order of `categories` (per kind) and of `entries` (per category) is the
   display order.
-- `language` is empty until the user chose a language; `theme` is empty
-  until the user chose a color scheme (empty means light). `theme` was added
-  to version 3 without a version bump, since an absent value is valid.
-- `dueMonth`, `paused` and `notes` are omitted when they have their zero value.
+- `language` and `theme` are empty until the user chose (empty means German
+  and light). `dueMonth`, `paused` and `notes` are omitted at their zero
+  value.
 
-### 3.2 Versioning and migration
+### 6.2 Versioning and migration
 
 The file carries a `version`. The application migrates older files step by
 step when loading and refuses files with a newer version than it knows.
@@ -405,18 +454,19 @@ step when loading and refuses files with a newer version than it knows.
 |---|---|
 | 1 | initial structure (categories, entries with monthly/yearly period) |
 | 2 | `settings.language` |
-| 3 | periods quarterly/half-yearly; entry `dueMonth`, `paused`, `notes`; `settings.savingsGoalCents`, `settings.window` |
+| 3 | periods quarterly/half-yearly; entry `dueMonth`, `paused`, `notes`; `settings.savingsGoalCents`, `settings.window`; later `settings.theme` (added without a bump, an absent value is valid) |
 
 Loading validates referential integrity (unique ids, entries reference
-existing categories, known kinds and periods, non-negative amounts, due month
-0–12, valid language code) and rejects corrupt files with a clear error.
+existing categories, known kinds, periods and themes, non-negative amounts
+and savings goal, due month 0–12, valid language code) and rejects corrupt
+files with a clear error.
 
-### 3.3 Backups
+### 6.3 Backup folder
 
 `backups/` next to `data.json`, files named `data-<timestamp>.json`, newest
-20 kept. See 2.10.
+20 kept (see 4.3).
 
-### 3.4 Errors
+### 6.4 Error codes
 
 The backend never returns free-text errors for user mistakes. It returns a
 **code** with parameters (for example `category.inUse` with `name` and
@@ -432,9 +482,9 @@ The backend never returns free-text errors for user mistakes. It returns a
 
 ---
 
-## 4. Technical implementation
+## 7. Technical implementation
 
-### 4.1 Stack
+### 7.1 Stack
 
 - **Wails v3** (Go) for the desktop shell, native dialogs and the service
   layer; **Svelte 5** with **TypeScript** and Vite for the frontend.
@@ -442,51 +492,54 @@ The backend never returns free-text errors for user mistakes. It returns a
   inline SVG, drag & drop uses the native HTML5 drag events, tests use Node's
   built-in test runner. Anything that has to be installed is asked for first.
 
-### 4.2 Architecture
+### 7.2 Architecture
 
 - The Go **service** (`planner` package) owns the data: every mutating method
   validates, changes the data, saves the file and returns the complete new
   view state (categories with entries, derived values, statistics). The
   frontend replaces its state with the result, so business logic exists only
-  once.
+  once. Bulk operations (move, pause, delete, restore several entries) are
+  single service calls.
 - Go structs are exposed to TypeScript through generated **bindings**
   (`wails3 generate bindings -ts -i -clean=true`), regenerated whenever a
   service signature changes.
-- The frontend keeps a single reactive **store** (state, open dialog, toasts,
-  filter) and small components: application shell, blocks, category groups,
-  entry rows, statistics panel, timeline, charts and one component per
-  dialog.
-- Props of the open dialog are bound to a local constant in the shell, so a
-  dialog can close itself and still read its props afterwards (Svelte props
-  are getters).
+- The frontend keeps one reactive **store** (state, open dialog, toasts,
+  filter, selection, print flag), a **theme** store and an **i18n** layer,
+  plus small components: application shell, blocks, category groups, entry
+  rows, statistics panel, timeline, charts, selection toolbar, command
+  palette and one component per dialog.
 
-### 4.3 Project layout
+### 7.3 Project layout
 
 ```
 main.go                    window setup, service registration, window geometry
 planner/
-  model.go                 data structures, validation, language check
-  calc.go                  monthly/yearly conversion, statistics, timeline, views
+  model.go                 data structures, validation, language and theme checks
+  calc.go                  conversions, statistics, timeline, levers, views
   store.go                 data.json loading, versioning/migration, atomic saving
   backup.go                automatic backups
   csv.go                   CSV export
   sample.go                example data
   errors.go                coded errors and their JSON marshalling
-  service.go               the service used by the frontend
+  service.go               the service used by the frontend (incl. bulk operations)
   planner_test.go          tests against this specification
 frontend/src/
   App.svelte               shell: top bar, search, shortcuts, blocks, statistics, dialogs
   i18n/en.ts, de.ts        language files (en.ts defines the key set)
   i18n/index.ts            language registry, interpolation, plural helper
   lib/i18n.svelte.ts       reactive t()/plural()/formatting for components
-  lib/store.svelte.ts      application state, service calls, filter, undo actions
+  lib/theme.svelte.ts      appearance (light/dark/system) handling
+  lib/store.svelte.ts      application state, service calls, filter, selection, undo
   lib/dnd.svelte.ts        drag & drop state and drop handling
   lib/money.ts             € parsing and formatting (cents based)
   lib/reorder.ts           drag index arithmetic
-  components/              Block, CategoryGroup, EntryRow, StatsPanel, Timeline, Charts, dialogs, Toasts
+  components/              Block, CategoryGroup, EntryRow, StatsPanel, Timeline,
+                           Charts, SelectionBar, CommandPalette, Toasts, Modal,
+                           Icon, and the dialogs (Entry, Category, SavingsGoal,
+                           Import, Backups, Shortcuts, Confirm, Alert)
 ```
 
-### 4.4 Persistence details
+### 7.4 Persistence details
 
 - Amounts are integer cents everywhere; the frontend converts to and from a
   human-readable € string.
@@ -494,7 +547,7 @@ frontend/src/
   truncated data file.
 - Window geometry is written debounced (500 ms) and only when it changed.
 
-### 4.5 Internationalisation
+### 7.5 Internationalisation
 
 - One TypeScript file per language exporting a flat object of dot-namespaced
   keys (`"stats.toBank": "To bank account"`). The English file defines the
@@ -502,26 +555,27 @@ frontend/src/
   is a compile error. A unit test additionally checks identical key sets and
   identical placeholders.
 - Placeholders are written `{name}`. Plural forms use `<key>.one` /
-  `<key>.other` and a `plural(key, count)` helper.
+  `<key>.other` and a `plural(key, count)` helper. Tooltip texts live under
+  `tip.*`.
 - A registry lists every language with its code, its native label and the
   BCP 47 tag used for number formatting (`de-DE`, `en-IE`).
 - Backend error codes are translated under `errors.<code>`; kind names inside
   messages are translated too.
 
-### 4.6 Tests
+### 7.6 Tests
 
-- **Go**: every requirement of section 2 and 3 that lives in the backend
-  (category rules, validation, conversions and rounding, statistics, timeline,
-  ordering and moves, restore, collapse state, persistence, versioning and
-  migration, import merge/replace rules, backups, CSV, sample data, language
-  setting, coded errors).
+- **Go**: every backend requirement of sections 2, 4, 5 and 6 (category
+  rules, validation, conversions and rounding, statistics, timeline, levers,
+  ordering and moves, bulk operations, restore, collapse state, persistence,
+  versioning and migration, import merge/replace rules, backups, CSV, sample
+  data, language, theme and window settings, coded errors).
 - **Node**: money parsing and formatting per locale, drag index arithmetic,
   language file completeness and interpolation, and a compile-level test that
   dialog props in the shell are not bound directly to the mutable dialog
   state.
 - `svelte-check` must report no errors and no warnings.
 
-### 4.7 Build, run and workflow
+### 7.7 Build, run and workflow
 
 ```sh
 wails3 dev          # run with hot reload
@@ -530,58 +584,87 @@ wails3 task test    # Go tests + frontend unit tests
 ```
 
 - Work happens on the `main` branch, structured in commits after stages that
-  make sense (each commit builds and passes all tests).
-- The window is tested by launching the built binary; regenerate bindings
-  before building when the Go service changed.
+  make sense; every commit builds and passes all tests.
+- Regenerate bindings before building when the Go service changed.
+
+### 7.8 Packaging and icon
+
+The application icon is a blue rounded square (`#2f5fd6`) with a white
+€ sign (`build/appicon.png`, 1024 × 1024). The Windows `icon.ico` embedded
+into the executable contains the sizes 16, 24, 32, 48 and 64 as uncompressed
+32-bit bitmaps (the three smallest with a bolder glyph) and 128 and 256 as
+PNG; the macOS `.icns` is generated from the PNG. The build task does not
+regenerate existing icon files.
+
+### 7.9 Implementation notes
+
+Non-obvious decisions that must survive a rewrite:
+
+- **Dialog props**: Svelte 5 passes props as getters. The open dialog is
+  bound to a local constant in the shell, so a dialog can close itself
+  (`app.dialog = null`) and still read its props afterwards.
+- **Drag & drop cursor**: `dragenter` is cancelled at block level for
+  compatible drags, because WebKit otherwise shows "not allowed" for a moment
+  at every element boundary; drop indicators are absolutely positioned
+  overlays without transitions so the table never shifts while dragging.
+- **Escape**: only text fields block the shortcuts; a focused checkbox or
+  button must not swallow *Esc* (otherwise selection mode could not be left
+  by keyboard after clicking a checkbox).
+- **Sticky statistics**: the 20 px top gap is a margin on both columns, not
+  padding on the scroll container, so WebKit keeps the sticky box level with
+  the income block.
+- **Button padding**: 1 px less on top than at the bottom, because system
+  fonts such as Segoe UI render low in their line box.
+- **Errors**: coded errors are marshalled through the Wails service option
+  `MarshalError` and arrive in the frontend as `error.cause = {code, params}`.
 
 ---
 
-## 5. Design and styling
+## 8. Design and styling
 
-### 5.1 Principles
+### 8.1 Principles
 
 - Calm, light, table-first interface: clear fonts, tabular numbers, few
   colors with a fixed meaning (green = income, rust = spending, blue =
   actions, violet = savings), generous but compact spacing.
 - Color never carries information alone: badges have text, chart slices have
   a legend with names and amounts, status banners have icons.
-- Dark mode is an explicit choice (light by default, dark, or follow the
-  system) with its own token values (not an inverted palette); chart colors
-  are re-stepped for the dark surface.
+- Dark mode is an explicit choice with its own token values (not an inverted
+  palette); chart colors are re-stepped for the dark surface.
 - Every visual value is a CSS custom property in `frontend/public/style.css`;
   components use tokens only.
 
-### 5.2 Layout and dimensions
+### 8.2 Layout and dimensions
 
 | Element | Value |
 |---|---|
 | Window default / minimum | 1440 × 900 / 1200 × 700 |
 | Page max / min width | 1600 px / 1140 px, centered, 24 px side padding |
 | Content grid | the full-width main area is the scroll container (scrollbar at the window edge); inside it a centered page wrapper holds two columns: tables `minmax(0, 1fr)`, statistics 320 px, 20 px gap |
-| Statistics box | sticky; both columns start 20 px below the top bar (margin on the columns, not padding on the scroll area, so the sticky box stays level with the income block) |
-| Top bar | 10 px 24 px padding, title left, search box (200–420 px) and the period filter dropdown as separate controls in the middle, actions and language dropdown right |
+| Statistics box | sticky; both columns start 20 px below the top bar (margin on the columns) |
+| Top bar | 10 px 24 px padding; title left; search box (200–420 px) and the period filter dropdown as separate controls in the middle; buttons, icon buttons, appearance and language dropdowns right |
 | Table columns | `28px minmax(150px, 1fr) 120px 110px 125px 125px 120px` (handle, name, frequency, due, per month, per year, actions) |
 | Row height | 38 px min; category header 40 px |
 | Block header | 28 px gap between the block header (title, totals, buttons) and the column titles (20 px margin + 8 px padding) |
 | Corner radius | 10 px cards and dialogs, 6 px buttons, badges and inputs |
-| Shadows | cards `0 1px 2px rgba(20,26,40,.06), 0 4px 16px rgba(20,26,40,.06)`; dialogs `0 12px 40px rgba(20,26,40,.22)` |
+| Shadows | cards `0 1px 2px rgba(20,26,40,.06), 0 4px 16px rgba(20,26,40,.06)`; dialogs and the selection toolbar `0 12px 40px rgba(20,26,40,.22)` |
 
-### 5.3 Typography
+### 8.3 Typography
 
 - Font stack: `Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif`; monospace for key caps.
 - Base 14 px, line height 1.45, antialiased, `font-variant-numeric: tabular-nums` everywhere.
-- Sizes: app title 18 px, block title 17 px, dialog title 17 px, statistics
-  heading 15 px, section labels 11 px uppercase with 0.06 em letter spacing,
-  hints and secondary text 11.5–12.5 px, badges 11 px uppercase.
+- Sizes: app title 18 px, block title 17 px, dialog title 17 px, category
+  title 15 px, statistics heading 15 px, section labels 11 px uppercase with
+  0.06 em letter spacing, hints and secondary text 11.5–12.5 px, badges 11 px
+  uppercase.
 - Weights: 400 for entry names, 500 for buttons, 600 for headings and master
-  values, 700 for totals and category titles. Category titles are 15 px in
-  the primary text color so they stand apart from the 14 px regular entry
-  names; only the thin accent bar of the header carries the block color.
-  Derived values use the muted text color.
+  values, 700 for totals and category titles. Category titles stay in the
+  primary text color; only the thin accent bar of the header carries the
+  block color. Derived values use the muted text color.
 - Text selection and the default cursor are disabled on the page (desktop
   application feel); inputs and error texts remain selectable.
 
-### 5.4 Color tokens
+### 8.4 Color tokens
 
 Light mode (default) and dark mode (applied as `data-theme="dark"` on the
 root element; "system" is resolved to one of the two in the frontend):
@@ -589,26 +672,29 @@ root element; "system" is resolved to one of the two in the frontend):
 | Token | Light | Dark | Use |
 |---|---|---|---|
 | `--bg` | `#f5f6fa` | `#12151c` | page background |
-| `--surface` | `#ffffff` | `#1b1f2a` | cards, rows, dialogs |
+| `--surface` | `#ffffff` | `#1b1f2a` | cards, rows, dialogs, selection toolbar |
 | `--surface-2` | `#f8f9fc` | `#202533` | hover, search box, tiles |
-| `--surface-3` | `#eef0f5` | `#2a3040` | category headers, pressed state |
+| `--surface-3` | `#eef0f5` | `#2a3040` | category headers, pressed state, paused badge |
 | `--border` | `#dfe3ea` | `#2f3646` | dividers |
-| `--border-strong` | `#c8cdd8` | `#3d4557` | inputs, buttons |
+| `--border-strong` | `#c8cdd8` | `#3d4557` | inputs, buttons, selection toolbar |
 | `--text` | `#1c2130` | `#e8ebf2` | primary text |
 | `--text-2` | `#5b6474` | `#aab2c3` | secondary text |
 | `--text-3` | `#8a93a5` | `#7c8598` | muted text, icons, derived values |
-| `--accent` / `-soft` / `-strong` | `#2f5fd6` / `#e6edfb` / `#1f47ad` | `#5b8def` / `#1f2c47` / `#7fa6f5` | primary buttons, focus, drop indicators, monthly badge |
-| `--income` / `-soft` / `-strong` | `#1e8a5a` / `#e5f4ec` / `#166b45` | `#3cbf82` / `#17302a` / `#5ed39c` | income block and button, positive values |
-| `--spending` / `-soft` / `-strong` | `#c2542c` / `#fbeae3` / `#9c4222` | `#e07a55` / `#3a241c` / `#f0956f` | spending block, share bars, due bars |
+| `--accent` / `-soft` / `-strong` | `#2f5fd6` / `#e6edfb` / `#1f47ad` | `#5b8def` / `#1f2c47` / `#7fa6f5` | primary buttons, focus, drop indicators, monthly badge, selected rows |
+| `--income` / `-soft` / `-strong` | `#1e8a5a` / `#e5f4ec` / `#166b45` | `#3cbf82` / `#17302a` / `#5ed39c` | income accent bar and button, positive values |
+| `--spending` / `-soft` / `-strong` | `#c2542c` / `#fbeae3` / `#9c4222` | `#e07a55` / `#3a241c` / `#f0956f` | spending accent bar and button, share bars, due bars |
 | `--positive` / `--negative` | `#1e8a5a` / `#c9302c` | `#3cbf82` / `#ef6b6b` | signed saldo values |
 | `--danger` / `-soft` | `#c9302c` / `#fbe7e6` | `#ef6b6b` / `#3a1f21` | delete buttons, error banner and toast |
 | `--warn` / `-soft` | `#8a5a10` / `#fff4dc` | `#e0b25c` / `#3a2f16` | savings goal warning |
 | `--savings` / `-soft` | `#6b3fa0` / `#f3ecfb` | `#a98ae6` / `#2b2340` | savings tile, timeline line, yearly badge |
 | `--quarterly` / `-soft` | `#1b6f7d` / `#e6f4f6` | `#5fc0cf` / `#172e33` | quarterly badge |
 | `--halfyearly` / `-soft` | `#8a5a10` / `#fbf0e0` | `#e0b25c` / `#3a2f16` | half-yearly badge |
+| `--stripe` | `rgba(20,26,40,.07)` | `rgba(255,255,255,.07)` | stripes of paused rows |
 | `--toast-bg` | `#1c2130` | `#2a3040` | info toasts |
 
-### 5.5 Chart palette
+Print forces the light palette with pure white surfaces and black text.
+
+### 8.5 Chart palette
 
 Categorical colors for the spending donut, assigned in fixed order by
 category rank (largest first); a ninth and further categories are folded
@@ -631,24 +717,22 @@ named with its amount in the legend.
 
 Chart marks: donut with a 12-unit stroke on a 100-unit view box, 2-unit gaps
 between slices, the hovered slice grows to 14; the timeline uses thin bars
-(55 % of the column) and a 2 px step line. The share bar in a category
-header keeps a 24 px gap to the due column.
+(55 % of the column) and a 2 px step line.
 
-### 5.6 Components
+### 8.6 Components
 
 - **Buttons**: padding 6 px top / 8 px bottom / 12 px sides (small: 3 / 5 /
-  9 px, 13 px text), line height 1.2. The top padding is 1 px smaller than
-  the bottom on purpose: system fonts such as Segoe UI render low in their
-  line box, so symmetric padding looks bottom-heavy. 1 px strong border,
-  white surface, hover darkens the surface; primary in accent, income
-  and spending buttons in their color, danger in red; icon buttons are
-  28 × 28 px transparent squares that get a surface-3 background on hover.
+  9 px, 13 px text), line height 1.2 (see 7.9 for the asymmetry), 1 px
+  strong border, white surface, hover darkens the surface; primary in
+  accent, income and spending buttons in their color, danger in red; icon
+  buttons are 28 × 28 px transparent squares with a surface-3 background on
+  hover.
 - **Inputs and selects**: 8 × 10 px padding (selects 30 px on the right so
   the text keeps the same distance from the native arrow as from the left
   edge; small selects 4 × 8 px with 28 px right), strong border, accent
-  border on focus, 2 px accent outline for keyboard focus; the amount input carries a
-  trailing € sign; the period choice is a segmented control (accent-soft
-  background for the active segment).
+  border on focus, 2 px accent outline for keyboard focus; the amount input
+  carries a trailing € sign; the period choice is a segmented control
+  (accent-soft background for the active segment).
 - **Badges**: pill, 11 px uppercase, semantic color pairs (monthly = accent,
   quarterly, half-yearly, yearly = savings). A row never shows more than one
   badge, so the frequency column never wraps.
@@ -656,68 +740,57 @@ header keeps a 24 px gap to the due column.
   the block color (the left padding is reduced by 3 px so the columns stay
   aligned with the rows), title 15 px bold in the primary text color,
   chevron that rotates 90° when expanded, count pill in secondary text,
-  subtotals right-aligned in secondary text, actions appear on hover. The
-  bar is the only colored element of the header.
-- **Entry row**: separated by 1 px borders, hover surface-2, actions appear
-  on hover, dragged rows at 35 % opacity. Paused rows: a diagonal stripe
-  pattern (`repeating-linear-gradient(135deg, var(--stripe) 0 3px,
-  transparent 3px 10px)`, stripe color `rgba(20,26,40,.07)` light /
-  `rgba(255,255,255,.07)` dark) over the normal row background; name, amounts
-  and due month in muted text; the period badge in surface-3 with muted text.
-- **Header checkbox**: 14 px native checkbox centered in the 28 px handle
-  column of the column-title row, at 55 % opacity until selection mode is
-  on, indeterminate while only some entries of the block are selected.
-- **Selection toolbar**: fixed at the bottom center (20 px from the bottom),
-  sized by its content and wrapping onto a second line before it could
-  exceed the window width minus 40 px, surface background, strong border, large shadow, 10 px
-  radius, count as an accent-soft pill; slides up over 160 ms. The content
-  gets 96 px bottom padding while it is visible so the last rows can be
-  scrolled above it.
-- **Due column**: text centered in its column, so it sits midway between the
-  period badge and the right-aligned amounts.
+  share bar with a 24 px gap to the due column, subtotals right-aligned in
+  secondary text, actions on hover. The bar is the only colored element.
+- **Entry row**: separated by 1 px borders, hover surface-2, actions on
+  hover, dragged rows at 35 % opacity, selected rows in accent-soft. Paused
+  rows: `repeating-linear-gradient(135deg, var(--stripe) 0 3px, transparent
+  3px 10px)` over the normal background; name, amounts and due month in
+  muted text; the period badge in surface-3 with muted text.
+- **Due column**: text centered, so it sits midway between the period badge
+  and the right-aligned amounts.
+- **Header checkbox**: native checkbox centered in the 28 px handle column
+  of the column-title row, at 55 % opacity until selection mode is on,
+  indeterminate while only some entries of the block are selected.
+- **Selection toolbar**: fixed at the bottom center, 20 px from the bottom,
+  sized by its content and wrapping before it could exceed the window width
+  minus 40 px; surface background, strong border, large shadow, 10 px
+  radius; the count as an accent-soft pill; slides up over 160 ms. The page
+  gets 96 px bottom padding while it is visible.
 - **Drop indicators**: 3 px accent line between rows and 3 px line in the
-  block color between categories, both drawn as absolutely positioned
-  overlays without transitions so the table never shifts while dragging; a target category gets an accent border and a
-  soft accent ring; empty and collapsed targets show a soft accent area with
-  "Drop here".
+  block color between categories, both absolutely positioned overlays; a
+  target category gets an accent border and a soft accent ring; empty and
+  collapsed targets show a soft accent area with "Drop here".
 - **Statistics tiles**: surface-2 with a 4 px left border in accent (bank)
   or savings color; value 22 px semibold.
+- **Levers list**: numbered rows (rank in muted bold 11 px), name and
+  category stacked, yearly amount and share stacked right; hover surface-3.
 - **Banners**: 10 × 14 px padding, icon plus text, danger or warn colors.
 - **Dialogs**: centered panel on a dark translucent backdrop
   (`rgba(10,13,20,.55)`), 12 px radius, title row with close icon, body,
   footer with right-aligned buttons; short fade and pop-in animation.
+- **Command palette**: dialog with the search input on top, results list
+  (max 360 px, scrolls) grouped by uppercase section labels, active item in
+  accent-soft, hint line with the key legend.
 - **Toasts**: lower right, dark surface with white text, success in
   income-strong, error in danger, optional outlined action button, close
   icon; slide-in animation; toasts with an action have a 3 px white
-  (70 % opacity) countdown bar along the bottom edge that scales from full
-  width to zero linearly over the toast's duration.
+  (70 % opacity) countdown bar along the bottom edge.
 - **Key caps** in the shortcut list: bordered inline blocks in the monospace
   font.
 
-### 5.7 Interaction details
-
-- Every displayed money value or percentage carries a tooltip that explains
-  what it means and how it was calculated: block and category totals (what
-  is summed, paused entries excluded), entry amounts (entered vs. calculated
-  with the formula), the two transfers, every overview row, the savings
-  goal and remainder, the peak buffer, the timeline readout, the levers
-  (yearly and monthly amount, share of spending and of income) and the
-  donut legend. The texts live under the `tip.*` keys of the language files
-  and use line breaks to stay short per line; the levers headline carries
-  the explanation of the list, the items only their own values.
+### 8.7 Interaction details
 
 - Actions in rows and category headers are hidden until hover to keep the
-  table calm.
-- The appearance dropdown (sun icon) and the language dropdown (globe icon)
-  sit at the far right of the top bar.
+  table calm; hovering never changes the handle cell.
 - The current month is printed bold in the timeline axis; the readout below
-  the timeline always uses two fixed lines (due, on savings account) so
-  hovering never reflows the box.
+  the timeline always uses two fixed lines so hovering never reflows the box.
+- Every money value and percentage has an explanatory tooltip (see 3.3).
 - Focus is visible everywhere (2 px accent outline).
 
 ---
 
-## 6. Working agreement
+## 9. Working agreement
 
 - Read the whole specification before starting. Ask open questions first;
   once implementation has started, do not interrupt with questions until it

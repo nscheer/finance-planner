@@ -9,9 +9,10 @@ specification is in [project.md](project.md).
 - Income and spendings are grouped by **categories** (separate categories for
   income and spending). Categories have to exist before entries can be added
   and can only be deleted when they are empty.
-- Each entry has a name, an amount in € and a **period** (per month or per
-  year). The period the user entered is the master; the other value is
-  calculated (× 12 or ÷ 12) and shown next to it.
+- Each entry has a name, an amount in € and a **period** (monthly,
+  quarterly, half-yearly or yearly). The period the user entered is the
+  master; the monthly and yearly values are calculated from it and shown
+  next to each other.
 - Categories and entries can be reordered with **drag & drop**; entries can be
   dragged into another category of the same kind. The order is saved.
 - The statistics box shows the two monthly transfers the planning approach
@@ -55,7 +56,8 @@ specification is in [project.md](project.md).
 - **Print / PDF** via the system print dialog (`Ctrl+P`); all categories are
   expanded, one column, light colors.
 - **Sample data** for an empty planner, **search and period filter**,
-  **duplicate entry**, a **dark color scheme** following the system, and the
+  **duplicate entry**, an **appearance** setting (light by default, dark, or
+  follow the system), explanatory **tooltips** on every value, and the
   window size and position are remembered.
 
 ### Keyboard shortcuts
