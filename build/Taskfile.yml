@@ -200,6 +200,12 @@ tasks:
     generates:
       - "darwin/icons.icns"
       - "windows/icon.ico"
+    # The committed icons are hand-built (windows/icon.ico carries bitmap
+    # entries for the small sizes, which Explorer renders reliably). Only
+    # regenerate when one of them is missing.
+    status:
+      - test -f darwin/icons.icns
+      - test -f windows/icon.ico
     cmds:
       - wails3 generate icons -input appicon.png -macfilename darwin/icons.icns -windowsfilename windows/icon.ico -iconcomposerinput appicon.icon -macassetdir darwin
 

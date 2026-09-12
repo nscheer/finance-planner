@@ -57,7 +57,7 @@ export const de: Messages = {
   "block.perMonth": "/ Monat",
   "block.perYear": "/ Jahr",
   "block.column.name": "Name",
-  "block.column.entered": "Eingabe",
+  "block.column.entered": "Zahlweise",
   "block.column.due": "Fällig",
   "block.column.perMonth": "Pro Monat",
   "block.column.perYear": "Pro Jahr",

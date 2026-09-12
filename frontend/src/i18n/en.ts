@@ -66,7 +66,7 @@ export const en = {
   "block.perMonth": "/ month",
   "block.perYear": "/ year",
   "block.column.name": "Name",
-  "block.column.entered": "Entered",
+  "block.column.entered": "Frequency",
   "block.column.due": "Due",
   "block.column.perMonth": "Per month",
   "block.column.perYear": "Per year",

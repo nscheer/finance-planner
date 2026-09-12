@@ -109,7 +109,7 @@ Each block has:
 - a header with the kind, the block totals per month and per year, and the
   buttons *Expand all*, *Collapse all*, *Category* (new category) and
   *Income* / *Spending* (new entry);
-- a column header: Name · Entered · Due · Per month · Per year;
+- a column header: Name · Frequency (German: Zahlweise) · Due · Per month · Per year;
 - the categories in their saved order, each as a collapsible group with a
   drag handle, the name, the number of entries, its subtotals per month and
   per year and the actions *add entry*, *rename*, *delete*;
@@ -273,8 +273,10 @@ Shortcuts are ignored while a dialog is open or an input field has the focus.
   stretch endlessly on very wide screens; below 1140 px the page keeps its
   layout instead of squishing.
 - The application icon is a blue rounded square (`#2f5fd6`) with a white
-  € sign (`build/appicon.png`, 1024 × 1024; Windows and macOS icons are
-  generated from it).
+  € sign (`build/appicon.png`, 1024 × 1024). The Windows `icon.ico`
+  (embedded into the executable, shown by Explorer) contains the sizes 16,
+  24, 32, 48 and 64 as uncompressed 32-bit bitmaps and 128 and 256 as PNG;
+  the macOS `.icns` is generated from the PNG.
 
 ---
 
@@ -480,7 +482,7 @@ wails3 task test    # Go tests + frontend unit tests
 | Content grid | two columns: tables `minmax(0, 1fr)`, statistics 320 px, 20 px gap |
 | Statistics box | sticky; both columns start 20 px below the top bar (margin on the columns, not padding on the scroll area, so the sticky box stays level with the income block) |
 | Top bar | 10 px 24 px padding, title left, search box (200–420 px) and the period filter dropdown as separate controls in the middle, actions and language dropdown right |
-| Table columns | `28px minmax(150px, 1fr) 120px 110px 125px 125px 120px` (handle, name, entered, due, per month, per year, actions) |
+| Table columns | `28px minmax(150px, 1fr) 120px 110px 125px 125px 120px` (handle, name, frequency, due, per month, per year, actions) |
 | Row height | 38 px min; category header 40 px |
 | Corner radius | 10 px cards and dialogs, 6 px buttons, badges and inputs |
 | Shadows | cards `0 1px 2px rgba(20,26,40,.06), 0 4px 16px rgba(20,26,40,.06)`; dialogs `0 12px 40px rgba(20,26,40,.22)` |
