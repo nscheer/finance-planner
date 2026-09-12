@@ -505,8 +505,11 @@ wails3 task test    # Go tests + frontend unit tests
 - Sizes: app title 18 px, block title 17 px, dialog title 17 px, statistics
   heading 15 px, section labels 11 px uppercase with 0.06 em letter spacing,
   hints and secondary text 11.5–12.5 px, badges 11 px uppercase.
-- Weights: 500 for names and buttons, 600 for headings and master values,
-  700 for totals. Derived values use the muted text color.
+- Weights: 400 for entry names, 500 for buttons, 600 for headings and master
+  values, 700 for totals and category titles. Category titles are 15 px in
+  the block color (green for income, rust for spending) so they stand apart
+  from the 14 px regular entry names. Derived values use the muted text
+  color.
 - Text selection and the default cursor are disabled on the page (desktop
   application feel); inputs and error texts remain selectable.
 
@@ -575,8 +578,11 @@ header keeps a 24 px gap to the due column.
 - **Badges**: pill, 11 px uppercase, semantic color pairs (monthly = accent,
   quarterly, half-yearly, yearly = savings). A row never shows more than one
   badge, so the frequency column never wraps.
-- **Category header**: surface-3 background, chevron that rotates 90° when
-  expanded, count pill, subtotals right-aligned, actions appear on hover.
+- **Category header**: surface-3 background with a 3 px left accent bar in
+  the block color (the left padding is reduced by 3 px so the columns stay
+  aligned with the rows), title 15 px bold in the block color, chevron that
+  rotates 90° when expanded, count pill with text in the block color,
+  subtotals right-aligned in secondary text, actions appear on hover.
 - **Entry row**: separated by 1 px borders, hover surface-2, actions appear
   on hover, dragged rows at 35 % opacity. Paused rows: a diagonal stripe
   pattern (`repeating-linear-gradient(135deg, var(--stripe) 0 3px,

@@ -137,7 +137,10 @@
     grid-template-columns: var(--cols);
     align-items: center;
     min-height: 40px;
-    padding: 0 8px 0 4px;
+    /* 3 px accent bar in the block color; left padding reduced by 3 px so
+       the header columns stay aligned with the rows below. */
+    padding: 0 8px 0 1px;
+    border-left: 3px solid var(--block-color);
     background: var(--surface-3);
     cursor: grab;
   }
@@ -159,8 +162,9 @@
     background: none;
     text-align: left;
     cursor: pointer;
-    font-weight: 600;
-    font-size: 14px;
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--block-color);
   }
   .chevron {
     display: flex;
@@ -183,7 +187,7 @@
     border: 1px solid var(--border);
     font-size: 11px;
     font-weight: 600;
-    color: var(--text-2);
+    color: var(--block-color);
   }
   .share-cell {
     display: flex;

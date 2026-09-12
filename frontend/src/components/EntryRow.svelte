@@ -136,7 +136,7 @@
     gap: 6px;
     min-width: 0;
     padding-left: 4px;
-    font-weight: 500;
+    font-weight: 400;
   }
   .name-text {
     overflow: hidden;
