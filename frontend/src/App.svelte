@@ -1,106 +1,159 @@
 <script lang="ts">
-  import {onMount} from 'svelte';
-  import {Events, WML} from "@wailsio/runtime";
-  import {GreetService} from "../bindings/changeme";
-
-  const wailsVersion = "v3.0.0-beta.20";
-
-  let name: string = $state('');
-  let time: string = $state('Listening for Time event...');
-
-  let titleNameEl: HTMLElement;
-  let toastEl: HTMLElement;
-  let resultEl: HTMLElement;
-  let toastTimer: ReturnType<typeof setTimeout>;
+  /**
+   * Application shell: top bar with global actions, the two blocks (income,
+   * spending) on the left, the statistics box on the right, and the currently
+   * open modal dialog.
+   */
+  import { onMount } from "svelte";
+  import Icon from "./components/Icon.svelte";
+  import Block from "./components/Block.svelte";
+  import StatsPanel from "./components/StatsPanel.svelte";
+  import Toasts from "./components/Toasts.svelte";
+  import EntryDialog from "./components/EntryDialog.svelte";
+  import CategoryDialog from "./components/CategoryDialog.svelte";
+  import ConfirmDialog from "./components/ConfirmDialog.svelte";
+  import AlertDialog from "./components/AlertDialog.svelte";
+  import ImportDialog from "./components/ImportDialog.svelte";
+  import { app, Kind, loadState, setAllCollapsed, exportData, startImport } from "./lib/store.svelte";
+  import { endDrag } from "./lib/dnd.svelte";
 
   onMount(() => {
-    Events.On('time', (v: any) => {
-      // On a narrow screen the full RFC1123 stamp is too wide for the footer, so
-      // show just the clock time there (matching the CSS breakpoint).
-      const full = v.data;
-      const compact = (full.match(/\d{1,2}:\d{2}:\d{2}/) || [full])[0];
-      time = window.matchMedia('(max-width: 640px)').matches ? compact : full;
-    });
-    // Wire up data-wml-openURL links (logos + footer "Docs" link).
-    WML.Reload();
+    loadState();
   });
-
-  // Crossfade the framework word in the heading ("Wails + Svelte") to the name
-  // the user entered ("Wails + <name>"): the old word fades out while the new one
-  // fades in over the same spot.
-  function swapTitleName(name: string): void {
-    const current = titleNameEl.querySelector('.title-name-text:not(.is-outgoing)');
-    if (!current || current.textContent === name) {
-      return;
-    }
-    const incoming = document.createElement('span');
-    incoming.className = 'title-name-text is-entering';
-    incoming.textContent = name;
-    current.classList.add('is-outgoing');
-    titleNameEl.appendChild(incoming);
-    // Force a reflow so the transitions run from the starting state.
-    void incoming.offsetWidth;
-    incoming.classList.remove('is-entering');
-    current.classList.add('is-leaving');
-    current.addEventListener('transitionend', () => current.remove(), {once: true});
-  }
-
-  // Pop the toast with the message Go returned, then auto-dismiss it.
-  function showToast(message: string): void {
-    resultEl.innerText = message;
-    toastEl.classList.add('is-visible');
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => toastEl.classList.remove('is-visible'), 4000);
-  }
-
-  const doGreet = (): void => {
-    let n = name || 'anonymous';
-    swapTitleName(n);
-    GreetService.Greet(n).then(showToast).catch(console.error);
-  }
 </script>
 
-<main class="container">
-  <header class="brand">
-    <span class="brand-mark" data-wml-openURL="https://v3.wails.io">
-      <img src="/wails.png" class="brand-logo" alt="Wails logo"/>
-    </span>
-    <span class="brand-badge" data-wml-openURL="https://svelte.dev">
-      <img src="/svelte.svg" alt="Svelte logo"/>
-    </span>
+<!-- A drag that ends outside any drop zone must clear the indicators. -->
+<svelte:window ondragend={endDrag} ondrop={endDrag} />
+
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <h1>Finance Planner</h1>
+      {#if app.state}
+        <span class="path" title={app.state.dataPath}>{app.state.dataPath}</span>
+      {/if}
+    </div>
+    <div class="actions">
+      <button class="btn btn-sm" type="button" onclick={() => setAllCollapsed(false)}><Icon name="expand" size={14} /> Expand all</button>
+      <button class="btn btn-sm" type="button" onclick={() => setAllCollapsed(true)}><Icon name="collapse" size={14} /> Collapse all</button>
+      <span class="divider"></span>
+      <button class="btn btn-sm" type="button" onclick={startImport}><Icon name="upload" size={14} /> Import</button>
+      <button class="btn btn-sm" type="button" onclick={exportData}><Icon name="download" size={14} /> Export</button>
+    </div>
   </header>
 
-  <h1 class="title"><span class="title-accent">Wails +</span> <span class="title-name" bind:this={titleNameEl}><span class="title-name-text">Svelte</span></span></h1>
-  <p class="subtitle">Build beautiful cross-platform apps with Go and Svelte.</p>
-
-  <div class="greet">
-    <div class="input-box">
-      <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-      <input aria-label="input" class="input" bind:value={name} type="text" placeholder="Your name" autocomplete="off"/>
-      <button aria-label="greet-btn" class="btn" onclick={doGreet}>Greet
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-      </button>
-    </div>
-  </div>
-</main>
-
-<hr class="footer-divider"/>
-<footer class="footer">
-  <span class="footer-version">{wailsVersion}</span>
-  <span class="footer-time">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-    <span>{time}</span>
-  </span>
-  <a class="footer-docs" data-wml-openURL="https://v3.wails.io" aria-label="Wails documentation">Docs
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
-  </a>
-</footer>
-
-<div class="toast" bind:this={toastEl} role="status" aria-live="polite">
-  <span class="toast-label">From Go</span>
-  <span aria-label="result" class="toast-msg" bind:this={resultEl}></span>
+  <main class="content">
+    {#if app.loadError}
+      <div class="load-error">
+        <strong>Could not load the data file.</strong>
+        <p>{app.loadError}</p>
+        <button class="btn" type="button" onclick={loadState}>Retry</button>
+      </div>
+    {:else if app.state}
+      <div class="tables">
+        <Block kind={Kind.KindIncome} categories={app.state.income ?? []} />
+        <Block kind={Kind.KindSpending} categories={app.state.spending ?? []} />
+      </div>
+      <StatsPanel stats={app.state.stats} />
+    {:else}
+      <p class="muted">Loading…</p>
+    {/if}
+  </main>
 </div>
 
+{#if app.dialog}
+  {#if app.dialog.type === "entry"}
+    <EntryDialog kind={app.dialog.kind} entry={app.dialog.entry} categoryId={app.dialog.categoryId} />
+  {:else if app.dialog.type === "category"}
+    <CategoryDialog kind={app.dialog.kind} category={app.dialog.category} />
+  {:else if app.dialog.type === "confirm"}
+    <ConfirmDialog
+      title={app.dialog.title}
+      message={app.dialog.message}
+      confirmLabel={app.dialog.confirmLabel}
+      onConfirm={app.dialog.onConfirm}
+    />
+  {:else if app.dialog.type === "alert"}
+    <AlertDialog title={app.dialog.title} message={app.dialog.message} />
+  {:else if app.dialog.type === "import"}
+    <ImportDialog preview={app.dialog.preview} />
+  {/if}
+{/if}
+
+<Toasts />
+
 <style>
-  /* Put your standard CSS here */
+  .app {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    min-width: var(--page-min);
+  }
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 10px 24px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .brand {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    min-width: 0;
+  }
+  h1 {
+    font-size: 18px;
+    letter-spacing: -0.01em;
+  }
+  .path {
+    font-size: 12px;
+    color: var(--text-3);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .divider {
+    width: 1px;
+    height: 22px;
+    margin: 0 4px;
+    background: var(--border);
+  }
+  .content {
+    flex: 1;
+    overflow: auto;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) var(--stats-width);
+    align-items: start;
+    gap: 20px;
+    width: 100%;
+    max-width: var(--page-max);
+    margin: 0 auto;
+    padding: 20px 24px 32px;
+  }
+  .tables {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    min-width: 0;
+  }
+  .load-error {
+    grid-column: 1 / -1;
+    padding: 20px;
+    background: var(--danger-soft);
+    border-radius: var(--radius);
+    color: var(--danger);
+  }
+  .load-error p {
+    user-select: text;
+  }
 </style>

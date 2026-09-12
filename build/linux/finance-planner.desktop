@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=finance-planner
+Exec=finance-planner
+Icon=finance-planner
+Categories=Development;
+Terminal=false
+Keywords=wails
+Version=1.0
+StartupNotify=false
