@@ -418,6 +418,31 @@ export function setSelected(id: string, on: boolean): void {
   app.selectionAnchor = on ? id : app.selectionAnchor;
 }
 
+/** Selects or deselects every visible entry of a block. */
+export function selectAllOf(kind: Kind, on: boolean): void {
+  for (const c of visibleCategories(kind)) {
+    for (const e of c.entries ?? []) {
+      if (on) app.selection[e.id] = true;
+      else delete app.selection[e.id];
+    }
+  }
+  app.selectMode = true;
+}
+
+/** How much of a block's visible entries is selected (for the header checkbox). */
+export function blockSelectionState(kind: Kind): "none" | "some" | "all" {
+  let total = 0;
+  let selected = 0;
+  for (const c of visibleCategories(kind)) {
+    for (const e of c.entries ?? []) {
+      total++;
+      if (isSelected(e.id)) selected++;
+    }
+  }
+  if (total === 0 || selected === 0) return "none";
+  return selected === total ? "all" : "some";
+}
+
 /** Shows or hides the checkboxes; leaving the mode drops the selection. */
 export function toggleSelectMode(): void {
   if (app.selectMode) clearSelection();

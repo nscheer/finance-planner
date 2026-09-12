@@ -5,7 +5,18 @@
    */
   import Icon from "./Icon.svelte";
   import CategoryGroup from "./CategoryGroup.svelte";
-  import { Kind, type CategoryView, kindLabel, kindKey, openDialog, setAllCollapsed, filterActive } from "../lib/store.svelte";
+  import {
+    app,
+    Kind,
+    type CategoryView,
+    kindLabel,
+    kindKey,
+    openDialog,
+    setAllCollapsed,
+    filterActive,
+    selectAllOf,
+    blockSelectionState,
+  } from "../lib/store.svelte";
   import { t, formatEuro } from "../lib/i18n.svelte";
   import { dnd, drop, hoverCategoryTarget, hoverKeepTarget, isCategoryTarget } from "../lib/dnd.svelte";
 
@@ -31,6 +42,29 @@
   function onGapDragOver(event: DragEvent, index: number) {
     if (filterActive()) return;
     if (dnd.source?.type === "category") hoverCategoryTarget(event, kind, index);
+  }
+
+  const hasEntries = $derived(categories.some((c) => (c.entries ?? []).length > 0));
+  const selectionState = $derived(blockSelectionState(kind));
+
+  /** Header checkbox: enters selection mode, then selects / deselects the block. */
+  function onSelectAll(event: Event) {
+    if (!app.selectMode) {
+      event.preventDefault(); // stays unchecked: only the mode is switched on
+      app.selectMode = true;
+      return;
+    }
+    selectAllOf(kind, selectionState !== "all");
+  }
+
+  /** Svelte action for the tri-state look of the header checkbox. */
+  function indeterminate(node: HTMLInputElement, value: boolean) {
+    node.indeterminate = value;
+    return {
+      update(next: boolean) {
+        node.indeterminate = next;
+      },
+    };
   }
 
   /** Everything else inside the block keeps the last target (see hoverKeepTarget). */
@@ -81,7 +115,18 @@
   </header>
 
   <div class="columns" role="row">
-    <span></span>
+    <span class="select-all" class:armed={app.selectMode}>
+      {#if hasEntries}
+        <input
+          type="checkbox"
+          checked={selectionState === "all"}
+          use:indeterminate={selectionState === "some"}
+          title={t("block.selectAll")}
+          aria-label={t("block.selectAll")}
+          onclick={onSelectAll}
+        />
+      {/if}
+    </span>
     <span>{t("block.column.name")}</span>
     <span>{t("block.column.entered")}</span>
     <span class="center">{t("block.column.due")}</span>
@@ -180,6 +225,20 @@
   }
   .columns .center {
     text-align: center;
+  }
+  /* Header checkbox above the row checkboxes: muted until selection mode is on. */
+  .select-all {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0.55;
+  }
+  .select-all.armed {
+    opacity: 1;
+  }
+  .select-all input {
+    margin: 0;
+    cursor: pointer;
   }
   .categories {
     display: flex;

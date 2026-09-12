@@ -39,7 +39,6 @@
     confirmLoadSampleData,
     selectionCount,
     clearSelection,
-    toggleSelectMode,
     printPlanner,
     type PeriodFilter,
   } from "./lib/store.svelte";
@@ -220,7 +219,6 @@
       <button class="btn btn-sm" type="button" onclick={exportCSV}><Icon name="download" size={14} /> {t("app.exportCsv")}</button>
       <button class="btn btn-sm" type="button" onclick={() => openDialog({ type: "backups" })}><Icon name="history" size={14} /> {t("app.backups")}</button>
       <button class="btn btn-sm" type="button" onclick={printPlanner}><Icon name="printer" size={14} /> {t("app.print")}</button>
-      <button class="icon-btn" class:active={app.selectMode} type="button" aria-pressed={app.selectMode} title={t("app.selectMode")} aria-label={t("app.selectMode")} onclick={toggleSelectMode}><Icon name="checkbox" size={16} /></button>
       <button class="icon-btn" type="button" title="{t('shortcuts.palette')} (Ctrl+K)" aria-label={t("shortcuts.palette")} onclick={() => openDialog({ type: "palette" })}><Icon name="command" size={16} /></button>
       <button class="icon-btn" type="button" title={t("app.shortcuts")} aria-label={t("app.shortcuts")} onclick={() => openDialog({ type: "shortcuts" })}><Icon name="keyboard" size={16} /></button>
       <span class="divider"></span>

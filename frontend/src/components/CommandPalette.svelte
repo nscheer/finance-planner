@@ -22,6 +22,7 @@
     printPlanner,
     confirmLoadSampleData,
     isEmpty,
+    toggleSelectMode,
   } from "../lib/store.svelte";
   import { t, locales, setLocale } from "../lib/i18n.svelte";
   import { themes, setTheme } from "../lib/theme.svelte";
@@ -69,6 +70,7 @@
       { id: "collapse-income", section: "actions", label: t("palette.collapseIncome"), icon: "collapse", run: () => { closeDialog(); setAllCollapsed(Kind.KindIncome, true); } },
       { id: "expand-spending", section: "actions", label: t("palette.expandSpending"), icon: "expand", run: () => { closeDialog(); setAllCollapsed(Kind.KindSpending, false); } },
       { id: "collapse-spending", section: "actions", label: t("palette.collapseSpending"), icon: "collapse", run: () => { closeDialog(); setAllCollapsed(Kind.KindSpending, true); } },
+      { id: "select", section: "actions", label: t("app.selectMode"), icon: "checkbox", run: () => { closeDialog(); toggleSelectMode(); } },
       { id: "shortcuts", section: "actions", label: t("shortcuts.title"), icon: "keyboard", run: () => openDialog({ type: "shortcuts" }) },
     ];
     for (const theme of themes) {

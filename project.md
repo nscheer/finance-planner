@@ -86,12 +86,16 @@ Operations on entries:
   into another category of the same kind. No confirmation is required, but
   the target position must be clearly visible while dragging.
 - Double-clicking a row opens the edit dialog.
-- **Multi-select**: a toggle button in the top bar (checkbox icon) switches
-  the **selection mode** on, in which the handle cell of every row shows a
-  checkbox instead of the drag grip. Ctrl/Cmd+click on a row toggles it and
-  enters the mode as well, Shift+click selects a range inside a category.
-  Hovering never changes a row. Clearing the selection (toolbar button or
-  *Esc*) leaves the mode and the grips return. Selected rows
+- **Multi-select**: a small checkbox in the column-title row of each block,
+  in the handle column right above the rows, switches the **selection
+  mode** on, in which the handle cell of every row shows a checkbox instead
+  of the drag grip. In the mode that header checkbox is tri-state for its
+  block (none / some / all of the visible entries selected); clicking it
+  selects all entries of the block, or deselects them when all are
+  selected. Ctrl/Cmd+click on a row toggles it and enters the mode as well,
+  Shift+click selects a range inside a category; the command palette offers
+  "Select entries" too. Hovering never changes a row. Clearing the selection
+  (toolbar button or *Esc*) leaves the mode and the grips return. Selected rows
   are tinted in the soft accent color. While entries are selected a toolbar
   floating at the bottom center of the window (it never moves the content)
   shows the count and offers: move to another category of the
@@ -656,8 +660,9 @@ header keeps a 24 px gap to the due column.
   transparent 3px 10px)`, stripe color `rgba(20,26,40,.07)` light /
   `rgba(255,255,255,.07)` dark) over the normal row background; name, amounts
   and due month in muted text; the period badge in surface-3 with muted text.
-- **Selection mode button**: icon button in the top bar; while the mode is
-  on it is shown pressed (accent-soft background, accent-strong icon).
+- **Header checkbox**: 14 px native checkbox centered in the 28 px handle
+  column of the column-title row, at 55 % opacity until selection mode is
+  on, indeterminate while only some entries of the block are selected.
 - **Selection toolbar**: fixed at the bottom center (20 px from the bottom),
   sized by its content and wrapping onto a second line before it could
   exceed the window width minus 40 px, surface background, strong border, large shadow, 10 px

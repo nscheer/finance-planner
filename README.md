@@ -49,7 +49,7 @@ specification is in [project.md](project.md).
   can be restored from the Backups dialog.
 - **CSV export** for spreadsheets (UTF-8 with BOM; `;` and decimal comma in
   German, `,` and decimal point otherwise).
-- **Multi-select** (selection mode button or Ctrl+click) with bulk move,
+- **Multi-select** (header checkbox of a block or Ctrl+click) with bulk move,
   pause, resume and delete (with undo).
 - **Command palette** (`Ctrl+K`) over actions, categories and entries.
 - **Print / PDF** via the system print dialog (`Ctrl+P`); all categories are
