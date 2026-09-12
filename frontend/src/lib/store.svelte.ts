@@ -71,6 +71,8 @@ export const app = $state({
   filter: { query: "", period: "all" as PeriodFilter },
   /** True while the print layout is active (all categories expanded). */
   printing: false,
+  /** Selection mode: all rows show a checkbox instead of the drag grip. */
+  selectMode: false,
   /** Ids of the selected entries (multi-select for bulk actions). */
   selection: {} as Record<string, true>,
   /** Last entry selected by click; anchor for Shift+click ranges. */
@@ -407,9 +409,19 @@ export function selectionCount(): number {
 }
 
 export function setSelected(id: string, on: boolean): void {
-  if (on) app.selection[id] = true;
-  else delete app.selection[id];
+  if (on) {
+    app.selection[id] = true;
+    app.selectMode = true;
+  } else {
+    delete app.selection[id];
+  }
   app.selectionAnchor = on ? id : app.selectionAnchor;
+}
+
+/** Shows or hides the checkboxes; leaving the mode drops the selection. */
+export function toggleSelectMode(): void {
+  if (app.selectMode) clearSelection();
+  else app.selectMode = true;
 }
 
 export function toggleSelected(id: string): void {
@@ -428,11 +440,14 @@ export function selectRange(category: CategoryView, id: string): void {
   }
   const [a, b] = from < to ? [from, to] : [to, from];
   for (let i = a; i <= b; i++) app.selection[entries[i].id] = true;
+  app.selectMode = true;
 }
 
+/** Clears the selection and leaves the selection mode. */
 export function clearSelection(): void {
   app.selection = {};
   app.selectionAnchor = null;
+  app.selectMode = false;
 }
 
 /** The selected entries with their category, in table order. */

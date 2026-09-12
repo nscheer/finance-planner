@@ -22,6 +22,7 @@ export const en = {
   "app.exportCsv": "Export CSV",
   "app.backups": "Backups",
   "app.print": "Print",
+  "app.selectMode": "Select entries (checkboxes; Ctrl+click also selects)",
   "print.generated": "Printed on {date}",
   "app.shortcuts": "Keyboard shortcuts",
   "app.search": "Search entries…",

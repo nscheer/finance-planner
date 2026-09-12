@@ -271,6 +271,10 @@ select:focus-visible {
   background: var(--danger-soft);
   color: var(--danger);
 }
+.icon-btn.active {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
 .icon-btn svg {
   width: 16px;
   height: 16px;

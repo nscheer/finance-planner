@@ -13,8 +13,8 @@
     confirmDeleteEntry,
     pauseEntry,
     periodKey,
+    app,
     isSelected,
-    selectionCount,
     setSelected,
     toggleSelected,
     selectRange,
@@ -61,7 +61,7 @@
   }
 
   const selected = $derived(isSelected(entry.id));
-  const showCheckbox = $derived(selected || selectionCount() > 0);
+  const showCheckbox = $derived(app.selectMode);
 
   function duplicate() {
     openDialog({ type: "entry", kind: category.kind, duplicateOf: entry });
@@ -166,18 +166,15 @@
     color: var(--text-3);
     cursor: grab;
   }
-  /* The handle cell shows the grip, or a checkbox when hovering, when the
-     row is selected or when a selection exists. */
+  /* The handle cell shows the grip, or a checkbox in selection mode. */
   .handle .check {
     display: none;
     margin: 0;
     cursor: pointer;
   }
-  .row:hover .handle .grip,
   .row.show-checkbox .handle .grip {
     display: none;
   }
-  .row:hover .handle .check,
   .row.show-checkbox .handle .check {
     display: block;
   }

@@ -16,6 +16,7 @@ export const de: Messages = {
   "app.exportCsv": "CSV exportieren",
   "app.backups": "Backups",
   "app.print": "Drucken",
+  "app.selectMode": "Einträge auswählen (Kontrollkästchen; Strg+Klick wählt ebenfalls)",
   "print.generated": "Gedruckt am {date}",
   "app.shortcuts": "Tastenkürzel",
   "app.search": "Einträge suchen…",
