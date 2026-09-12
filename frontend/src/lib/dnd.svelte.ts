@@ -119,13 +119,13 @@ export async function drop(event: DragEvent): Promise<void> {
     if (source.kind !== target.kind) return;
     const index = resolveMoveIndex(true, source.index, target.index);
     if (index === null) return;
-    await applyOrAlert(Service.MoveCategory(source.id, index), "Move failed");
+    await applyOrAlert(Service.MoveCategory(source.id, index), "alert.moveFailed");
     return;
   }
 
   if (source.type === "entry" && target.type === "entry") {
     const index = resolveMoveIndex(target.categoryId === source.categoryId, source.index, target.index);
     if (index === null) return;
-    await applyOrAlert(Service.MoveEntry(source.id, target.categoryId, index), "Move failed");
+    await applyOrAlert(Service.MoveEntry(source.id, target.categoryId, index), "alert.moveFailed");
   }
 }

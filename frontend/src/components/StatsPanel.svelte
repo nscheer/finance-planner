@@ -7,7 +7,7 @@
    *    so the money is there when the yearly spending is due.
    */
   import type { Stats } from "../lib/store.svelte";
-  import { formatEuro, formatEuroSigned } from "../lib/money";
+  import { t, formatEuro, formatEuroSigned } from "../lib/i18n.svelte";
 
   let { stats }: { stats: Stats } = $props();
 
@@ -15,58 +15,55 @@
 </script>
 
 <aside class="stats">
-  <h2>Statistics</h2>
+  <h2>{t("stats.title")}</h2>
 
   <section class="group">
-    <h3>Monthly transfers</h3>
+    <h3>{t("stats.transfers")}</h3>
     <div class="tile bank">
-      <span class="label">To bank account</span>
+      <span class="label">{t("stats.toBank")}</span>
       <span class="value money">{formatEuro(stats.toBankMonthlyCents)}</span>
-      <span class="sub">spendings paid per month</span>
+      <span class="sub">{t("stats.toBankSub")}</span>
     </div>
     <div class="tile savings">
-      <span class="label">To savings account</span>
+      <span class="label">{t("stats.toSavings")}</span>
       <span class="value money">{formatEuro(stats.toSavingsMonthlyCents)}</span>
-      <span class="sub">1/12 of spendings paid per year</span>
+      <span class="sub">{t("stats.toSavingsSub")}</span>
     </div>
   </section>
 
   <section class="group">
-    <h3>Overview</h3>
+    <h3>{t("stats.overview")}</h3>
     <dl>
       <div>
-        <dt>Income per month</dt>
+        <dt>{t("stats.incomePerMonth")}</dt>
         <dd class="money">{formatEuro(stats.incomeMonthlyCents)}</dd>
       </div>
       <div>
-        <dt>Average cost per month</dt>
+        <dt>{t("stats.avgCostPerMonth")}</dt>
         <dd class="money">{formatEuro(stats.spendingMonthlyCents)}</dd>
       </div>
       <div class="total">
-        <dt>Saldo per month</dt>
+        <dt>{t("stats.saldoPerMonth")}</dt>
         <dd class="money {sign(stats.saldoMonthlyCents)}">{formatEuroSigned(stats.saldoMonthlyCents)}</dd>
       </div>
     </dl>
     <dl>
       <div>
-        <dt>Income per year</dt>
+        <dt>{t("stats.incomePerYear")}</dt>
         <dd class="money">{formatEuro(stats.incomeYearlyCents)}</dd>
       </div>
       <div>
-        <dt>Cost per year</dt>
+        <dt>{t("stats.costPerYear")}</dt>
         <dd class="money">{formatEuro(stats.spendingYearlyCents)}</dd>
       </div>
       <div class="total">
-        <dt>Saldo per year</dt>
+        <dt>{t("stats.saldoPerYear")}</dt>
         <dd class="money {sign(stats.saldoYearlyCents)}">{formatEuroSigned(stats.saldoYearlyCents)}</dd>
       </div>
     </dl>
   </section>
 
-  <p class="note">
-    Monthly spendings are paid from the bank account. Yearly spendings are saved up month by month on the
-    savings account, so the money is available when they are due.
-  </p>
+  <p class="note">{t("stats.note")}</p>
 </aside>
 
 <style>

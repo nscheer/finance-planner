@@ -5,6 +5,7 @@
    */
   import type { Snippet } from "svelte";
   import Icon from "./Icon.svelte";
+  import { t } from "../lib/i18n.svelte";
 
   let {
     title,
@@ -43,7 +44,7 @@
   <div class="panel" role="dialog" aria-modal="true" aria-label={title} style:width="{width}px" use:autofocus>
     <header>
       <h2>{title}</h2>
-      <button class="icon-btn" type="button" aria-label="Close" onclick={onclose}><Icon name="close" /></button>
+      <button class="icon-btn" type="button" aria-label={t("dialog.close")} onclick={onclose}><Icon name="close" /></button>
     </header>
     <div class="body">
       {@render children()}

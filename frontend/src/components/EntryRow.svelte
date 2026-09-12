@@ -5,7 +5,7 @@
    */
   import Icon from "./Icon.svelte";
   import { Period, type CategoryView, type EntryView, openDialog, confirmDeleteEntry } from "../lib/store.svelte";
-  import { formatEuro } from "../lib/money";
+  import { t, formatEuro } from "../lib/i18n.svelte";
   import { startDrag, endDrag, hoverEntryTarget, isLowerHalf, isDraggedEntry, dnd } from "../lib/dnd.svelte";
 
   let { entry, category, index }: { entry: EntryView; category: CategoryView; index: number } = $props();
@@ -38,16 +38,16 @@
   ondragover={onDragOver}
   ondblclick={edit}
 >
-  <span class="handle" title="Drag to reorder or move to another category"><Icon name="grip" size={14} /></span>
+  <span class="handle" title={t("entry.dragHint")}><Icon name="grip" size={14} /></span>
   <span class="name">{entry.name}</span>
   <span class="period">
-    <span class="badge {monthlyIsMaster ? 'badge-monthly' : 'badge-yearly'}">{monthlyIsMaster ? "monthly" : "yearly"}</span>
+    <span class="badge {monthlyIsMaster ? 'badge-monthly' : 'badge-yearly'}">{t(monthlyIsMaster ? "entry.monthly" : "entry.yearly")}</span>
   </span>
   <span class="money amount" class:master={monthlyIsMaster} class:derived={!monthlyIsMaster}>{formatEuro(entry.monthlyCents)}</span>
   <span class="money amount" class:master={!monthlyIsMaster} class:derived={monthlyIsMaster}>{formatEuro(entry.yearlyCents)}</span>
   <span class="actions">
-    <button class="icon-btn" type="button" title="Edit" aria-label="Edit {entry.name}" onclick={edit}><Icon name="edit" /></button>
-    <button class="icon-btn danger" type="button" title="Delete" aria-label="Delete {entry.name}" onclick={() => confirmDeleteEntry(entry)}><Icon name="trash" /></button>
+    <button class="icon-btn" type="button" title={t("entry.edit")} aria-label="{t('entry.edit')}: {entry.name}" onclick={edit}><Icon name="edit" /></button>
+    <button class="icon-btn danger" type="button" title={t("entry.delete")} aria-label="{t('entry.delete')}: {entry.name}" onclick={() => confirmDeleteEntry(entry)}><Icon name="trash" /></button>
   </span>
 </div>
 

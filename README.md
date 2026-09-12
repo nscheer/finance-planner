@@ -18,6 +18,8 @@ specification is in [project.md](project.md).
   is built on: the sum of monthly spendings (to the bank account) and 1/12 of
   the yearly spendings (to the savings account), plus the saldo per month and
   per year.
+- The UI is available in **English and German**; the dropdown in the top
+  right corner switches the language and the choice is saved in `data.json`.
 - All data is stored in `data.json` next to the binary. The file carries a
   `version` number so the structure can be migrated later. Data can be
   exported to and imported from JSON files (add to or replace current data).
@@ -41,6 +43,17 @@ cd frontend && npm run check   # svelte-check / TypeScript
 Note: `go build`/`go vet` at the module root need `frontend/dist` to exist
 (it is embedded into the binary), so run `wails3 build` once first.
 
+## Adding a language
+
+1. Copy `frontend/src/i18n/en.ts` to `<code>.ts` and translate the values.
+   The `Messages` type makes TypeScript report missing or unknown keys, and
+   the i18n unit test checks that placeholders match.
+2. Register it in the `locales` list in `frontend/src/i18n/index.ts` with its
+   label and the BCP 47 tag used for currency formatting.
+
+Backend errors are returned as codes (`planner/errors.go`) and translated
+in the frontend under the `errors.*` keys.
+
 ## Layout
 
 ```
@@ -50,9 +63,13 @@ planner/
   calc.go                  monthly/yearly conversion, statistics, view models
   store.go                 data.json loading, versioning/migration, atomic saving
   service.go               the service used by the frontend (CRUD, moves, import/export)
+  errors.go                coded errors that the frontend translates
   planner_test.go          tests against project.md
 frontend/src/
-  App.svelte               shell: top bar, blocks, statistics, dialogs
+  App.svelte               shell: top bar, language dropdown, blocks, statistics, dialogs
+  i18n/en.ts, de.ts        language files (en.ts defines the key set)
+  i18n/index.ts            language registry and translation helpers
+  lib/i18n.svelte.ts       reactive t()/plural()/formatEuro() for components
   lib/store.svelte.ts      application state and service calls
   lib/dnd.svelte.ts        drag & drop state and drop handling
   lib/money.ts             € parsing and formatting (cents based)

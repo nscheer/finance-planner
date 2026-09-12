@@ -2,6 +2,7 @@
   /** Popup notifications in the lower right corner. */
   import Icon from "./Icon.svelte";
   import { app, dismissToast } from "../lib/store.svelte";
+  import { t } from "../lib/i18n.svelte";
 </script>
 
 <div class="toasts" aria-live="polite">
@@ -9,7 +10,7 @@
     <div class="toast {toast.kind}">
       <Icon name={toast.kind === "error" ? "alert" : toast.kind === "success" ? "check" : "info"} />
       <span>{toast.message}</span>
-      <button class="icon-btn" type="button" aria-label="Dismiss" onclick={() => dismissToast(toast.id)}><Icon name="close" size={14} /></button>
+      <button class="icon-btn" type="button" aria-label={t("dialog.dismiss")} onclick={() => dismissToast(toast.id)}><Icon name="close" size={14} /></button>
     </div>
   {/each}
 </div>

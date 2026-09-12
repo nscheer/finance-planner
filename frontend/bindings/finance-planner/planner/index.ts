@@ -16,6 +16,7 @@ export type {
     CategoryView,
     EntryView,
     ImportPreview,
+    Settings,
     State,
     Stats
 } from "./models.js";

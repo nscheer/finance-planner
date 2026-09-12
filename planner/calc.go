@@ -59,6 +59,7 @@ type Stats struct {
 type State struct {
 	Version  int            `json:"version"`
 	DataPath string         `json:"dataPath"`
+	Settings Settings       `json:"settings"`
 	Income   []CategoryView `json:"income"`
 	Spending []CategoryView `json:"spending"`
 	Stats    Stats          `json:"stats"`
@@ -112,6 +113,7 @@ func (d *Data) BuildState(dataPath string) State {
 	return State{
 		Version:  d.Version,
 		DataPath: dataPath,
+		Settings: d.Settings,
 		Income:   d.BuildViews(KindIncome),
 		Spending: d.BuildViews(KindSpending),
 		Stats:    d.ComputeStats(),

@@ -3,6 +3,7 @@
   import Modal from "./Modal.svelte";
   import Icon from "./Icon.svelte";
   import { closeDialog } from "../lib/store.svelte";
+  import { t } from "../lib/i18n.svelte";
 
   let { title, message }: { title: string; message: string } = $props();
 </script>
@@ -13,7 +14,7 @@
     <p>{message}</p>
   </div>
   {#snippet footer()}
-    <button class="btn btn-primary" type="button" onclick={closeDialog}>OK</button>
+    <button class="btn btn-primary" type="button" onclick={closeDialog}>{t("dialog.ok")}</button>
   {/snippet}
 </Modal>
 

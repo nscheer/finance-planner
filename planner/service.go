@@ -99,13 +99,13 @@ func (s *Service) AddCategory(kind Kind, name string) (State, error) {
 	return s.mutate(func() error {
 		name = strings.TrimSpace(name)
 		if !kind.Valid() {
-			return fmt.Errorf("unknown kind %q", kind)
+			return newError(ErrKindUnknown, "kind", kind)
 		}
 		if name == "" {
-			return errors.New("the category name must not be empty")
+			return newError(ErrCategoryNameEmpty)
 		}
 		if s.findCategoryByName(kind, name) != nil {
-			return fmt.Errorf("a %s category named %q already exists", kind, name)
+			return newError(ErrCategoryExists, "kind", kind, "name", name)
 		}
 		s.data.Categories = append(s.data.Categories, Category{ID: newID(), Name: name, Kind: kind})
 		return nil
@@ -118,13 +118,13 @@ func (s *Service) RenameCategory(id, name string) (State, error) {
 		name = strings.TrimSpace(name)
 		c := s.data.Category(id)
 		if c == nil {
-			return errors.New("category not found")
+			return newError(ErrCategoryNotFound)
 		}
 		if name == "" {
-			return errors.New("the category name must not be empty")
+			return newError(ErrCategoryNameEmpty)
 		}
 		if other := s.findCategoryByName(c.Kind, name); other != nil && other.ID != id {
-			return fmt.Errorf("a %s category named %q already exists", c.Kind, name)
+			return newError(ErrCategoryExists, "kind", c.Kind, "name", name)
 		}
 		c.Name = name
 		return nil
@@ -136,10 +136,10 @@ func (s *Service) DeleteCategory(id string) (State, error) {
 	return s.mutate(func() error {
 		c := s.data.Category(id)
 		if c == nil {
-			return errors.New("category not found")
+			return newError(ErrCategoryNotFound)
 		}
 		if n := len(s.data.EntriesOf(id)); n > 0 {
-			return fmt.Errorf("the category %q is still used by %d entries and can't be deleted", c.Name, n)
+			return newError(ErrCategoryInUse, "name", c.Name, "count", n)
 		}
 		s.data.Categories = removeCategory(s.data.Categories, id)
 		return nil
@@ -151,7 +151,7 @@ func (s *Service) SetCategoryCollapsed(id string, collapsed bool) (State, error)
 	return s.mutate(func() error {
 		c := s.data.Category(id)
 		if c == nil {
-			return errors.New("category not found")
+			return newError(ErrCategoryNotFound)
 		}
 		c.Collapsed = collapsed
 		return nil
@@ -163,7 +163,7 @@ func (s *Service) SetCategoryCollapsed(id string, collapsed bool) (State, error)
 func (s *Service) SetAllCollapsed(kind Kind, collapsed bool) (State, error) {
 	return s.mutate(func() error {
 		if !kind.Valid() {
-			return fmt.Errorf("unknown kind %q", kind)
+			return newError(ErrKindUnknown, "kind", kind)
 		}
 		for i := range s.data.Categories {
 			if s.data.Categories[i].Kind == kind {
@@ -180,7 +180,7 @@ func (s *Service) MoveCategory(id string, toIndex int) (State, error) {
 	return s.mutate(func() error {
 		c := s.data.Category(id)
 		if c == nil {
-			return errors.New("category not found")
+			return newError(ErrCategoryNotFound)
 		}
 		moved := *c
 		rest := removeCategory(s.data.Categories, id)
@@ -225,7 +225,7 @@ func (s *Service) UpdateEntry(id, categoryID, name string, amountCents int64, pe
 	return s.mutate(func() error {
 		e := s.data.Entry(id)
 		if e == nil {
-			return errors.New("entry not found")
+			return newError(ErrEntryNotFound)
 		}
 		if err := s.validateEntry(categoryID, &name, amountCents, period); err != nil {
 			return err
@@ -244,7 +244,7 @@ func (s *Service) UpdateEntry(id, categoryID, name string, amountCents int64, pe
 func (s *Service) DeleteEntry(id string) (State, error) {
 	return s.mutate(func() error {
 		if s.data.Entry(id) == nil {
-			return errors.New("entry not found")
+			return newError(ErrEntryNotFound)
 		}
 		s.data.Entries = removeEntry(s.data.Entries, id)
 		return nil
@@ -258,15 +258,15 @@ func (s *Service) MoveEntry(id, targetCategoryID string, toIndex int) (State, er
 	return s.mutate(func() error {
 		e := s.data.Entry(id)
 		if e == nil {
-			return errors.New("entry not found")
+			return newError(ErrEntryNotFound)
 		}
 		from := s.data.Category(e.CategoryID)
 		to := s.data.Category(targetCategoryID)
 		if to == nil {
-			return errors.New("target category not found")
+			return newError(ErrCategoryNotFound)
 		}
 		if from != nil && from.Kind != to.Kind {
-			return fmt.Errorf("an %s entry can't be moved into a %s category", from.Kind, to.Kind)
+			return newError(ErrEntryKindMismatch, "from", from.Kind, "to", to.Kind)
 		}
 		moved := *e
 		moved.CategoryID = targetCategoryID
@@ -289,6 +289,19 @@ func (s *Service) MoveEntry(id, targetCategoryID string, toIndex int) (State, er
 	})
 }
 
+// ---- settings -------------------------------------------------------------
+
+// SetLanguage stores the UI language chosen in the language dropdown.
+func (s *Service) SetLanguage(language string) (State, error) {
+	return s.mutate(func() error {
+		if !ValidLanguage(language) {
+			return newError(ErrLanguageInvalid, "language", language)
+		}
+		s.data.Settings.Language = language
+		return nil
+	})
+}
+
 // ---- import / export ------------------------------------------------------
 
 // ExportTo writes the current data to the given path.
@@ -307,7 +320,7 @@ func (s *Service) PreviewImport(path string) (ImportPreview, error) {
 	}
 	d, err := Decode(raw)
 	if err != nil {
-		return ImportPreview{}, fmt.Errorf("%s is not a valid planner file: %w", filepath.Base(path), err)
+		return ImportPreview{}, newError(ErrImportInvalidFile, "file", filepath.Base(path), "detail", err.Error())
 	}
 	return ImportPreview{Path: path, Version: d.Version, Categories: len(d.Categories), Entries: len(d.Entries)}, nil
 }
@@ -322,15 +335,17 @@ func (s *Service) ImportData(path string, mode ImportMode) (State, error) {
 		}
 		imported, err := Decode(raw)
 		if err != nil {
-			return fmt.Errorf("%s is not a valid planner file: %w", filepath.Base(path), err)
+			return newError(ErrImportInvalidFile, "file", filepath.Base(path), "detail", err.Error())
 		}
 		switch mode {
 		case ImportReplace:
+			// The language is a preference of this installation, not of the file.
+			imported.Settings = s.data.Settings
 			s.data = imported
 		case ImportMerge:
 			s.data = Merge(s.data, imported)
 		default:
-			return fmt.Errorf("unknown import mode %q", mode)
+			return newError(ErrImportModeUnknown, "mode", mode)
 		}
 		return nil
 	})
@@ -340,7 +355,7 @@ func (s *Service) ImportData(path string, mode ImportMode) (State, error) {
 // exist in base with the same kind and name (case-insensitive) are reused,
 // all other categories and all entries get fresh ids so that nothing collides.
 func Merge(base, extra Data) Data {
-	out := Data{Version: CurrentVersion}
+	out := Data{Version: CurrentVersion, Settings: base.Settings}
 	out.Categories = append(out.Categories, base.Categories...)
 	out.Entries = append(out.Entries, base.Entries...)
 
@@ -418,16 +433,16 @@ func (s *Service) findCategoryByName(kind Kind, name string) *Category {
 func (s *Service) validateEntry(categoryID string, name *string, amountCents int64, period Period) error {
 	*name = strings.TrimSpace(*name)
 	if s.data.Category(categoryID) == nil {
-		return errors.New("please choose a category")
+		return newError(ErrEntryCategoryRequired)
 	}
 	if *name == "" {
-		return errors.New("the name must not be empty")
+		return newError(ErrEntryNameEmpty)
 	}
 	if amountCents <= 0 {
-		return errors.New("the amount must be greater than 0")
+		return newError(ErrEntryAmountPositive)
 	}
 	if !period.Valid() {
-		return fmt.Errorf("unknown period %q", period)
+		return newError(ErrPeriodUnknown, "period", period)
 	}
 	return nil
 }

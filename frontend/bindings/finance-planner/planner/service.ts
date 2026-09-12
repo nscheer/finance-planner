@@ -130,6 +130,13 @@ export function SetCategoryCollapsed(id: string, collapsed: boolean): $Cancellab
 }
 
 /**
+ * SetLanguage stores the UI language chosen in the language dropdown.
+ */
+export function SetLanguage(language: string): $CancellablePromise<$models.State> {
+    return $Call.ByID(1410414146, language);
+}
+
+/**
  * UpdateEntry changes all editable fields of an entry. When the category
  * changes, the entry is appended at the end of the new category.
  */

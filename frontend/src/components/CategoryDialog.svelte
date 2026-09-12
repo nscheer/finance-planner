@@ -8,11 +8,11 @@
     apply,
     closeDialog,
     errorMessage,
-    kindLabel,
+    kindKey,
     notify,
     openDialog,
   } from "../lib/store.svelte";
-
+  import { t } from "../lib/i18n.svelte";
   import { untrack } from "svelte";
 
   let { kind, category, returnToEntry = false }: { kind: Kind; category?: CategoryView; returnToEntry?: boolean } = $props();
@@ -32,10 +32,10 @@
     try {
       if (initial) {
         await apply(Service.RenameCategory(initial.id, name));
-        notify("success", `Renamed category to "${name.trim()}".`);
+        notify("success", t("toast.categoryRenamed", { name: name.trim() }));
       } else {
         await apply(Service.AddCategory(kind, name));
-        notify("success", `Added ${kindLabel(kind).toLowerCase()} category "${name.trim()}".`);
+        notify("success", t(kindKey("toast.categoryAdded", kind), { name: name.trim() }));
       }
       if (returnToEntry) {
         openDialog({ type: "entry", kind });
@@ -50,18 +50,18 @@
   }
 </script>
 
-<Modal title={isEdit ? "Rename category" : `New ${kindLabel(kind).toLowerCase()} category`} width={420} onclose={closeDialog}>
+<Modal title={isEdit ? t("categoryDialog.titleRename") : t(kindKey("categoryDialog.titleNew", kind))} width={420} onclose={closeDialog}>
   <form id="category-form" onsubmit={submit}>
     {#if error}<p class="form-error">{error}</p>{/if}
     <div class="field">
-      <label for="category-name">Name</label>
-      <input id="category-name" class="input" type="text" bind:value={name} placeholder="e.g. Housing" autocomplete="off" />
+      <label for="category-name">{t("categoryDialog.name")}</label>
+      <input id="category-name" class="input" type="text" bind:value={name} placeholder={t("categoryDialog.namePlaceholder")} autocomplete="off" />
     </div>
   </form>
   {#snippet footer()}
-    <button class="btn" type="button" onclick={closeDialog}>Cancel</button>
+    <button class="btn" type="button" onclick={closeDialog}>{t("dialog.cancel")}</button>
     <button class="btn btn-primary" type="submit" form="category-form" disabled={working}>
-      {isEdit ? "Save" : "Add category"}
+      {isEdit ? t("dialog.save") : t("categoryDialog.submit")}
     </button>
   {/snippet}
 </Modal>

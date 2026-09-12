@@ -14,6 +14,10 @@ import {
   type ImportPreview,
   type Stats,
 } from "../../bindings/finance-planner/planner";
+import type { MessageKey } from "../i18n";
+
+import { hasKey, type Params } from "../i18n";
+import { t, plural, applyLocale } from "./i18n.svelte";
 
 export { Service, Kind, Period, ImportMode };
 export type { State, CategoryView, EntryView, ImportPreview, Stats };
@@ -77,11 +81,39 @@ export function alert(title: string, message: string): void {
   app.dialog = { type: "alert", title, message };
 }
 
-/** Extracts a readable message from an error thrown by a binding call. */
+/**
+ * Turns an error thrown by a binding call into a message in the current
+ * language. Coded backend errors (planner/errors.go) arrive as `cause`
+ * = {code, params} and are looked up under "errors.<code>"; anything else
+ * is shown as-is.
+ */
 export function errorMessage(err: unknown): string {
+  const cause = (err as { cause?: unknown } | null)?.cause;
+  if (cause && typeof cause === "object" && "code" in cause) {
+    const { code, params = {} } = cause as { code: string; params?: Record<string, unknown> };
+    return translateError(code, params);
+  }
   if (err instanceof Error) return err.message;
   if (typeof err === "string") return err;
   return String(err);
+}
+
+function translateError(code: string, raw: Record<string, unknown>): string {
+  const params: Params = {};
+  for (const [k, v] of Object.entries(raw)) {
+    // Kinds are shown in the user's language, e.g. "spending" -> "Ausgaben".
+    if ((k === "kind" || k === "from" || k === "to") && hasKey(`kindInline.${v}`)) {
+      params[k] = t(`kindInline.${v}` as "kindInline.income" | "kindInline.spending");
+    } else {
+      params[k] = typeof v === "number" ? v : String(v);
+    }
+  }
+  const key = `errors.${code}`;
+  if (hasKey(`${key}.one`) && typeof params.count === "number") {
+    return plural(key as "errors.category.inUse", params.count, params);
+  }
+  if (hasKey(key)) return t(key, params);
+  return code;
 }
 
 // ---- service calls -------------------------------------------------------------
@@ -102,19 +134,22 @@ export async function apply(call: Promise<State>): Promise<State> {
 }
 
 /** Like apply(), but reports errors in an alert modal instead of throwing. */
-export async function applyOrAlert(call: Promise<State>, title = "Something went wrong"): Promise<boolean> {
+export async function applyOrAlert(call: Promise<State>, titleKey: MessageKey = "alert.generic"): Promise<boolean> {
   try {
     await apply(call);
     return true;
   } catch (err) {
-    alert(title, errorMessage(err));
+    alert(t(titleKey), errorMessage(err));
     return false;
   }
 }
 
 export async function loadState(): Promise<void> {
   try {
-    app.state = await Service.GetState();
+    const state = await Service.GetState();
+    // Apply the saved language before rendering the data.
+    applyLocale(state.settings?.language);
+    app.state = state;
     app.loadError = "";
   } catch (err) {
     app.loadError = errorMessage(err);
@@ -129,7 +164,12 @@ export function categoriesOf(kind: Kind): CategoryView[] {
 }
 
 export function kindLabel(kind: Kind): string {
-  return kind === Kind.KindIncome ? "Income" : "Spending";
+  return t(kind === Kind.KindIncome ? "kind.income" : "kind.spending");
+}
+
+/** Helper for keys that exist per kind, e.g. "block.empty" -> "block.empty.income". */
+export function kindKey<T extends string>(base: T, kind: Kind): `${T}.income` | `${T}.spending` {
+  return `${base}.${kind === Kind.KindIncome ? "income" : "spending"}`;
 }
 
 // ---- actions used by several components ----------------------------------------
@@ -146,12 +186,12 @@ export function setAllCollapsed(kind: Kind, collapsed: boolean): Promise<boolean
 export function confirmDeleteEntry(entry: EntryView): void {
   openDialog({
     type: "confirm",
-    title: "Delete entry",
-    message: `Delete "${entry.name}"? This can't be undone.`,
-    confirmLabel: "Delete",
+    title: t("confirm.deleteEntry.title"),
+    message: t("confirm.deleteEntry.message", { name: entry.name }),
+    confirmLabel: t("dialog.delete"),
     onConfirm: async () => {
-      if (await applyOrAlert(Service.DeleteEntry(entry.id), "Delete failed")) {
-        notify("success", `Deleted "${entry.name}".`);
+      if (await applyOrAlert(Service.DeleteEntry(entry.id), "alert.deleteFailed")) {
+        notify("success", t("toast.entryDeleted", { name: entry.name }));
       }
     },
   });
@@ -160,21 +200,17 @@ export function confirmDeleteEntry(entry: EntryView): void {
 export function confirmDeleteCategory(category: CategoryView): void {
   const count = category.entries?.length ?? 0;
   if (count > 0) {
-    alert(
-      "Category in use",
-      `"${category.name}" still contains ${count} ${count === 1 ? "entry" : "entries"}. ` +
-        "Move or delete them first, then delete the category.",
-    );
+    alert(t("confirm.categoryInUse.title"), plural("confirm.categoryInUse.message", count, { name: category.name }));
     return;
   }
   openDialog({
     type: "confirm",
-    title: "Delete category",
-    message: `Delete the category "${category.name}"?`,
-    confirmLabel: "Delete",
+    title: t("confirm.deleteCategory.title"),
+    message: t("confirm.deleteCategory.message", { name: category.name }),
+    confirmLabel: t("dialog.delete"),
     onConfirm: async () => {
-      if (await applyOrAlert(Service.DeleteCategory(category.id), "Delete failed")) {
-        notify("success", `Deleted category "${category.name}".`);
+      if (await applyOrAlert(Service.DeleteCategory(category.id), "alert.deleteFailed")) {
+        notify("success", t("toast.categoryDeleted", { name: category.name }));
       }
     },
   });
@@ -183,9 +219,9 @@ export function confirmDeleteCategory(category: CategoryView): void {
 export async function exportData(): Promise<void> {
   try {
     const path = await Service.ExportData();
-    if (path) notify("success", `Exported to ${path}`);
+    if (path) notify("success", t("toast.exported", { path }));
   } catch (err) {
-    alert("Export failed", errorMessage(err));
+    alert(t("alert.exportFailed"), errorMessage(err));
   }
 }
 
@@ -195,12 +231,12 @@ export async function startImport(): Promise<void> {
     if (!preview.path) return; // cancelled
     openDialog({ type: "import", preview });
   } catch (err) {
-    alert("Import failed", errorMessage(err));
+    alert(t("alert.importFailed"), errorMessage(err));
   }
 }
 
 export async function importData(path: string, mode: ImportMode): Promise<void> {
-  if (await applyOrAlert(Service.ImportData(path, mode), "Import failed")) {
-    notify("success", mode === ImportMode.ImportReplace ? "Data replaced by import." : "Imported data added.");
+  if (await applyOrAlert(Service.ImportData(path, mode), "alert.importFailed")) {
+    notify("success", t(mode === ImportMode.ImportReplace ? "toast.importedReplace" : "toast.importedMerge"));
   }
 }

@@ -1,8 +1,8 @@
 <script lang="ts">
   /**
-   * Application shell: top bar with global actions, the two blocks (income,
-   * spending) on the left, the statistics box on the right, and the currently
-   * open modal dialog.
+   * Application shell: top bar with global actions and the language
+   * dropdown, the two blocks (income, spending) on the left, the statistics
+   * box on the right, and the currently open modal dialog.
    */
   import { onMount } from "svelte";
   import Icon from "./components/Icon.svelte";
@@ -14,8 +14,13 @@
   import ConfirmDialog from "./components/ConfirmDialog.svelte";
   import AlertDialog from "./components/AlertDialog.svelte";
   import ImportDialog from "./components/ImportDialog.svelte";
-  import { app, Kind, loadState, exportData, startImport } from "./lib/store.svelte";
+  import { app, Kind, loadState, exportData, startImport, alert, errorMessage } from "./lib/store.svelte";
+  import { i18n, t, locales, setLocale, type LocaleCode } from "./lib/i18n.svelte";
   import { dnd, endDrag } from "./lib/dnd.svelte";
+
+  onMount(() => {
+    loadState();
+  });
 
   /**
    * Runs last in the bubbling chain: if no row/category accepted the
@@ -26,9 +31,11 @@
     if (!event.defaultPrevented && dnd.target) dnd.target = null;
   }
 
-  onMount(() => {
-    loadState();
-  });
+  async function onLanguageChange(event: Event) {
+    const code = (event.currentTarget as HTMLSelectElement).value as LocaleCode;
+    const err = await setLocale(code);
+    if (err) alert(t("alert.generic"), errorMessage(err));
+  }
 </script>
 
 <!-- A drag that ends outside any drop zone must clear the indicators. -->
@@ -37,23 +44,32 @@
 <div class="app">
   <header class="topbar">
     <div class="brand">
-      <h1>Finance Planner</h1>
+      <h1>{t("app.title")}</h1>
       {#if app.state}
         <span class="path" title={app.state.dataPath}>{app.state.dataPath}</span>
       {/if}
     </div>
     <div class="actions">
-      <button class="btn btn-sm" type="button" onclick={startImport}><Icon name="upload" size={14} /> Import</button>
-      <button class="btn btn-sm" type="button" onclick={exportData}><Icon name="download" size={14} /> Export</button>
+      <button class="btn btn-sm" type="button" onclick={startImport}><Icon name="upload" size={14} /> {t("app.import")}</button>
+      <button class="btn btn-sm" type="button" onclick={exportData}><Icon name="download" size={14} /> {t("app.export")}</button>
+      <span class="divider"></span>
+      <label class="language" title={t("app.language")}>
+        <Icon name="globe" size={14} />
+        <select class="select select-sm" value={i18n.locale.code} onchange={onLanguageChange} aria-label={t("app.language")}>
+          {#each locales as locale (locale.code)}
+            <option value={locale.code}>{locale.label}</option>
+          {/each}
+        </select>
+      </label>
     </div>
   </header>
 
   <main class="content">
     {#if app.loadError}
       <div class="load-error">
-        <strong>Could not load the data file.</strong>
+        <strong>{t("app.loadError")}</strong>
         <p>{app.loadError}</p>
-        <button class="btn" type="button" onclick={loadState}>Retry</button>
+        <button class="btn" type="button" onclick={loadState}>{t("app.retry")}</button>
       </div>
     {:else if app.state}
       <div class="tables">
@@ -62,7 +78,7 @@
       </div>
       <StatsPanel stats={app.state.stats} />
     {:else}
-      <p class="muted">Loading…</p>
+      <p class="muted">{t("app.loading")}</p>
     {/if}
   </main>
 </div>
@@ -127,6 +143,24 @@
     align-items: center;
     gap: 8px;
     flex-shrink: 0;
+  }
+  .divider {
+    width: 1px;
+    height: 22px;
+    margin: 0 4px;
+    background: var(--border);
+  }
+  .language {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-2);
+  }
+  .select-sm {
+    width: auto;
+    padding: 4px 8px;
+    font-size: 13px;
+    color: var(--text);
   }
   .content {
     flex: 1;

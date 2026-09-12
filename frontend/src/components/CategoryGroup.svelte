@@ -7,7 +7,7 @@
   import Icon from "./Icon.svelte";
   import EntryRow from "./EntryRow.svelte";
   import { type CategoryView, openDialog, setCollapsed, confirmDeleteCategory } from "../lib/store.svelte";
-  import { formatEuro } from "../lib/money";
+  import { t, formatEuro } from "../lib/i18n.svelte";
   import {
     dnd,
     startDrag,
@@ -59,7 +59,7 @@
 >
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <header class="head" draggable="true" ondragstart={onDragStart} ondragend={endDrag}>
-    <span class="handle" title="Drag to reorder categories"><Icon name="grip" size={14} /></span>
+    <span class="handle" title={t("category.dragHint")}><Icon name="grip" size={14} /></span>
     <button class="title" type="button" onclick={toggle} aria-expanded={!category.collapsed}>
       <span class="chevron"><Icon name="chevron" size={14} /></span>
       <span class="name">{category.name}</span>
@@ -69,9 +69,9 @@
     <span class="money subtotal">{formatEuro(category.monthlyCents)}</span>
     <span class="money subtotal">{formatEuro(category.yearlyCents)}</span>
     <span class="actions">
-      <button class="icon-btn" type="button" title="Add entry" aria-label="Add entry to {category.name}" onclick={() => openDialog({ type: "entry", kind: category.kind, categoryId: category.id })}><Icon name="plus" /></button>
-      <button class="icon-btn" type="button" title="Rename" aria-label="Rename {category.name}" onclick={() => openDialog({ type: "category", kind: category.kind, category })}><Icon name="edit" /></button>
-      <button class="icon-btn danger" type="button" title={count > 0 ? "Category is in use" : "Delete"} aria-label="Delete {category.name}" onclick={() => confirmDeleteCategory(category)}><Icon name="trash" /></button>
+      <button class="icon-btn" type="button" title={t("category.addEntry")} aria-label="{t('category.addEntry')}: {category.name}" onclick={() => openDialog({ type: "entry", kind: category.kind, categoryId: category.id })}><Icon name="plus" /></button>
+      <button class="icon-btn" type="button" title={t("category.rename")} aria-label="{t('category.rename')}: {category.name}" onclick={() => openDialog({ type: "category", kind: category.kind, category })}><Icon name="edit" /></button>
+      <button class="icon-btn danger" type="button" title={count > 0 ? t("category.inUse") : t("category.delete")} aria-label="{t('category.delete')}: {category.name}" onclick={() => confirmDeleteCategory(category)}><Icon name="trash" /></button>
     </span>
   </header>
 
@@ -84,12 +84,12 @@
       <div class="drop-line" class:active={isEntryTarget(category.id, count)}></div>
       {#if count === 0}
         <div class="empty" class:active={isEntryTarget(category.id, 0)}>
-          {isCategoryHighlighted(category.id) ? "Drop here" : "No entries yet"}
+          {isCategoryHighlighted(category.id) ? t("category.dropHere") : t("category.noEntries")}
         </div>
       {/if}
     </div>
   {:else if isCategoryHighlighted(category.id)}
-    <div class="drop-collapsed">Drop to add to "{category.name}"</div>
+    <div class="drop-collapsed">{t("category.dropInto", { name: category.name })}</div>
   {/if}
 </section>
 

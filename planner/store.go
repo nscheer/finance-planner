@@ -61,6 +61,9 @@ func Decode(raw []byte) (Data, error) {
 	if d.Entries == nil {
 		d.Entries = []Entry{}
 	}
+	if d.Settings.Language == "" {
+		d.Settings.Language = DefaultLanguage
+	}
 	d.Version = CurrentVersion
 	if err := d.Validate(); err != nil {
 		return Data{}, err
@@ -87,6 +90,21 @@ func migrate(raw []byte, version int) ([]byte, error) {
 				return nil, err
 			}
 			version = 1
+		case 1:
+			// Version 2 added the "settings" object.
+			var m map[string]json.RawMessage
+			if err := json.Unmarshal(raw, &m); err != nil {
+				return nil, fmt.Errorf("invalid JSON: %w", err)
+			}
+			if _, ok := m["settings"]; !ok {
+				m["settings"] = json.RawMessage(`{"language":"` + DefaultLanguage + `"}`)
+			}
+			m["version"] = json.RawMessage("2")
+			var err error
+			if raw, err = json.Marshal(m); err != nil {
+				return nil, err
+			}
+			version = 2
 		default:
 			return nil, fmt.Errorf("no migration from version %d", version)
 		}

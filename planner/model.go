@@ -15,7 +15,15 @@ import (
 // CurrentVersion is the version of the data.json structure written by this
 // build. Bump it whenever the structure changes and add a migration step in
 // migrate() (store.go).
-const CurrentVersion = 1
+//
+// History:
+//
+//	1 - initial structure
+//	2 - added "settings" (language)
+const CurrentVersion = 2
+
+// DefaultLanguage is used when no language was chosen yet.
+const DefaultLanguage = "en"
 
 // Kind distinguishes income from spending. Categories belong to exactly one
 // kind, entries inherit the kind of their category.
@@ -56,16 +64,51 @@ type Entry struct {
 	Period      Period `json:"period"`
 }
 
+// Settings holds user preferences that are stored together with the data.
+type Settings struct {
+	// Language is the UI language code, e.g. "en" or "de".
+	Language string `json:"language"`
+}
+
 // Data is the complete persisted state. It is serialised 1:1 to data.json.
 type Data struct {
 	Version    int        `json:"version"`
+	Settings   Settings   `json:"settings"`
 	Categories []Category `json:"categories"`
 	Entries    []Entry    `json:"entries"`
 }
 
 // NewData returns an empty data set of the current version.
 func NewData() Data {
-	return Data{Version: CurrentVersion, Categories: []Category{}, Entries: []Entry{}}
+	return Data{
+		Version:    CurrentVersion,
+		Settings:   Settings{Language: DefaultLanguage},
+		Categories: []Category{},
+		Entries:    []Entry{},
+	}
+}
+
+// ValidLanguage reports whether s looks like a language code ("en", "de",
+// "pt-BR"). The list of actually supported languages lives in the frontend.
+func ValidLanguage(s string) bool {
+	if len(s) == 2 {
+		return isLower(s)
+	}
+	if len(s) == 5 && s[2] == '-' {
+		return isLower(s[:2]) && strings.ToUpper(s[3:]) == s[3:] && isLetters(s[3:])
+	}
+	return false
+}
+
+func isLower(s string) bool { return isLetters(s) && strings.ToLower(s) == s }
+
+func isLetters(s string) bool {
+	for _, r := range s {
+		if (r < 'a' || r > 'z') && (r < 'A' || r > 'Z') {
+			return false
+		}
+	}
+	return s != ""
 }
 
 // newID returns a random, URL-safe identifier.
@@ -143,6 +186,9 @@ func (d *Data) Validate() error {
 		if !c.Kind.Valid() {
 			return fmt.Errorf("category %q has unknown kind %q", c.Name, c.Kind)
 		}
+	}
+	if !ValidLanguage(d.Settings.Language) {
+		return fmt.Errorf("invalid language %q in settings", d.Settings.Language)
 	}
 	entryIDs := map[string]bool{}
 	for _, e := range d.Entries {

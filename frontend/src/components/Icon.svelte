@@ -4,7 +4,7 @@
 
   export type IconName =
     | "plus" | "edit" | "trash" | "chevron" | "grip" | "download" | "upload"
-    | "expand" | "collapse" | "close" | "info" | "check" | "alert";
+    | "expand" | "collapse" | "close" | "info" | "check" | "alert" | "globe";
 
   const paths: Record<IconName, string> = {
     plus: "M12 5v14M5 12h14",
@@ -20,6 +20,7 @@
     info: "M12 16v-4M12 8h.01M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z",
     check: "m5 12 5 5L20 7",
     alert: "M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z",
+    globe: "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20ZM2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20",
   };
 </script>
 

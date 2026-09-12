@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { parseEuro, centsToInput, formatEuro } from "./money.ts";
+import { parseEuro, centsToInput, formatEuroIn, formatEuroSignedIn } from "./money.ts";
 
 test("parses plain and decimal amounts with comma or dot", () => {
   assert.equal(parseEuro("12"), 1200);
@@ -40,8 +40,12 @@ test("round trip between input text and cents", () => {
   assert.equal(centsToInput(5), "0,05");
 });
 
-test("formats as German euro amounts", () => {
+test("formats euro amounts per locale", () => {
   // Intl uses a non-breaking space before the € sign.
-  assert.equal(formatEuro(123456).replace(/ /g, " "), "1.234,56 €");
-  assert.equal(formatEuro(0).replace(/ /g, " "), "0,00 €");
+  const nbsp = (s: string) => s.replace(/\u00a0/g, " ");
+  assert.equal(nbsp(formatEuroIn(123456, "de-DE")), "1.234,56 €");
+  assert.equal(nbsp(formatEuroIn(0, "de-DE")), "0,00 €");
+  assert.equal(formatEuroIn(123456, "en-IE"), "€1,234.56");
+  assert.equal(nbsp(formatEuroSignedIn(-350, "de-DE")), "-3,50 €");
+  assert.equal(nbsp(formatEuroSignedIn(350, "de-DE")), "+3,50 €");
 });

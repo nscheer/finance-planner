@@ -4,6 +4,7 @@ package planner
 
 import (
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -463,6 +464,80 @@ func TestDataFileIsCreatedOnStartup(t *testing.T) {
 	}
 }
 
+// "The application should be multi-lingual ... The choice should be saved."
+func TestLanguageSetting(t *testing.T) {
+	s, path := newTestService(t)
+	if s.GetState().Settings.Language != DefaultLanguage {
+		t.Fatalf("default language = %q", s.GetState().Settings.Language)
+	}
+	st, err := s.SetLanguage("de")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if st.Settings.Language != "de" {
+		t.Fatalf("language = %q, want de", st.Settings.Language)
+	}
+	for _, bad := range []string{"", "german", "DE", "d1", "de_DE"} {
+		if _, err := s.SetLanguage(bad); err == nil {
+			t.Errorf("expected error for language %q", bad)
+		}
+	}
+	if _, err := s.SetLanguage("pt-BR"); err != nil {
+		t.Errorf("region codes should be accepted: %v", err)
+	}
+	s.SetLanguage("de")
+
+	reloaded, err := NewService(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if reloaded.GetState().Settings.Language != "de" {
+		t.Fatal("language choice not persisted")
+	}
+
+	// Importing a file does not change the language of this installation.
+	other, _ := newTestService(t)
+	exportPath := filepath.Join(t.TempDir(), "x.json")
+	other.ExportTo(exportPath)
+	for _, mode := range []ImportMode{ImportMerge, ImportReplace} {
+		st, err := reloaded.ImportData(exportPath, mode)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if st.Settings.Language != "de" {
+			t.Fatalf("import (%s) changed the language to %q", mode, st.Settings.Language)
+		}
+	}
+}
+
+// Errors carry a stable code and parameters so the UI can translate them.
+func TestErrorsAreCoded(t *testing.T) {
+	s, _ := newTestService(t)
+	cat := mustCategory(t, s, KindSpending, "Housing")
+	mustEntry(t, s, cat, "Rent", 1, PeriodMonthly)
+
+	_, err := s.DeleteCategory(cat.ID)
+	var coded *Error
+	if !errors.As(err, &coded) {
+		t.Fatalf("expected coded error, got %T: %v", err, err)
+	}
+	if coded.Code != ErrCategoryInUse || coded.Params["name"] != "Housing" || coded.Params["count"] != 1 {
+		t.Fatalf("unexpected error: %+v", coded)
+	}
+
+	raw := MarshalError(err)
+	var decoded map[string]any
+	if err := json.Unmarshal(raw, &decoded); err != nil {
+		t.Fatalf("MarshalError produced invalid JSON: %v", err)
+	}
+	if decoded["code"] != ErrCategoryInUse {
+		t.Fatalf("marshalled code = %v", decoded["code"])
+	}
+	if MarshalError(errors.New("plain")) != nil {
+		t.Fatal("plain errors must fall back to the default handler")
+	}
+}
+
 func TestLoadMissingFileGivesEmptyData(t *testing.T) {
 	d, err := LoadFile(filepath.Join(t.TempDir(), "nope.json"))
 	if err != nil {
@@ -481,8 +556,17 @@ func TestDecodeVersions(t *testing.T) {
 	if err != nil {
 		t.Fatalf("migrating version 0: %v", err)
 	}
-	if d.Version != CurrentVersion || len(d.Categories) != 1 {
+	if d.Version != CurrentVersion || len(d.Categories) != 1 || d.Settings.Language != DefaultLanguage {
 		t.Fatalf("migration result wrong: %+v", d)
+	}
+
+	v1 := []byte(`{"version":1,"categories":[{"id":"c1","name":"X","kind":"income"}],"entries":[{"id":"e1","categoryId":"c1","name":"Y","amountCents":100,"period":"yearly"}]}`)
+	d, err = Decode(v1)
+	if err != nil {
+		t.Fatalf("migrating version 1: %v", err)
+	}
+	if d.Version != 2 || d.Settings.Language != DefaultLanguage || len(d.Entries) != 1 {
+		t.Fatalf("v1 migration result wrong: %+v", d)
 	}
 
 	newer := []byte(`{"version":999,"categories":[],"entries":[]}`)

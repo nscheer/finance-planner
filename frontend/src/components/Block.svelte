@@ -5,8 +5,8 @@
    */
   import Icon from "./Icon.svelte";
   import CategoryGroup from "./CategoryGroup.svelte";
-  import { Kind, type CategoryView, kindLabel, openDialog, setAllCollapsed } from "../lib/store.svelte";
-  import { formatEuro } from "../lib/money";
+  import { Kind, type CategoryView, kindLabel, kindKey, openDialog, setAllCollapsed } from "../lib/store.svelte";
+  import { t, formatEuro } from "../lib/i18n.svelte";
   import { dnd, drop, hoverCategoryTarget, isCategoryTarget } from "../lib/dnd.svelte";
 
   let { kind, categories }: { kind: Kind; categories: CategoryView[] } = $props();
@@ -27,21 +27,21 @@
       <span class="dot"></span>
       <h2>{kindLabel(kind)}</h2>
       <span class="totals">
-        <span class="money">{formatEuro(monthly)}</span> / month
+        <span class="money">{formatEuro(monthly)}</span> {t("block.perMonth")}
         <span class="sep">·</span>
-        <span class="money">{formatEuro(yearly)}</span> / year
+        <span class="money">{formatEuro(yearly)}</span> {t("block.perYear")}
       </span>
     </div>
     <div class="buttons">
-      <button class="btn btn-sm" type="button" title="Expand all categories" disabled={categories.length === 0} onclick={() => setAllCollapsed(kind, false)}>
-        <Icon name="expand" size={14} /> Expand all
+      <button class="btn btn-sm" type="button" disabled={categories.length === 0} onclick={() => setAllCollapsed(kind, false)}>
+        <Icon name="expand" size={14} /> {t("block.expandAll")}
       </button>
-      <button class="btn btn-sm" type="button" title="Collapse all categories" disabled={categories.length === 0} onclick={() => setAllCollapsed(kind, true)}>
-        <Icon name="collapse" size={14} /> Collapse all
+      <button class="btn btn-sm" type="button" disabled={categories.length === 0} onclick={() => setAllCollapsed(kind, true)}>
+        <Icon name="collapse" size={14} /> {t("block.collapseAll")}
       </button>
       <span class="divider"></span>
       <button class="btn btn-sm" type="button" onclick={() => openDialog({ type: "category", kind })}>
-        <Icon name="plus" size={14} /> Category
+        <Icon name="plus" size={14} /> {t("block.addCategory")}
       </button>
       <button class="btn btn-sm {isIncome ? 'btn-income' : 'btn-spending'}" type="button" onclick={() => openDialog({ type: "entry", kind })}>
         <Icon name="plus" size={14} /> {kindLabel(kind)}
@@ -51,18 +51,16 @@
 
   <div class="columns" role="row">
     <span></span>
-    <span>Name</span>
-    <span>Entered</span>
-    <span class="right">Per month</span>
-    <span class="right">Per year</span>
+    <span>{t("block.column.name")}</span>
+    <span>{t("block.column.entered")}</span>
+    <span class="right">{t("block.column.perMonth")}</span>
+    <span class="right">{t("block.column.perYear")}</span>
     <span></span>
   </div>
 
   <div class="categories">
     {#if categories.length === 0}
-      <div class="empty">
-        No {kindLabel(kind).toLowerCase()} categories yet. Add a category first, then add entries to it.
-      </div>
+      <div class="empty">{t(kindKey("block.empty", kind))}</div>
     {/if}
     {#each categories as category, i (category.id)}
       <div class="cat-drop" class:active={isCategoryTarget(kind, i)}></div>

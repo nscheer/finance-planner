@@ -99,11 +99,22 @@ export enum Period {
 };
 
 /**
+ * Settings holds user preferences that are stored together with the data.
+ */
+export interface Settings {
+    /**
+     * Language is the UI language code, e.g. "en" or "de".
+     */
+    "language": string;
+}
+
+/**
  * State is everything the frontend needs to render the main view.
  */
 export interface State {
     "version": number;
     "dataPath": string;
+    "settings": Settings;
     "income": CategoryView[] | null;
     "spending": CategoryView[] | null;
     "stats": Stats;

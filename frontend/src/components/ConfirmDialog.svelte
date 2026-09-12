@@ -2,6 +2,7 @@
   /** Confirmation modal for destructive actions (delete). */
   import Modal from "./Modal.svelte";
   import { closeDialog } from "../lib/store.svelte";
+  import { t } from "../lib/i18n.svelte";
 
   let {
     title,
@@ -26,7 +27,7 @@
 <Modal {title} width={420} onclose={closeDialog}>
   <p class="message">{message}</p>
   {#snippet footer()}
-    <button class="btn" type="button" onclick={closeDialog}>Cancel</button>
+    <button class="btn" type="button" onclick={closeDialog}>{t("dialog.cancel")}</button>
     <button class="btn btn-danger" type="button" disabled={working} onclick={confirm}>{confirmLabel}</button>
   {/snippet}
 </Modal>

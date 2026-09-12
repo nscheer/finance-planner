@@ -3,21 +3,30 @@
  * Go backend) and only formatted for display.
  */
 
-const formatter = new Intl.NumberFormat("de-DE", {
-  style: "currency",
-  currency: "EUR",
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
+const formatters = new Map<string, Intl.NumberFormat>();
 
-/** Formats cents as "1.234,56 €". */
-export function formatEuro(cents: number): string {
-  return formatter.format(cents / 100);
+function formatter(locale: string): Intl.NumberFormat {
+  let f = formatters.get(locale);
+  if (!f) {
+    f = new Intl.NumberFormat(locale, {
+      style: "currency",
+      currency: "EUR",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+    formatters.set(locale, f);
+  }
+  return f;
+}
+
+/** Formats cents as a € amount in the given locale, e.g. "1.234,56 €" (de-DE). */
+export function formatEuroIn(cents: number, locale: string): string {
+  return formatter(locale).format(cents / 100);
 }
 
 /** Formats cents with an explicit sign, e.g. "+12,00 €" / "-3,50 €". */
-export function formatEuroSigned(cents: number): string {
-  const s = formatEuro(Math.abs(cents));
+export function formatEuroSignedIn(cents: number, locale: string): string {
+  const s = formatEuroIn(Math.abs(cents), locale);
   return cents < 0 ? `-${s}` : `+${s}`;
 }
 

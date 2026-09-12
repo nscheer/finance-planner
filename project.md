@@ -71,6 +71,11 @@ Create test cases against the specification in this file.
 Every data entered should be in a modal dialog. When deleting ask for confirmation, also in a modal.
 Notifications can be in a modal as well or just as popups, depending on severity.
 
+### Language
+The application should be multi-lingual. It should support German and English. Language can be selected via a dropdown in one of the corners of the app.
+The choice should be saved.
+Use language files and language keys in a way that makes this easy to use and professional, so that changes can be done easily and it is easy to add a language later.
+
 ## General guideline
 
 Read these instruction in full - if there are question, ask them first. When you start to implement, do not ask any question until finished.

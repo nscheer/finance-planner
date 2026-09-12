@@ -2,6 +2,7 @@
   /** Asks whether an import should be added to or replace the current data. */
   import Modal from "./Modal.svelte";
   import { ImportMode, type ImportPreview, closeDialog, importData } from "../lib/store.svelte";
+  import { t, plural } from "../lib/i18n.svelte";
 
   let { preview }: { preview: ImportPreview } = $props();
   let working = $state(false);
@@ -14,27 +15,31 @@
   }
 
   const fileName = $derived(preview.path.split(/[\\/]/).pop() ?? preview.path);
+  const summary = $derived(
+    t("importDialog.summary", {
+      file: fileName,
+      categories: plural("importDialog.categories", preview.categories),
+      entries: plural("importDialog.entries", preview.entries),
+      version: preview.version,
+    }),
+  );
 </script>
 
-<Modal title="Import data" width={480} onclose={closeDialog}>
-  <p class="intro">
-    <strong>{fileName}</strong> contains {preview.categories}
-    {preview.categories === 1 ? "category" : "categories"} and {preview.entries}
-    {preview.entries === 1 ? "entry" : "entries"} (file version {preview.version}).
-  </p>
-  <p class="question">How should the data be imported?</p>
+<Modal title={t("importDialog.title")} width={480} onclose={closeDialog}>
+  <p class="intro">{summary}</p>
+  <p class="question">{t("importDialog.question")}</p>
   <div class="options">
     <button class="option" type="button" disabled={working} onclick={() => run(ImportMode.ImportMerge)}>
-      <strong>Add to current data</strong>
-      <span>Keeps everything you have. Categories with the same name are reused.</span>
+      <strong>{t("importDialog.merge.title")}</strong>
+      <span>{t("importDialog.merge.description")}</span>
     </button>
     <button class="option danger" type="button" disabled={working} onclick={() => run(ImportMode.ImportReplace)}>
-      <strong>Replace current data</strong>
-      <span>Deletes all current categories and entries and uses the imported file instead.</span>
+      <strong>{t("importDialog.replace.title")}</strong>
+      <span>{t("importDialog.replace.description")}</span>
     </button>
   </div>
   {#snippet footer()}
-    <button class="btn" type="button" onclick={closeDialog}>Cancel</button>
+    <button class="btn" type="button" onclick={closeDialog}>{t("dialog.cancel")}</button>
   {/snippet}
 </Modal>
 

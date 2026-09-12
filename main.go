@@ -28,7 +28,10 @@ func main() {
 		Name:        "Finance Planner",
 		Description: "Plan monthly and yearly income and spendings",
 		Services: []application.Service{
-			application.NewService(service),
+			application.NewServiceWithOptions(service, application.ServiceOptions{
+				// Send coded errors as JSON so the frontend can translate them.
+				MarshalError: planner.MarshalError,
+			}),
 		},
 		Assets: application.AssetOptions{
 			Handler: application.AssetFileServerFS(assets),
