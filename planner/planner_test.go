@@ -464,6 +464,71 @@ func TestDataFileIsCreatedOnStartup(t *testing.T) {
 	}
 }
 
+// Merge matches categories by id before name and never duplicates entries
+// whose id already exists.
+func TestMergeMatchesByID(t *testing.T) {
+	base := NewData()
+	base.Categories = []Category{
+		{ID: "cat-housing", Name: "Housing", Kind: KindSpending},
+		{ID: "cat-salary", Name: "Salary", Kind: KindIncome},
+	}
+	base.Entries = []Entry{
+		{ID: "e-rent", CategoryID: "cat-housing", Name: "Rent", AmountCents: 100000, Period: PeriodMonthly},
+	}
+
+	extra := NewData()
+	extra.Categories = []Category{
+		// Same id, renamed in the file -> reused by id, keeps the base name.
+		{ID: "cat-housing", Name: "Home", Kind: KindSpending},
+		// Different id, same name -> reused by name.
+		{ID: "cat-other", Name: "salary", Kind: KindIncome},
+		// Unknown id and name -> added, keeps its id.
+		{ID: "cat-leisure", Name: "Leisure", Kind: KindSpending},
+		// Same id as an existing category but a different kind -> not the
+		// same category; added under a fresh id.
+		{ID: "cat-salary", Name: "Bonus", Kind: KindSpending},
+	}
+	extra.Entries = []Entry{
+		{ID: "e-rent", CategoryID: "cat-housing", Name: "Rent (changed)", AmountCents: 1, Period: PeriodYearly}, // skipped
+		{ID: "e-power", CategoryID: "cat-housing", Name: "Power", AmountCents: 8000, Period: PeriodMonthly},     // added to Housing
+		{ID: "e-job", CategoryID: "cat-other", Name: "Job", AmountCents: 300000, Period: PeriodMonthly},         // added to Salary
+		{ID: "e-gym", CategoryID: "cat-leisure", Name: "Gym", AmountCents: 4000, Period: PeriodMonthly},         // added to Leisure
+		{ID: "e-bonus", CategoryID: "cat-salary", Name: "Bonus", AmountCents: 50000, Period: PeriodYearly},      // added to spending "Bonus"
+	}
+
+	merged, report := Merge(base, extra)
+	if err := merged.Validate(); err != nil {
+		t.Fatalf("merged data invalid: %v", err)
+	}
+	if report.CategoriesAdded != 2 || report.CategoriesReused != 2 || report.EntriesAdded != 4 || report.EntriesSkipped != 1 {
+		t.Fatalf("report wrong: %+v", report)
+	}
+
+	housing := merged.Category("cat-housing")
+	if housing == nil || housing.Name != "Housing" {
+		t.Fatalf("housing category not reused by id: %+v", housing)
+	}
+	if got := names(merged.BuildViews(KindSpending)[0].Entries); !equalStrings(got, []string{"Rent", "Power"}) {
+		t.Fatalf("housing entries: %v", got)
+	}
+	if rent := merged.Entry("e-rent"); rent.Name != "Rent" || rent.AmountCents != 100000 {
+		t.Fatalf("existing entry was modified: %+v", rent)
+	}
+	if got := names(merged.BuildViews(KindIncome)[0].Entries); !equalStrings(got, []string{"Job"}) || len(merged.CategoriesOf(KindIncome)) != 1 {
+		t.Fatalf("salary not reused by name: %+v", merged.BuildViews(KindIncome))
+	}
+	if merged.Category("cat-leisure") == nil {
+		t.Fatal("new category should keep its imported id")
+	}
+	bonus := merged.Entry("e-bonus")
+	if bonus == nil || bonus.CategoryID == "cat-salary" || merged.Category(bonus.CategoryID).Kind != KindSpending {
+		t.Fatalf("kind-mismatched category id must not be reused: %+v", bonus)
+	}
+	if len(merged.CategoriesOf(KindSpending)) != 3 {
+		t.Fatalf("spending categories: %+v", merged.CategoriesOf(KindSpending))
+	}
+}
+
 // "The application should be multi-lingual ... The choice should be saved."
 func TestLanguageSetting(t *testing.T) {
 	s, path := newTestService(t)
@@ -500,12 +565,12 @@ func TestLanguageSetting(t *testing.T) {
 	exportPath := filepath.Join(t.TempDir(), "x.json")
 	other.ExportTo(exportPath)
 	for _, mode := range []ImportMode{ImportMerge, ImportReplace} {
-		st, err := reloaded.ImportData(exportPath, mode)
+		res, err := reloaded.ImportData(exportPath, mode)
 		if err != nil {
 			t.Fatal(err)
 		}
-		if st.Settings.Language != "de" {
-			t.Fatalf("import (%s) changed the language to %q", mode, st.Settings.Language)
+		if res.State.Settings.Language != "de" {
+			t.Fatalf("import (%s) changed the language to %q", mode, res.State.Settings.Language)
 		}
 	}
 }
@@ -610,35 +675,48 @@ func TestExportImportReplaceAndMerge(t *testing.T) {
 	leisure := mustCategory(t, dst, KindSpending, "Leisure")
 	mustEntry(t, dst, leisure, "Gym", 4000, PeriodMonthly)
 
-	// Merge: "Rent" lands in the existing "housing" category, nothing is lost.
-	st, err := dst.ImportData(exportPath, ImportMerge)
+	// Merge: "Rent" lands in the existing "housing" category (matched by
+	// name, the ids differ), nothing is lost.
+	res, err := dst.ImportData(exportPath, ImportMerge)
 	if err != nil {
 		t.Fatal(err)
 	}
+	st := res.State
 	if len(st.Spending) != 2 {
 		t.Fatalf("merge created duplicate categories: %+v", st.Spending)
 	}
 	if got := names(st.Spending[0].Entries); !equalStrings(got, []string{"Power", "Rent"}) {
 		t.Fatalf("merged housing entries: %v", got)
 	}
+	if res.EntriesAdded != 1 || res.EntriesSkipped != 0 || res.CategoriesReused != 1 || res.CategoriesAdded != 0 {
+		t.Fatalf("merge report wrong: %+v", res)
+	}
 	if err := dst.data.Validate(); err != nil {
 		t.Fatalf("merged data invalid: %v", err)
 	}
-	// Merged entries get new ids, so importing the same file twice works.
-	if _, err := dst.ImportData(exportPath, ImportMerge); err != nil {
-		t.Fatal(err)
-	}
-	if got := names(dst.GetState().Spending[0].Entries); !equalStrings(got, []string{"Power", "Rent", "Rent"}) {
-		t.Fatalf("second merge: %v", got)
-	}
-
-	// Replace: only the imported data remains.
-	st, err = dst.ImportData(exportPath, ImportReplace)
+	// Importing the same file again skips the entry that already exists.
+	res, err = dst.ImportData(exportPath, ImportMerge)
 	if err != nil {
 		t.Fatal(err)
 	}
+	if got := names(res.State.Spending[0].Entries); !equalStrings(got, []string{"Power", "Rent"}) {
+		t.Fatalf("second merge duplicated entries: %v", got)
+	}
+	if res.EntriesAdded != 0 || res.EntriesSkipped != 1 {
+		t.Fatalf("second merge report wrong: %+v", res)
+	}
+
+	// Replace: only the imported data remains.
+	res, err = dst.ImportData(exportPath, ImportReplace)
+	if err != nil {
+		t.Fatal(err)
+	}
+	st = res.State
 	if len(st.Spending) != 1 || !equalStrings(names(st.Spending[0].Entries), []string{"Rent"}) {
 		t.Fatalf("replace result: %+v", st.Spending)
+	}
+	if res.EntriesAdded != 1 || res.CategoriesAdded != 1 || res.EntriesSkipped != 0 {
+		t.Fatalf("replace report wrong: %+v", res)
 	}
 
 	// Invalid mode and invalid file are rejected without touching the data.

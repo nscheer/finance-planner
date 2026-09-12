@@ -128,7 +128,8 @@ export const en = {
   "importDialog.entries.other": "{count} entries",
   "importDialog.question": "How should the data be imported?",
   "importDialog.merge.title": "Add to current data",
-  "importDialog.merge.description": "Keeps everything you have. Categories with the same name are reused.",
+  "importDialog.merge.description":
+    "Keeps everything you have. Categories with the same name are reused, entries that already exist are skipped.",
   "importDialog.replace.title": "Replace current data",
   "importDialog.replace.description":
     "Deletes all current categories and entries and uses the imported file instead.",
@@ -142,8 +143,14 @@ export const en = {
   "toast.categoryRenamed": "Renamed category to \"{name}\".",
   "toast.categoryDeleted": "Deleted category \"{name}\".",
   "toast.exported": "Exported to {path}",
-  "toast.importedMerge": "Imported data added.",
-  "toast.importedReplace": "Data replaced by import.",
+  "toast.importedMerge": "Import finished: {entries}, {skipped}, {categories}.",
+  "toast.importedMerge.entries.one": "{count} entry added",
+  "toast.importedMerge.entries.other": "{count} entries added",
+  "toast.importedMerge.skipped.one": "{count} already existed",
+  "toast.importedMerge.skipped.other": "{count} already existed",
+  "toast.importedMerge.categories.one": "{count} new category",
+  "toast.importedMerge.categories.other": "{count} new categories",
+  "toast.importedReplace": "Data replaced by import: {entries} in {categories}.",
 
   // ---- error dialog titles ----
   "alert.generic": "Something went wrong",

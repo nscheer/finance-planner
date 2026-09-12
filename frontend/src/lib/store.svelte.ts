@@ -236,7 +236,31 @@ export async function startImport(): Promise<void> {
 }
 
 export async function importData(path: string, mode: ImportMode): Promise<void> {
-  if (await applyOrAlert(Service.ImportData(path, mode), "alert.importFailed")) {
-    notify("success", t(mode === ImportMode.ImportReplace ? "toast.importedReplace" : "toast.importedMerge"));
+  app.busy = true;
+  try {
+    const result = await Service.ImportData(path, mode);
+    app.state = result.state;
+    if (mode === ImportMode.ImportReplace) {
+      notify(
+        "success",
+        t("toast.importedReplace", {
+          entries: plural("importDialog.entries", result.entriesAdded),
+          categories: plural("importDialog.categories", result.categoriesAdded),
+        }),
+      );
+    } else {
+      notify(
+        "success",
+        t("toast.importedMerge", {
+          entries: plural("toast.importedMerge.entries", result.entriesAdded),
+          skipped: plural("toast.importedMerge.skipped", result.entriesSkipped),
+          categories: plural("toast.importedMerge.categories", result.categoriesAdded),
+        }),
+      );
+    }
+  } catch (err) {
+    alert(t("alert.importFailed"), errorMessage(err));
+  } finally {
+    app.busy = false;
   }
 }

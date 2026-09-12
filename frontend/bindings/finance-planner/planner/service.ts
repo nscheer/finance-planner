@@ -76,9 +76,9 @@ export function GetState(): $CancellablePromise<$models.State> {
 
 /**
  * ImportData imports a file, either replacing the current data or merging
- * it into the current data.
+ * it into the current data (see Merge for the rules).
  */
-export function ImportData(path: string, mode: $models.ImportMode): $CancellablePromise<$models.State> {
+export function ImportData(path: string, mode: $models.ImportMode): $CancellablePromise<$models.ImportResult> {
     return $Call.ByID(3233648325, path, mode);
 }
 

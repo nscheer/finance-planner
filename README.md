@@ -23,6 +23,8 @@ specification is in [project.md](project.md).
 - All data is stored in `data.json` next to the binary. The file carries a
   `version` number so the structure can be migrated later. Data can be
   exported to and imported from JSON files (add to or replace current data).
+  When adding, categories are matched by id, then by name; entries whose id
+  already exists are skipped, so overlapping files never create duplicates.
 
 ## Development
 

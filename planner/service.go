@@ -32,6 +32,16 @@ type ImportPreview struct {
 	Entries    int    `json:"entries"`
 }
 
+// ImportResult is returned by ImportData: the new state plus a report of
+// what the import did, shown to the user in a notification.
+type ImportResult struct {
+	State            State `json:"state"`
+	CategoriesAdded  int   `json:"categoriesAdded"`
+	CategoriesReused int   `json:"categoriesReused"`
+	EntriesAdded     int   `json:"entriesAdded"`
+	EntriesSkipped   int   `json:"entriesSkipped"`
+}
+
 // Service is the Wails service used by the frontend. Every mutating method
 // persists the data immediately and returns the new State, so the frontend
 // simply replaces its state with the result.
@@ -326,9 +336,10 @@ func (s *Service) PreviewImport(path string) (ImportPreview, error) {
 }
 
 // ImportData imports a file, either replacing the current data or merging
-// it into the current data.
-func (s *Service) ImportData(path string, mode ImportMode) (State, error) {
-	return s.mutate(func() error {
+// it into the current data (see Merge for the rules).
+func (s *Service) ImportData(path string, mode ImportMode) (ImportResult, error) {
+	var result ImportResult
+	st, err := s.mutate(func() error {
 		raw, err := os.ReadFile(path)
 		if err != nil {
 			return err
@@ -342,19 +353,27 @@ func (s *Service) ImportData(path string, mode ImportMode) (State, error) {
 			// The language is a preference of this installation, not of the file.
 			imported.Settings = s.data.Settings
 			s.data = imported
+			result = ImportResult{CategoriesAdded: len(imported.Categories), EntriesAdded: len(imported.Entries)}
 		case ImportMerge:
-			s.data = Merge(s.data, imported)
+			s.data, result = Merge(s.data, imported)
 		default:
 			return newError(ErrImportModeUnknown, "mode", mode)
 		}
 		return nil
 	})
+	result.State = st
+	return result, err
 }
 
-// Merge adds the categories and entries of extra to base. Categories that
-// exist in base with the same kind and name (case-insensitive) are reused,
-// all other categories and all entries get fresh ids so that nothing collides.
-func Merge(base, extra Data) Data {
+// Merge adds the categories and entries of extra to base.
+//
+// Categories are matched by id first (same id and kind), then by kind and
+// name (case-insensitive); unmatched categories are added and keep their id
+// when it is free, so that later imports of the same file match by id.
+// Entries whose id already exists are skipped, so importing overlapping
+// files never creates duplicates; all other entries are added.
+func Merge(base, extra Data) (Data, ImportResult) {
+	var report ImportResult
 	out := Data{Version: CurrentVersion, Settings: base.Settings}
 	out.Categories = append(out.Categories, base.Categories...)
 	out.Entries = append(out.Entries, base.Entries...)
@@ -362,15 +381,25 @@ func Merge(base, extra Data) Data {
 	catMap := map[string]string{} // extra category id -> merged category id
 	for _, c := range extra.Categories {
 		found := ""
-		for _, existing := range out.Categories {
-			if existing.Kind == c.Kind && strings.EqualFold(existing.Name, c.Name) {
-				found = existing.ID
-				break
+		if existing := out.Category(c.ID); existing != nil && existing.Kind == c.Kind {
+			found = existing.ID
+		} else {
+			for _, existing := range out.Categories {
+				if existing.Kind == c.Kind && strings.EqualFold(existing.Name, c.Name) {
+					found = existing.ID
+					break
+				}
 			}
 		}
-		if found == "" {
-			found = newID()
+		if found != "" {
+			report.CategoriesReused++
+		} else {
+			found = c.ID
+			if found == "" || out.Category(found) != nil {
+				found = newID()
+			}
 			out.Categories = append(out.Categories, Category{ID: found, Name: c.Name, Kind: c.Kind, Collapsed: c.Collapsed})
+			report.CategoriesAdded++
 		}
 		catMap[c.ID] = found
 	}
@@ -379,11 +408,18 @@ func Merge(base, extra Data) Data {
 		if !ok {
 			continue // Decode() guarantees this can't happen, but stay safe
 		}
-		e.ID = newID()
+		if out.Entry(e.ID) != nil {
+			report.EntriesSkipped++
+			continue
+		}
+		if e.ID == "" {
+			e.ID = newID()
+		}
 		e.CategoryID = target
 		out.Entries = append(out.Entries, e)
+		report.EntriesAdded++
 	}
-	return out
+	return out, report
 }
 
 // ---- dialogs (need a running Wails application) ---------------------------

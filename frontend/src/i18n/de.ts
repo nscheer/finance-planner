@@ -111,7 +111,8 @@ export const de: Messages = {
   "importDialog.entries.other": "{count} Einträge",
   "importDialog.question": "Wie sollen die Daten importiert werden?",
   "importDialog.merge.title": "Zu den aktuellen Daten hinzufügen",
-  "importDialog.merge.description": "Behält alles Vorhandene. Kategorien mit gleichem Namen werden wiederverwendet.",
+  "importDialog.merge.description":
+    "Behält alles Vorhandene. Kategorien mit gleichem Namen werden wiederverwendet, bereits vorhandene Einträge übersprungen.",
   "importDialog.replace.title": "Aktuelle Daten ersetzen",
   "importDialog.replace.description":
     "Löscht alle aktuellen Kategorien und Einträge und verwendet stattdessen die importierte Datei.",
@@ -124,8 +125,14 @@ export const de: Messages = {
   "toast.categoryRenamed": "Kategorie in „{name}“ umbenannt.",
   "toast.categoryDeleted": "Kategorie „{name}“ gelöscht.",
   "toast.exported": "Exportiert nach {path}",
-  "toast.importedMerge": "Importierte Daten hinzugefügt.",
-  "toast.importedReplace": "Daten durch Import ersetzt.",
+  "toast.importedMerge": "Import abgeschlossen: {entries}, {skipped}, {categories}.",
+  "toast.importedMerge.entries.one": "{count} Eintrag hinzugefügt",
+  "toast.importedMerge.entries.other": "{count} Einträge hinzugefügt",
+  "toast.importedMerge.skipped.one": "{count} bereits vorhanden",
+  "toast.importedMerge.skipped.other": "{count} bereits vorhanden",
+  "toast.importedMerge.categories.one": "{count} neue Kategorie",
+  "toast.importedMerge.categories.other": "{count} neue Kategorien",
+  "toast.importedReplace": "Daten durch Import ersetzt: {entries} in {categories}.",
 
   "alert.generic": "Etwas ist schiefgelaufen",
   "alert.deleteFailed": "Löschen fehlgeschlagen",

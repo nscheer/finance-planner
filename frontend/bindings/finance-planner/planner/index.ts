@@ -16,6 +16,7 @@ export type {
     CategoryView,
     EntryView,
     ImportPreview,
+    ImportResult,
     Settings,
     State,
     Stats

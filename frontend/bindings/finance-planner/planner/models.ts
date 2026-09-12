@@ -71,6 +71,18 @@ export interface ImportPreview {
 }
 
 /**
+ * ImportResult is returned by ImportData: the new state plus a report of
+ * what the import did, shown to the user in a notification.
+ */
+export interface ImportResult {
+    "state": State;
+    "categoriesAdded": number;
+    "categoriesReused": number;
+    "entriesAdded": number;
+    "entriesSkipped": number;
+}
+
+/**
  * Kind distinguishes income from spending. Categories belong to exactly one
  * kind, entries inherit the kind of their category.
  */
