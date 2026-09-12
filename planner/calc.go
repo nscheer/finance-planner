@@ -1,6 +1,9 @@
 package planner
 
-import "math"
+import (
+	"math"
+	"sort"
+)
 
 // MonthlyCents returns the monthly equivalent of an entry: the entered amount
 // divided by the number of months per payment, rounded to cents.
@@ -32,7 +35,25 @@ type CategoryView struct {
 	Entries      []EntryView `json:"entries"`
 	MonthlyCents int64       `json:"monthlyCents"`
 	YearlyCents  int64       `json:"yearlyCents"`
+	// ShareOfIncome is the category's monthly total divided by the monthly
+	// income (spending categories only, 0 without income).
+	ShareOfIncome float64 `json:"shareOfIncome"`
 }
+
+// TopEntry is one of the "biggest levers": an active spending with one of
+// the highest yearly costs.
+type TopEntry struct {
+	ID              string  `json:"id"`
+	Name            string  `json:"name"`
+	CategoryName    string  `json:"categoryName"`
+	MonthlyCents    int64   `json:"monthlyCents"`
+	YearlyCents     int64   `json:"yearlyCents"`
+	ShareOfSpending float64 `json:"shareOfSpending"`
+	ShareOfIncome   float64 `json:"shareOfIncome"`
+}
+
+// TopEntryCount is the length of Stats.TopSpendings.
+const TopEntryCount = 5
 
 // TimelineMonth describes one calendar month (index 0 = January) of the
 // steady-state savings plan.
@@ -81,6 +102,8 @@ type Stats struct {
 	UnscheduledCount int `json:"unscheduledCount"`
 	// PausedCount is the number of paused entries (income and spending).
 	PausedCount int `json:"pausedCount"`
+	// TopSpendings lists the active spendings with the highest yearly cost.
+	TopSpendings []TopEntry `json:"topSpendings"`
 }
 
 // State is everything the frontend needs to render the main view.
@@ -144,6 +167,7 @@ func (d *Data) ComputeStats() Stats {
 	}
 	s.SaldoMonthlyCents = s.IncomeMonthlyCents - s.SpendingMonthlyCents
 	s.SaldoYearlyCents = s.IncomeYearlyCents - s.SpendingYearlyCents
+	s.TopSpendings = d.topSpendings(kinds, s.SpendingMonthlyCents, s.IncomeMonthlyCents)
 
 	s.SavingsGoalCents = d.Settings.SavingsGoalCents
 	s.RemainingAfterGoalCents = s.SaldoMonthlyCents - s.SavingsGoalCents
@@ -155,6 +179,40 @@ func (d *Data) ComputeStats() Stats {
 		}
 	}
 	return s
+}
+
+// topSpendings returns the TopEntryCount active spendings with the highest
+// yearly cost (ties broken by name), with their shares of all spending and
+// of the income.
+func (d *Data) topSpendings(kinds map[string]Kind, spendingMonthly, incomeMonthly int64) []TopEntry {
+	names := map[string]string{}
+	for _, c := range d.Categories {
+		names[c.ID] = c.Name
+	}
+	top := []TopEntry{}
+	for _, e := range d.Entries {
+		if e.Paused || kinds[e.CategoryID] != KindSpending {
+			continue
+		}
+		t := TopEntry{ID: e.ID, Name: e.Name, CategoryName: names[e.CategoryID], MonthlyCents: e.MonthlyCents(), YearlyCents: e.YearlyCents()}
+		if spendingMonthly > 0 {
+			t.ShareOfSpending = float64(t.MonthlyCents) / float64(spendingMonthly)
+		}
+		if incomeMonthly > 0 {
+			t.ShareOfIncome = float64(t.MonthlyCents) / float64(incomeMonthly)
+		}
+		top = append(top, t)
+	}
+	sort.SliceStable(top, func(i, j int) bool {
+		if top[i].YearlyCents != top[j].YearlyCents {
+			return top[i].YearlyCents > top[j].YearlyCents
+		}
+		return top[i].Name < top[j].Name
+	})
+	if len(top) > TopEntryCount {
+		top = top[:TopEntryCount]
+	}
+	return top
 }
 
 // addToTimeline adds a scheduled non-monthly spending to the timeline.
@@ -179,12 +237,19 @@ func addToTimeline(tl *[12]TimelineMonth, e Entry) {
 
 // BuildState assembles the full frontend state.
 func (d *Data) BuildState(dataPath string) State {
+	stats := d.ComputeStats()
+	spending := d.BuildViews(KindSpending)
+	if stats.IncomeMonthlyCents > 0 {
+		for i := range spending {
+			spending[i].ShareOfIncome = float64(spending[i].MonthlyCents) / float64(stats.IncomeMonthlyCents)
+		}
+	}
 	return State{
 		Version:  d.Version,
 		DataPath: dataPath,
 		Settings: d.Settings,
 		Income:   d.BuildViews(KindIncome),
-		Spending: d.BuildViews(KindSpending),
-		Stats:    d.ComputeStats(),
+		Spending: spending,
+		Stats:    stats,
 	}
 }

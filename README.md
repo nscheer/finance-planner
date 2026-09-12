@@ -39,8 +39,9 @@ specification is in [project.md](project.md).
 - **Notes** per entry (shown as a tooltip and in the edit dialog).
 - **Savings goal** per month with the remaining amount, and banners when
   spending exceeds income or the goal is not reachable.
-- **Charts**: share of each spending category (bar in the category header and
-  a donut).
+- **Charts and levers**: share of each spending category (bar in the
+  category header and a donut) and a "biggest levers" list of the five most
+  expensive spendings per year.
 - **Undo**: deleting an entry or category and importing a file can be undone
   from the notification.
 - **Backups**: written to `backups/` next to `data.json` before changes (at

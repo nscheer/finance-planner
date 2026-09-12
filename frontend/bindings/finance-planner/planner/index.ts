@@ -26,5 +26,6 @@ export type {
     State,
     Stats,
     TimelineMonth,
+    TopEntry,
     WindowGeometry
 } from "./models.js";

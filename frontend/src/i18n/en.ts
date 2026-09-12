@@ -90,7 +90,8 @@ export const en = {
   "category.noEntries": "No entries yet",
   "category.dropHere": "Drop here",
   "category.dropInto": "Drop to add to \"{name}\"",
-  "category.share": "{percent} of all spending",
+  "category.share": "{percent} of all spending · {income} of income",
+  "category.shareNoIncome": "{percent} of all spending",
 
   // ---- entries ----
   "entry.dragHint": "Drag to reorder or move to another category",
@@ -146,6 +147,9 @@ export const en = {
   "stats.timelineDue": "due",
   "stats.timelineSaved": "on savings account",
   "stats.timelineEmpty": "Give non-monthly spendings a due month to see when they are due and how the savings account fills up.",
+  "stats.levers": "Biggest levers",
+  "stats.leversHint": "Active spendings with the highest yearly cost. Click to edit.",
+  "stats.leversEmpty": "No spendings yet.",
   "stats.byCategory": "Spending by category",
   "stats.otherCategories": "Other",
   "stats.chartsEmpty": "No spending yet.",

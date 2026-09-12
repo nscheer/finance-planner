@@ -42,6 +42,12 @@ export interface CategoryView {
     "entries": EntryView[] | null;
     "monthlyCents": number;
     "yearlyCents": number;
+
+    /**
+     * ShareOfIncome is the category's monthly total divided by the monthly
+     * income (spending categories only, 0 without income).
+     */
+    "shareOfIncome": number;
 }
 
 /**
@@ -321,6 +327,11 @@ export interface Stats {
      * PausedCount is the number of paused entries (income and spending).
      */
     "pausedCount": number;
+
+    /**
+     * TopSpendings lists the active spendings with the highest yearly cost.
+     */
+    "topSpendings": TopEntry[] | null;
 }
 
 /**
@@ -338,6 +349,20 @@ export interface TimelineMonth {
      * month, after the month's contribution and payments.
      */
     "savedCents": number;
+}
+
+/**
+ * TopEntry is one of the "biggest levers": an active spending with one of
+ * the highest yearly costs.
+ */
+export interface TopEntry {
+    "id": string;
+    "name": string;
+    "categoryName": string;
+    "monthlyCents": number;
+    "yearlyCents": number;
+    "shareOfSpending": number;
+    "shareOfIncome": number;
 }
 
 /**

@@ -6,8 +6,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"math"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -230,6 +232,10 @@ func TestStatistics(t *testing.T) {
 	mustEntry(t, s, insurance, "Health", 20000, PeriodMonthly) // 200/month
 
 	st := s.GetState().Stats
+	if len(st.TopSpendings) != 3 || st.TopSpendings[0].Name != "Rent" {
+		t.Fatalf("top spendings: %+v", st.TopSpendings)
+	}
+	st.TopSpendings = nil // checked above; the struct compare needs comparable fields
 	want := Stats{
 		IncomeMonthlyCents:      310000,
 		IncomeYearlyCents:       3720000,
@@ -243,7 +249,7 @@ func TestStatistics(t *testing.T) {
 		GoalReachable:           true,
 		UnscheduledCount:        1, // "Car" has no due month
 	}
-	if st != want {
+	if !reflect.DeepEqual(st, want) {
 		t.Fatalf("stats\n got %+v\nwant %+v", st, want)
 	}
 	if st.ToBankMonthlyCents+st.ToSavingsMonthlyCents != st.SpendingMonthlyCents {
@@ -1175,5 +1181,53 @@ func TestThemeSetting(t *testing.T) {
 	}
 	if _, err := Decode([]byte(`{"version":3,"settings":{"theme":"purple"},"categories":[],"entries":[]}`)); err == nil {
 		t.Fatal("unknown theme must be rejected when loading")
+	}
+}
+
+// "Biggest levers": the five most expensive active spendings per year.
+func TestTopSpendings(t *testing.T) {
+	s, _ := newTestService(t)
+	salary := mustCategory(t, s, KindIncome, "Salary")
+	housing := mustCategory(t, s, KindSpending, "Housing")
+	leisure := mustCategory(t, s, KindSpending, "Leisure")
+	mustEntry(t, s, salary, "Job", 400000, PeriodMonthly)      // 4000/month
+	mustEntry(t, s, housing, "Rent", 100000, PeriodMonthly)    // 12000/year
+	mustEntry(t, s, housing, "Power", 8000, PeriodMonthly)     // 960/year
+	mustEntry(t, s, leisure, "Holiday", 240000, PeriodYearly)  // 2400/year
+	mustEntry(t, s, leisure, "Gym", 3000, PeriodMonthly)       // 360/year
+	mustEntry(t, s, leisure, "Streaming", 1000, PeriodMonthly) // 120/year
+	mustEntry(t, s, leisure, "Magazine", 6000, PeriodYearly)   // 60/year
+	mustEntry(t, s, leisure, "Club", 6000, PeriodYearly)       // 60/year, same as Magazine
+	paused := mustEntry(t, s, leisure, "Boat", 9999900, PeriodYearly)
+	s.SetEntryPaused(paused.ID, true)
+
+	st := s.GetState()
+	top := st.Stats.TopSpendings
+	if len(top) != TopEntryCount {
+		t.Fatalf("expected %d levers, got %d", TopEntryCount, len(top))
+	}
+	got := []string{}
+	for _, e := range top {
+		got = append(got, e.Name)
+	}
+	// Ties (Magazine/Club at 60/year) are broken by name; Boat is paused.
+	if !equalStrings(got, []string{"Rent", "Holiday", "Power", "Gym", "Streaming"}) {
+		t.Fatalf("levers: %v", got)
+	}
+	if top[0].CategoryName != "Housing" || top[0].YearlyCents != 1200000 {
+		t.Fatalf("first lever wrong: %+v", top[0])
+	}
+	// Shares: spending per month = 1000+80+200+30+10+5+5 = 1330; income 4000.
+	if math.Abs(top[0].ShareOfSpending-100000.0/133000.0) > 1e-9 || math.Abs(top[0].ShareOfIncome-0.25) > 1e-9 {
+		t.Fatalf("shares wrong: %+v", top[0])
+	}
+	// Category share of income: Housing 1080/4000.
+	if math.Abs(st.Spending[0].ShareOfIncome-0.27) > 1e-9 {
+		t.Fatalf("category share of income = %v", st.Spending[0].ShareOfIncome)
+	}
+	// Without income the share of income is 0, and an empty planner has no levers.
+	empty, _ := newTestService(t)
+	if len(empty.GetState().Stats.TopSpendings) != 0 {
+		t.Fatal("empty planner must have no levers")
 	}
 }

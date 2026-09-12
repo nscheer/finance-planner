@@ -83,7 +83,12 @@
     </button>
     <span class="share-cell">
       {#if share !== null}
-        <span class="share" title={t("category.share", { percent: formatPercent(share) })}>
+        <span
+          class="share"
+          title={category.shareOfIncome > 0
+            ? t("category.share", { percent: formatPercent(share), income: formatPercent(category.shareOfIncome) })
+            : t("category.shareNoIncome", { percent: formatPercent(share) })}
+        >
           <span class="share-bar"><span class="share-fill" style:width="{Math.round(share * 100)}%"></span></span>
           <span class="share-text">{formatPercent(share)}</span>
         </span>

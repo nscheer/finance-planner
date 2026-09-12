@@ -9,10 +9,17 @@
   import Icon from "./Icon.svelte";
   import Timeline from "./Timeline.svelte";
   import Charts from "./Charts.svelte";
-  import { type Stats, type CategoryView, openDialog } from "../lib/store.svelte";
-  import { t, plural, formatEuro, formatEuroSigned } from "../lib/i18n.svelte";
+  import { type Stats, type CategoryView, type EntryView, Kind, openDialog } from "../lib/store.svelte";
+  import { t, plural, formatEuro, formatEuroSigned, formatPercent } from "../lib/i18n.svelte";
 
   let { stats, spending }: { stats: Stats; spending: CategoryView[] } = $props();
+
+  /** Opens the edit dialog for one of the "biggest levers". */
+  function editLever(id: string) {
+    let entry: EntryView | undefined;
+    for (const c of spending) entry = entry ?? (c.entries ?? []).find((e) => e.id === id);
+    if (entry) openDialog({ type: "entry", kind: Kind.KindSpending, entry });
+  }
 
   const sign = (cents: number) => (cents < 0 ? "negative" : cents > 0 ? "positive" : "");
 </script>
@@ -95,6 +102,31 @@
     {/if}
     {#if stats.pausedCount > 0}
       <p class="note">{plural("stats.paused", stats.pausedCount)}</p>
+    {/if}
+  </section>
+
+  <section class="group">
+    <h3>{t("stats.levers")}</h3>
+    {#if (stats.topSpendings ?? []).length === 0}
+      <p class="note">{t("stats.leversEmpty")}</p>
+    {:else}
+      <ol class="levers" title={t("stats.leversHint")}>
+        {#each stats.topSpendings ?? [] as lever, i (lever.id)}
+          <li>
+            <button type="button" class="lever" onclick={() => editLever(lever.id)}>
+              <span class="rank">{i + 1}</span>
+              <span class="lever-text">
+                <span class="lever-name">{lever.name}</span>
+                <span class="lever-cat">{lever.categoryName}</span>
+              </span>
+              <span class="lever-values">
+                <span class="money lever-amount">{formatEuro(lever.yearlyCents)}</span>
+                <span class="lever-share">{formatPercent(lever.shareOfSpending)}</span>
+              </span>
+            </button>
+          </li>
+        {/each}
+      </ol>
     {/if}
   </section>
 
@@ -213,6 +245,66 @@
   }
   dl.compact .total dd {
     font-size: 13px;
+  }
+  .levers {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .lever {
+    display: grid;
+    grid-template-columns: 18px 1fr auto;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 4px 6px;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+  }
+  .lever:hover {
+    background: var(--surface-3);
+  }
+  .rank {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-3);
+    text-align: center;
+  }
+  .lever-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .lever-name {
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .lever-cat {
+    font-size: 11px;
+    color: var(--text-3);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .lever-values {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+  }
+  .lever-amount {
+    font-weight: 600;
+  }
+  .lever-share {
+    font-size: 11px;
+    color: var(--text-3);
   }
   .note {
     margin: 0;
