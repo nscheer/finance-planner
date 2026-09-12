@@ -468,7 +468,8 @@ option {
     min-width: 0;
     height: auto;
   }
-  .content {
+  .content,
+  .page {
     display: block !important;
     overflow: visible !important;
     max-width: none;

@@ -247,7 +247,10 @@
     </div>
   </header>
 
-  <main class="content" class:has-selection={app.selectMode}>
+  <!-- The full-width main area scrolls, so the scrollbar sits at the window
+       edge; the centered, width-capped page wrapper holds the grid. -->
+  <main class="content">
+    <div class="page" class:has-selection={app.selectMode}>
     {#if app.state}
       <!-- Shown only on paper (see the print stylesheet). -->
       <header class="print-header">
@@ -291,6 +294,7 @@
     {:else}
       <p class="muted">{t("app.loading")}</p>
     {/if}
+    </div>
   </main>
 </div>
 
@@ -448,6 +452,8 @@
   .content {
     flex: 1;
     overflow: auto;
+  }
+  .page {
     display: grid;
     grid-template-columns: minmax(0, 1fr) var(--stats-width);
     align-items: start;
@@ -467,7 +473,7 @@
     padding-top: 20px;
   }
   /* Room to scroll the last rows above the floating selection toolbar. */
-  .content.has-selection {
+  .page.has-selection {
     padding-bottom: 96px;
   }
   .banner {

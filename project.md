@@ -557,7 +557,7 @@ wails3 task test    # Go tests + frontend unit tests
 |---|---|
 | Window default / minimum | 1440 × 900 / 1200 × 700 |
 | Page max / min width | 1600 px / 1140 px, centered, 24 px side padding |
-| Content grid | two columns: tables `minmax(0, 1fr)`, statistics 320 px, 20 px gap |
+| Content grid | the full-width main area is the scroll container (scrollbar at the window edge); inside it a centered page wrapper holds two columns: tables `minmax(0, 1fr)`, statistics 320 px, 20 px gap |
 | Statistics box | sticky; both columns start 20 px below the top bar (margin on the columns, not padding on the scroll area, so the sticky box stays level with the income block) |
 | Top bar | 10 px 24 px padding, title left, search box (200–420 px) and the period filter dropdown as separate controls in the middle, actions and language dropdown right |
 | Table columns | `28px minmax(150px, 1fr) 120px 110px 125px 125px 120px` (handle, name, frequency, due, per month, per year, actions) |
