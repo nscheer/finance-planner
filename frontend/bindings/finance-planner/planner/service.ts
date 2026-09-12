@@ -46,6 +46,13 @@ export function DeleteCategory(id: string): $CancellablePromise<$models.State> {
 }
 
 /**
+ * DeleteEntries removes several entries at once.
+ */
+export function DeleteEntries(ids: string[] | null): $CancellablePromise<$models.State> {
+    return $Call.ByID(3881323217, ids);
+}
+
+/**
  * DeleteEntry removes an entry.
  */
 export function DeleteEntry(id: string): $CancellablePromise<$models.State> {
@@ -121,6 +128,14 @@ export function MoveCategory(id: string, toIndex: number): $CancellablePromise<$
 }
 
 /**
+ * MoveEntries appends the given entries, in the given order, to the end of
+ * the target category. All entries must belong to the target's kind.
+ */
+export function MoveEntries(ids: string[] | null, targetCategoryID: string): $CancellablePromise<$models.State> {
+    return $Call.ByID(1766142675, ids, targetCategoryID);
+}
+
+/**
  * MoveEntry moves an entry to position toIndex (0 = first) inside the target
  * category, which may be the entry's current category (reorder) or another
  * category of the same kind (re-categorise).
@@ -161,6 +176,15 @@ export function RestoreCategory(category: $models.Category, index: number): $Can
 }
 
 /**
+ * RestoreEntries re-inserts deleted entries at their former positions
+ * ("undo" of DeleteEntries). Items are applied in ascending index order per
+ * category, so the original order is reproduced.
+ */
+export function RestoreEntries(items: $models.EntryAt[] | null): $CancellablePromise<$models.State> {
+    return $Call.ByID(3859119618, items);
+}
+
+/**
  * RestoreEntry re-inserts a deleted entry with its original id at the given
  * position of its category ("undo" of DeleteEntry).
  */
@@ -181,6 +205,13 @@ export function SetAllCollapsed(kind: $models.Kind, collapsed: boolean): $Cancel
  */
 export function SetCategoryCollapsed(id: string, collapsed: boolean): $CancellablePromise<$models.State> {
     return $Call.ByID(1889659817, id, collapsed);
+}
+
+/**
+ * SetEntriesPaused pauses or resumes several entries at once.
+ */
+export function SetEntriesPaused(ids: string[] | null, paused: boolean): $CancellablePromise<$models.State> {
+    return $Call.ByID(2577873674, ids, paused);
 }
 
 /**

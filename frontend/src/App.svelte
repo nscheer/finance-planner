@@ -17,6 +17,7 @@
   import SavingsGoalDialog from "./components/SavingsGoalDialog.svelte";
   import BackupsDialog from "./components/BackupsDialog.svelte";
   import ShortcutsDialog from "./components/ShortcutsDialog.svelte";
+  import SelectionBar from "./components/SelectionBar.svelte";
   import {
     app,
     Kind,
@@ -35,6 +36,8 @@
     clearFilter,
     isEmpty,
     confirmLoadSampleData,
+    selectionCount,
+    clearSelection,
     type PeriodFilter,
   } from "./lib/store.svelte";
   import { i18n, t, locales, setLocale, formatEuro, type LocaleCode } from "./lib/i18n.svelte";
@@ -43,6 +46,13 @@
 
   onMount(() => {
     loadState();
+  });
+
+  // A changed filter changes the visible rows: drop the selection.
+  $effect(() => {
+    void app.filter.query;
+    void app.filter.period;
+    clearSelection();
   });
 
   /**
@@ -99,6 +109,9 @@
       if (inField && target === searchEl) {
         clearFilter();
         searchEl?.blur();
+        event.preventDefault();
+      } else if (!inField && selectionCount() > 0) {
+        clearSelection();
         event.preventDefault();
       }
       return;
@@ -231,6 +244,9 @@
             <Icon name="target" size={16} />
             <span>{t("warning.goal", { amount: formatEuro(-app.state.stats.remainingAfterGoalCents) })}</span>
           </div>
+        {/if}
+        {#if selectionCount() > 0}
+          <SelectionBar />
         {/if}
         {#if isEmpty()}
           <div class="get-started">

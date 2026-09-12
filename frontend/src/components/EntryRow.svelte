@@ -13,6 +13,11 @@
     confirmDeleteEntry,
     pauseEntry,
     periodKey,
+    isSelected,
+    selectionCount,
+    setSelected,
+    toggleSelected,
+    selectRange,
   } from "../lib/store.svelte";
   import { t, formatEuro, monthName } from "../lib/i18n.svelte";
   import { startDrag, endDrag, hoverEntryTarget, isLowerHalf, isDraggedEntry, dnd } from "../lib/dnd.svelte";
@@ -44,25 +49,55 @@
     openDialog({ type: "entry", kind: category.kind, entry });
   }
 
+  /** Ctrl/Cmd+click toggles the selection, Shift+click selects a range. */
+  function onClick(event: MouseEvent) {
+    if (event.shiftKey) {
+      selectRange(category, entry.id);
+      event.preventDefault();
+    } else if (event.ctrlKey || event.metaKey) {
+      toggleSelected(entry.id);
+      event.preventDefault();
+    }
+  }
+
+  const selected = $derived(isSelected(entry.id));
+  const showCheckbox = $derived(selected || selectionCount() > 0);
+
   function duplicate() {
     openDialog({ type: "entry", kind: category.kind, duplicateOf: entry });
   }
 </script>
 
+<!-- Keyboard users select via the checkbox; the row click is a mouse shortcut. -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
+<!-- svelte-ignore a11y_click_events_have_key_events -->
 <div
   class="row"
   class:dragging={isDraggedEntry(entry)}
   class:paused={entry.paused}
   class:locked={!draggable}
+  class:selected
+  class:show-checkbox={showCheckbox}
   bind:this={rowEl}
   draggable="true"
   ondragstart={onDragStart}
   ondragend={endDrag}
   ondragover={onDragOver}
   ondblclick={edit}
+  onclick={onClick}
 >
-  <span class="handle" title={draggable ? t("entry.dragHint") : ""}><Icon name="grip" size={14} /></span>
+  <span class="handle" title={draggable ? t("entry.dragHint") : ""}>
+    <span class="grip"><Icon name="grip" size={14} /></span>
+    <input
+      class="check"
+      type="checkbox"
+      checked={selected}
+      title={t("entry.select")}
+      aria-label="{t('entry.select')}: {entry.name}"
+      onclick={(e) => { e.stopPropagation(); if (e.shiftKey) selectRange(category, entry.id); else setSelected(entry.id, !selected); }}
+      ondblclick={(e) => e.stopPropagation()}
+    />
+  </span>
   <span class="name" title={entry.notes || undefined}>
     <span class="name-text">{entry.name}</span>
     {#if entry.notes}<span class="name-icon" aria-label={t("entry.notes")} role="img"><Icon name="note" size={13} /></span>{/if}
@@ -127,8 +162,30 @@
   .handle {
     display: flex;
     justify-content: center;
+    align-items: center;
     color: var(--text-3);
     cursor: grab;
+  }
+  /* The handle cell shows the grip, or a checkbox when hovering, when the
+     row is selected or when a selection exists. */
+  .handle .check {
+    display: none;
+    margin: 0;
+    cursor: pointer;
+  }
+  .row:hover .handle .grip,
+  .row.show-checkbox .handle .grip {
+    display: none;
+  }
+  .row:hover .handle .check,
+  .row.show-checkbox .handle .check {
+    display: block;
+  }
+  .row.selected {
+    background: var(--accent-soft);
+  }
+  .row.selected:hover {
+    background: var(--accent-soft);
   }
   .name {
     display: flex;

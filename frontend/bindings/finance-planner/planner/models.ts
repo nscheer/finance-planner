@@ -84,6 +84,15 @@ export interface Entry {
 }
 
 /**
+ * EntryAt is a deleted entry together with its former position inside its
+ * category, so that a bulk delete can be undone.
+ */
+export interface EntryAt {
+    "entry": Entry;
+    "index": number;
+}
+
+/**
  * EntryInput holds the editable fields of an entry as entered in the dialog.
  */
 export interface EntryInput {

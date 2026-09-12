@@ -17,6 +17,7 @@ export type {
     Category,
     CategoryView,
     Entry,
+    EntryAt,
     EntryInput,
     EntryView,
     ImportPreview,

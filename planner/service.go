@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -369,6 +370,113 @@ func (s *Service) RestoreCategory(category Category, index int) (State, error) {
 			return newError(ErrCategoryExists, "kind", category.Kind, "name", category.Name)
 		}
 		s.data.Categories = insertCategory(s.data.Categories, s.categoryInsertPos(category.Kind, index), category)
+		return nil
+	})
+}
+
+// ---- bulk operations on a selection of entries ----------------------------
+
+// EntryAt is a deleted entry together with its former position inside its
+// category, so that a bulk delete can be undone.
+type EntryAt struct {
+	Entry Entry `json:"entry"`
+	Index int   `json:"index"`
+}
+
+// lookupEntries resolves ids and fails on the first unknown one.
+func (s *Service) lookupEntries(ids []string) ([]*Entry, error) {
+	out := make([]*Entry, 0, len(ids))
+	for _, id := range ids {
+		e := s.data.Entry(id)
+		if e == nil {
+			return nil, newError(ErrEntryNotFound)
+		}
+		out = append(out, e)
+	}
+	return out, nil
+}
+
+// MoveEntries appends the given entries, in the given order, to the end of
+// the target category. All entries must belong to the target's kind.
+func (s *Service) MoveEntries(ids []string, targetCategoryID string) (State, error) {
+	return s.mutate(func() error {
+		to := s.data.Category(targetCategoryID)
+		if to == nil {
+			return newError(ErrCategoryNotFound)
+		}
+		entries, err := s.lookupEntries(ids)
+		if err != nil {
+			return err
+		}
+		moved := make([]Entry, 0, len(entries))
+		for _, e := range entries {
+			if from := s.data.Category(e.CategoryID); from != nil && from.Kind != to.Kind {
+				return newError(ErrEntryKindMismatch, "from", from.Kind, "to", to.Kind)
+			}
+			copied := *e
+			copied.CategoryID = targetCategoryID
+			moved = append(moved, copied)
+		}
+		for _, id := range ids {
+			s.data.Entries = removeEntry(s.data.Entries, id)
+		}
+		for _, e := range moved {
+			s.data.Entries = insertEntry(s.data.Entries, s.entryInsertPos(targetCategoryID, len(s.data.Entries)), e)
+		}
+		return nil
+	})
+}
+
+// SetEntriesPaused pauses or resumes several entries at once.
+func (s *Service) SetEntriesPaused(ids []string, paused bool) (State, error) {
+	return s.mutate(func() error {
+		entries, err := s.lookupEntries(ids)
+		if err != nil {
+			return err
+		}
+		for _, e := range entries {
+			e.Paused = paused
+		}
+		return nil
+	})
+}
+
+// DeleteEntries removes several entries at once.
+func (s *Service) DeleteEntries(ids []string) (State, error) {
+	return s.mutate(func() error {
+		if _, err := s.lookupEntries(ids); err != nil {
+			return err
+		}
+		for _, id := range ids {
+			s.data.Entries = removeEntry(s.data.Entries, id)
+		}
+		return nil
+	})
+}
+
+// RestoreEntries re-inserts deleted entries at their former positions
+// ("undo" of DeleteEntries). Items are applied in ascending index order per
+// category, so the original order is reproduced.
+func (s *Service) RestoreEntries(items []EntryAt) (State, error) {
+	return s.mutate(func() error {
+		sorted := append([]EntryAt(nil), items...)
+		sort.SliceStable(sorted, func(i, j int) bool { return sorted[i].Index < sorted[j].Index })
+		for _, it := range sorted {
+			entry := it.Entry
+			if entry.ID == "" || s.data.Entry(entry.ID) != nil {
+				return newError(ErrEntryIDExists)
+			}
+			in := EntryInput{
+				CategoryID: entry.CategoryID, Name: entry.Name, AmountCents: entry.AmountCents,
+				Period: entry.Period, DueMonth: entry.DueMonth, Paused: entry.Paused, Notes: entry.Notes,
+			}
+			if err := s.validateEntry(&in); err != nil {
+				return err
+			}
+			e := Entry{ID: entry.ID}
+			in.applyTo(&e)
+			s.data.Entries = insertEntry(s.data.Entries, s.entryInsertPos(e.CategoryID, it.Index), e)
+		}
 		return nil
 	})
 }

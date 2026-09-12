@@ -49,6 +49,7 @@ specification is in [project.md](project.md).
   can be restored from the Backups dialog.
 - **CSV export** for spreadsheets (UTF-8 with BOM; `;` and decimal comma in
   German, `,` and decimal point otherwise).
+- **Multi-select** with bulk move, pause, resume and delete (with undo).
 - **Sample data** for an empty planner, **search and period filter**,
   **duplicate entry**, a **dark color scheme** following the system, and the
   window size and position are remembered.
@@ -61,7 +62,7 @@ specification is in [project.md](project.md).
 | `i` | New income |
 | `c` | New spending category |
 | `/` or `Ctrl+F` | Search |
-| `Esc` | Clear search / close dialog |
+| `Esc` | Clear search / clear selection / close dialog |
 | `?` | Show shortcuts |
 
 Shortcuts are ignored while a dialog or an input field is focused.

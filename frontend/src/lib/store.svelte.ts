@@ -68,6 +68,10 @@ export const app = $state({
   toasts: [] as Toast[],
   /** Search text and period filter of the top bar. */
   filter: { query: "", period: "all" as PeriodFilter },
+  /** Ids of the selected entries (multi-select for bulk actions). */
+  selection: {} as Record<string, true>,
+  /** Last entry selected by click; anchor for Shift+click ranges. */
+  selectionAnchor: null as string | null,
 });
 
 let toastSeq = 0;
@@ -92,6 +96,15 @@ export function filterActive(): boolean {
 export function clearFilter(): void {
   app.filter.query = "";
   app.filter.period = "all";
+}
+
+/** Drops selected ids that no longer exist (after deletes, imports, restores). */
+export function pruneSelection(): void {
+  const existing = new Set<string>();
+  for (const kind of [Kind.KindIncome, Kind.KindSpending]) {
+    for (const c of categoriesOf(kind)) for (const e of c.entries ?? []) existing.add(e.id);
+  }
+  for (const id of Object.keys(app.selection)) if (!existing.has(id)) delete app.selection[id];
 }
 
 function entryMatches(e: EntryView): boolean {
@@ -194,6 +207,7 @@ export async function apply(call: Promise<State>): Promise<State> {
   try {
     const next = await call;
     app.state = next;
+    pruneSelection();
     return next;
   } finally {
     app.busy = false;
@@ -374,6 +388,128 @@ export function confirmLoadSampleData(): void {
         );
       } catch (err) {
         alert(t("alert.generic"), errorMessage(err));
+      }
+    },
+  });
+}
+
+// ---- multi-select ----------------------------------------------------------
+
+export function isSelected(id: string): boolean {
+  return app.selection[id] === true;
+}
+
+export function selectionCount(): number {
+  return Object.keys(app.selection).length;
+}
+
+export function setSelected(id: string, on: boolean): void {
+  if (on) app.selection[id] = true;
+  else delete app.selection[id];
+  app.selectionAnchor = on ? id : app.selectionAnchor;
+}
+
+export function toggleSelected(id: string): void {
+  setSelected(id, !isSelected(id));
+}
+
+/** Selects all entries between the anchor and `id` inside one category. */
+export function selectRange(category: CategoryView, id: string): void {
+  const entries = category.entries ?? [];
+  const to = entries.findIndex((e) => e.id === id);
+  const from = entries.findIndex((e) => e.id === app.selectionAnchor);
+  if (to < 0) return;
+  if (from < 0) {
+    setSelected(id, true);
+    return;
+  }
+  const [a, b] = from < to ? [from, to] : [to, from];
+  for (let i = a; i <= b; i++) app.selection[entries[i].id] = true;
+}
+
+export function clearSelection(): void {
+  app.selection = {};
+  app.selectionAnchor = null;
+}
+
+/** The selected entries with their category, in table order. */
+export function selectedEntries(): { entry: EntryView; category: CategoryView; index: number }[] {
+  const out: { entry: EntryView; category: CategoryView; index: number }[] = [];
+  for (const kind of [Kind.KindIncome, Kind.KindSpending]) {
+    for (const category of categoriesOf(kind)) {
+      (category.entries ?? []).forEach((entry, index) => {
+        if (isSelected(entry.id)) out.push({ entry, category, index });
+      });
+    }
+  }
+  return out;
+}
+
+/** Kind of the selection: one kind, or "mixed" when both kinds are selected. */
+export function selectionKind(): Kind | "mixed" | null {
+  let kind: Kind | null = null;
+  for (const { category } of selectedEntries()) {
+    if (kind === null) kind = category.kind;
+    else if (kind !== category.kind) return "mixed";
+  }
+  return kind;
+}
+
+function selectedIds(): string[] {
+  return selectedEntries().map((s) => s.entry.id);
+}
+
+export async function moveSelection(categoryId: string): Promise<void> {
+  const ids = selectedIds();
+  const target = [...categoriesOf(Kind.KindIncome), ...categoriesOf(Kind.KindSpending)].find((c) => c.id === categoryId);
+  if (ids.length === 0 || !target) return;
+  if (await applyOrAlert(Service.MoveEntries(ids, categoryId), "alert.moveFailed")) {
+    clearSelection();
+    notify("success", plural("toast.entriesMoved", ids.length, { name: target.name }));
+  }
+}
+
+export async function pauseSelection(paused: boolean): Promise<void> {
+  const ids = selectedIds();
+  if (ids.length === 0) return;
+  if (await applyOrAlert(Service.SetEntriesPaused(ids, paused))) {
+    clearSelection();
+    notify("info", plural(paused ? "toast.entriesPaused" : "toast.entriesResumed", ids.length));
+  }
+}
+
+export function confirmDeleteSelection(): void {
+  const items = selectedEntries();
+  if (items.length === 0) return;
+  // Snapshot for the undo action.
+  const restore = items.map(({ entry, index }) => ({
+    entry: {
+      id: entry.id,
+      categoryId: entry.categoryId,
+      name: entry.name,
+      amountCents: entry.amountCents,
+      period: entry.period,
+      dueMonth: entry.dueMonth ?? 0,
+      paused: entry.paused ?? false,
+      notes: entry.notes ?? "",
+    },
+    index,
+  }));
+  const ids = items.map((s) => s.entry.id);
+  openDialog({
+    type: "confirm",
+    title: t("confirm.deleteEntries.title"),
+    message: plural("confirm.deleteEntries.message", ids.length),
+    confirmLabel: t("dialog.delete"),
+    onConfirm: async () => {
+      if (await applyOrAlert(Service.DeleteEntries(ids), "alert.deleteFailed")) {
+        clearSelection();
+        notify("success", plural("toast.entriesDeleted", ids.length), {
+          label: t("toast.undo"),
+          run: async () => {
+            if (await applyOrAlert(Service.RestoreEntries(restore))) notify("info", t("toast.restored"));
+          },
+        });
       }
     },
   });

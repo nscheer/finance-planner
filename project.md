@@ -86,6 +86,15 @@ Operations on entries:
   into another category of the same kind. No confirmation is required, but
   the target position must be clearly visible while dragging.
 - Double-clicking a row opens the edit dialog.
+- **Multi-select**: the handle cell of a row turns into a checkbox on hover,
+  when the row is selected or while any selection exists. Ctrl/Cmd+click
+  toggles a row, Shift+click selects a range inside a category. Selected rows
+  are tinted in the soft accent color. While entries are selected a bar above
+  the blocks shows the count and offers: move to another category of the
+  same kind (disabled when income and spending entries are mixed), pause,
+  resume, delete (with confirmation and an Undo that restores all entries at
+  their former positions) and clear. *Esc* clears the selection; changing the
+  search or filter clears it too.
 
 ### 2.4 Calculations
 
@@ -286,7 +295,7 @@ only be loaded when there are no categories and entries.
 | `i` | New income |
 | `c` | New spending category |
 | `/` or `Ctrl+F` | Focus the search box |
-| `Esc` | Clear the search (when the search box is focused) / close a dialog |
+| `Esc` | Clear the search (when the search box is focused) / clear the selection / close a dialog |
 | `?` | Show the list of shortcuts |
 
 Shortcuts are ignored while a dialog is open or an input field has the focus.

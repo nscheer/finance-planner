@@ -1231,3 +1231,76 @@ func TestTopSpendings(t *testing.T) {
 		t.Fatal("empty planner must have no levers")
 	}
 }
+
+// Bulk actions on a selection: move, pause, delete and undo of the delete.
+func TestBulkEntryOperations(t *testing.T) {
+	s, _ := newTestService(t)
+	housing := mustCategory(t, s, KindSpending, "Housing")
+	leisure := mustCategory(t, s, KindSpending, "Leisure")
+	salary := mustCategory(t, s, KindIncome, "Salary")
+	rent := mustEntry(t, s, housing, "Rent", 100000, PeriodMonthly)
+	power := mustEntry(t, s, housing, "Power", 8000, PeriodMonthly)
+	water := mustEntry(t, s, housing, "Water", 3000, PeriodMonthly)
+	gym := mustEntry(t, s, leisure, "Gym", 4000, PeriodMonthly)
+
+	// Move Rent and Water (in that order) to Leisure: appended after Gym.
+	st, err := s.MoveEntries([]string{rent.ID, water.ID}, leisure.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := names(st.Spending[1].Entries); !equalStrings(got, []string{"Gym", "Rent", "Water"}) {
+		t.Fatalf("after bulk move: %v", got)
+	}
+	if got := names(st.Spending[0].Entries); !equalStrings(got, []string{"Power"}) {
+		t.Fatalf("source after bulk move: %v", got)
+	}
+	if _, err := s.MoveEntries([]string{gym.ID}, salary.ID); err == nil {
+		t.Fatal("moving spendings into an income category must fail")
+	}
+	if _, err := s.MoveEntries([]string{gym.ID, "nope"}, housing.ID); err == nil {
+		t.Fatal("unknown id must fail")
+	}
+
+	// Pause both, resume one.
+	st, err = s.SetEntriesPaused([]string{rent.ID, water.ID}, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if st.Stats.PausedCount != 2 {
+		t.Fatalf("paused count = %d", st.Stats.PausedCount)
+	}
+	st, _ = s.SetEntriesPaused([]string{rent.ID}, false)
+	if st.Stats.PausedCount != 1 {
+		t.Fatalf("paused count after resume = %d", st.Stats.PausedCount)
+	}
+
+	// Delete Gym (index 0) and Water (index 2) from Leisure, then undo.
+	gymAt := EntryAt{Entry: *s.data.Entry(gym.ID), Index: 0}
+	waterAt := EntryAt{Entry: *s.data.Entry(water.ID), Index: 2}
+	st, err = s.DeleteEntries([]string{gym.ID, water.ID})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := names(st.Spending[1].Entries); !equalStrings(got, []string{"Rent"}) {
+		t.Fatalf("after bulk delete: %v", got)
+	}
+	st, err = s.RestoreEntries([]EntryAt{waterAt, gymAt}) // any order
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := names(st.Spending[1].Entries); !equalStrings(got, []string{"Gym", "Rent", "Water"}) {
+		t.Fatalf("after undo: %v", got)
+	}
+	if !st.Spending[1].Entries[2].Paused {
+		t.Fatal("restored entry lost its paused flag")
+	}
+	if _, err := s.RestoreEntries([]EntryAt{gymAt}); err == nil {
+		t.Fatal("restoring an existing entry must fail")
+	}
+	if _, err := s.DeleteEntries([]string{power.ID, "missing"}); err == nil {
+		t.Fatal("bulk delete with an unknown id must fail")
+	}
+	if s.data.Entry(power.ID) == nil {
+		t.Fatal("a failed bulk delete must not delete anything")
+	}
+}
