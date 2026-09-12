@@ -22,7 +22,7 @@ var assets embed.FS
 const (
 	defaultWidth  = 1440
 	defaultHeight = 900
-	minWidth      = 1100
+	minWidth      = 1200
 	minHeight     = 700
 )
 

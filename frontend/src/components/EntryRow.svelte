@@ -14,7 +14,7 @@
     pauseEntry,
     periodKey,
   } from "../lib/store.svelte";
-  import { t, formatEuro, monthShort } from "../lib/i18n.svelte";
+  import { t, formatEuro, monthName } from "../lib/i18n.svelte";
   import { startDrag, endDrag, hoverEntryTarget, isLowerHalf, isDraggedEntry, dnd } from "../lib/dnd.svelte";
 
   let {
@@ -70,9 +70,9 @@
   <span class="period">
     <span class="badge badge-{entry.period}">{t(periodKey(entry.period))}</span>
     {#if entry.paused}<span class="badge badge-paused">{t("entry.paused")}</span>{/if}
-    {#if !monthlyIsMaster && (entry.dueMonth ?? 0) > 0}
-      <span class="due">{t("entry.due", { month: monthShort(entry.dueMonth ?? 0) })}</span>
-    {/if}
+  </span>
+  <span class="due">
+    {#if !monthlyIsMaster && (entry.dueMonth ?? 0) > 0}{monthName(entry.dueMonth ?? 0)}{/if}
   </span>
   <span class="money amount" class:master={monthlyIsMaster} class:derived={!monthlyIsMaster}>{formatEuro(entry.monthlyCents)}</span>
   <span class="money amount" class:master={entry.period === Period.PeriodYearly} class:derived={entry.period !== Period.PeriodYearly}>{formatEuro(entry.yearlyCents)}</span>
@@ -145,9 +145,10 @@
     gap: 4px;
   }
   .due {
-    font-size: 11px;
-    color: var(--text-3);
+    color: var(--text-2);
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .amount {
     text-align: right;

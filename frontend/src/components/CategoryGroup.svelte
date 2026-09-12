@@ -89,6 +89,7 @@
         </span>
       {/if}
     </span>
+    <span></span>
     <span class="money subtotal">{formatEuro(category.monthlyCents)}</span>
     <span class="money subtotal">{formatEuro(category.yearlyCents)}</span>
     <span class="actions">

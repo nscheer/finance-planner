@@ -152,17 +152,19 @@
         <span class="path" title={app.state.dataPath}>{app.state.dataPath}</span>
       {/if}
     </div>
-    <div class="search" class:active={filterActive()}>
-      <span class="search-icon"><Icon name="search" size={14} /></span>
-      <input
-        class="input search-input"
-        type="search"
-        placeholder={t("app.search")}
-        aria-label={t("shortcuts.search")}
-        bind:value={app.filter.query}
-        bind:this={searchEl}
-      />
-      <select class="select select-sm" bind:value={app.filter.period} aria-label={t("app.filter.all")}>
+    <div class="filters">
+      <div class="search" class:active={app.filter.query.trim() !== ""}>
+        <span class="search-icon"><Icon name="search" size={14} /></span>
+        <input
+          class="input search-input"
+          type="search"
+          placeholder={t("app.search")}
+          aria-label={t("shortcuts.search")}
+          bind:value={app.filter.query}
+          bind:this={searchEl}
+        />
+      </div>
+      <select class="select select-sm period-filter" class:active={app.filter.period !== "all"} bind:value={app.filter.period} aria-label={t("app.filter.all")}>
         {#each periodFilters as f (f.value)}
           <option value={f.value}>{f.label}</option>
         {/each}
@@ -299,20 +301,31 @@
     gap: 8px;
     flex-shrink: 0;
   }
+  .filters {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+  }
   .search {
     display: flex;
     align-items: center;
     gap: 6px;
     flex: 1;
-    max-width: 560px;
-    min-width: 260px;
+    max-width: 420px;
+    min-width: 200px;
     padding: 2px 4px 2px 8px;
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     background: var(--surface-2);
   }
-  .search.active {
+  .search.active,
+  .period-filter.active {
     border-color: var(--accent);
+  }
+  .period-filter {
+    flex-shrink: 0;
   }
   .search-icon {
     display: flex;
@@ -377,13 +390,16 @@
     width: 100%;
     max-width: var(--page-max);
     margin: 0 auto;
-    padding: 20px 24px 32px;
+    /* No top padding here: the top gap is a margin on both columns, so the
+       sticky statistics box starts exactly level with the income block. */
+    padding: 0 24px 32px;
   }
   .tables {
     display: flex;
     flex-direction: column;
     gap: 20px;
     min-width: 0;
+    padding-top: 20px;
   }
   .banner {
     display: flex;

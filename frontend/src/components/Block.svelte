@@ -60,6 +60,7 @@
     <span></span>
     <span>{t("block.column.name")}</span>
     <span>{t("block.column.entered")}</span>
+    <span>{t("block.column.due")}</span>
     <span class="right">{t("block.column.perMonth")}</span>
     <span class="right">{t("block.column.perYear")}</span>
     <span></span>
@@ -81,7 +82,7 @@
 <style>
   .block {
     /* Shared column layout for the column header, category headers and rows. */
-    --cols: 28px minmax(160px, 1fr) 110px 150px 150px 72px;
+    --cols: 28px minmax(150px, 1fr) 120px 110px 125px 125px 120px;
     --block-color: var(--income);
     background: var(--surface);
     border: 1px solid var(--border);

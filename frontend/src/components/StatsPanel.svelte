@@ -108,7 +108,8 @@
 <style>
   .stats {
     position: sticky;
-    top: 20px; /* matches the content padding, so it never jumps when sticking */
+    top: 20px;
+    margin-top: 20px; /* same gap as the tables column; keeps both boxes level */
     display: flex;
     flex-direction: column;
     gap: 18px;

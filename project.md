@@ -109,7 +109,7 @@ Each block has:
 - a header with the kind, the block totals per month and per year, and the
   buttons *Expand all*, *Collapse all*, *Category* (new category) and
   *Income* / *Spending* (new entry);
-- a column header: Name · Entered · Per month · Per year;
+- a column header: Name · Entered · Due · Per month · Per year;
 - the categories in their saved order, each as a collapsible group with a
   drag handle, the name, the number of entries, its subtotals per month and
   per year and the actions *add entry*, *rename*, *delete*;
@@ -118,7 +118,8 @@ Each block has:
 
 Each entry row shows: drag handle · name (with a note icon and tooltip when
 notes exist) · a **period badge** (monthly / quarterly / half-yearly / yearly)
-plus a *paused* badge and the due month where applicable · per month ·
+plus a *paused* badge · the **due month** as a full month name in its own
+column (empty for monthly entries and unset due months) · per month ·
 per year · actions (pause/resume, duplicate, edit, delete). The value the user
 entered (the master) is printed bold; the derived value is muted. Paused rows
 are greyed out and struck through.
@@ -177,8 +178,9 @@ A sticky box on the right side with these sections:
 
 ### 2.8 Search and filter
 
-The top bar contains a search box and a period filter (all periods, monthly,
-quarterly, half-yearly, yearly, paused only). The search matches entry names
+The top bar contains a search box and, as a separate control next to it, a
+period filter dropdown (all periods, monthly, quarterly, half-yearly, yearly,
+paused only). The search matches entry names
 and notes (case-insensitive). While a filter is active only matching entries
 are listed, categories without matches are hidden, a hint shows "x of y
 entries shown", and a clear button resets the filter. Subtotals stay those of
@@ -264,12 +266,15 @@ Shortcuts are ignored while a dialog is open or an input field has the focus.
 
 ### 2.13 Window
 
-- Default size 1440 × 900, minimum 1100 × 700, so the table and the
-  statistics box always fit side by side.
+- Default size 1440 × 900, minimum 1200 × 700, so the table with all its
+  columns and the statistics box always fit side by side.
 - The last window size and position are saved and restored on the next start.
 - The page content is centered and capped at 1600 px width so it does not
-  stretch endlessly on very wide screens; below 1040 px the page keeps its
+  stretch endlessly on very wide screens; below 1140 px the page keeps its
   layout instead of squishing.
+- The application icon is a blue rounded square (`#2f5fd6`) with a white
+  € sign (`build/appicon.png`, 1024 × 1024; Windows and macOS icons are
+  generated from it).
 
 ---
 
@@ -470,12 +475,12 @@ wails3 task test    # Go tests + frontend unit tests
 
 | Element | Value |
 |---|---|
-| Window default / minimum | 1440 × 900 / 1100 × 700 |
-| Page max / min width | 1600 px / 1040 px, centered, 24 px side padding |
+| Window default / minimum | 1440 × 900 / 1200 × 700 |
+| Page max / min width | 1600 px / 1140 px, centered, 24 px side padding |
 | Content grid | two columns: tables `minmax(0, 1fr)`, statistics 320 px, 20 px gap |
-| Statistics box | sticky, 20 px from the top of the scroll area |
-| Top bar | 10 px 24 px padding, title left, search box (260–560 px) in the middle, actions and language dropdown right |
-| Table columns | `28px minmax(160px, 1fr) 110px 150px 150px 72px` (handle, name, entered, per month, per year, actions) |
+| Statistics box | sticky; both columns start 20 px below the top bar (margin on the columns, not padding on the scroll area, so the sticky box stays level with the income block) |
+| Top bar | 10 px 24 px padding, title left, search box (200–420 px) and the period filter dropdown as separate controls in the middle, actions and language dropdown right |
+| Table columns | `28px minmax(150px, 1fr) 120px 110px 125px 125px 120px` (handle, name, entered, due, per month, per year, actions) |
 | Row height | 38 px min; category header 40 px |
 | Corner radius | 10 px cards and dialogs, 6 px buttons, badges and inputs |
 | Shadows | cards `0 1px 2px rgba(20,26,40,.06), 0 4px 16px rgba(20,26,40,.06)`; dialogs `0 12px 40px rgba(20,26,40,.22)` |
@@ -583,7 +588,9 @@ line.
   table calm.
 - The language dropdown sits at the far right of the top bar with a globe
   icon.
-- The current month is printed bold in the timeline axis.
+- The current month is printed bold in the timeline axis; the readout below
+  the timeline always uses two fixed lines (due, on savings account) so
+  hovering never reflows the box.
 - Focus is visible everywhere (2 px accent outline).
 
 ---

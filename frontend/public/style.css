@@ -59,7 +59,7 @@
 
   /* Page width limits: wide but not endless, and never squished. */
   --page-max: 1600px;
-  --page-min: 1040px;
+  --page-min: 1140px;
   --stats-width: 320px;
 }
 

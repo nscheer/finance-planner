@@ -5,7 +5,7 @@
    * state). Hovering a month shows its values below the chart.
    */
   import type { Stats } from "../lib/store.svelte";
-  import { t, formatEuro, monthShort } from "../lib/i18n.svelte";
+  import { t, formatEuro, monthShort, monthName } from "../lib/i18n.svelte";
 
   let { stats }: { stats: Stats } = $props();
 
@@ -57,15 +57,18 @@
       {/each}
       <path class="saved" d={linePath} />
     </svg>
+    <!-- Always two lines, so hovering never reflows the box. -->
     <div class="readout" aria-live="polite">
-      {#if hovered !== null}
-        <strong>{monthShort(hovered + 1)}</strong>
-        <span><span class="swatch due"></span>{t("stats.timelineDue")}: <span class="money">{formatEuro(months[hovered].dueCents)}</span></span>
-        <span><span class="swatch saved"></span>{t("stats.timelineSaved")}: <span class="money">{formatEuro(months[hovered].savedCents)}</span></span>
-      {:else}
-        <span><span class="swatch due"></span>{t("stats.timelineDue")}</span>
-        <span><span class="swatch saved"></span>{t("stats.timelineSaved")}</span>
-      {/if}
+      <div class="line">
+        <span class="swatch due"></span>
+        <span class="label">{t("stats.timelineDue")}{hovered !== null ? ` (${monthName(hovered + 1)})` : ""}</span>
+        <span class="money value">{hovered !== null ? formatEuro(months[hovered].dueCents) : ""}</span>
+      </div>
+      <div class="line">
+        <span class="swatch saved"></span>
+        <span class="label">{t("stats.timelineSaved")}</span>
+        <span class="money value">{hovered !== null ? formatEuro(months[hovered].savedCents) : ""}</span>
+      </div>
     </div>
   {:else}
     <p class="empty">{t("stats.timelineEmpty")}</p>
@@ -111,19 +114,33 @@
   }
   .readout {
     display: flex;
-    flex-wrap: wrap;
-    gap: 4px 12px;
-    min-height: 18px;
+    flex-direction: column;
+    gap: 2px;
     font-size: 11.5px;
     color: var(--text-2);
   }
+  .line {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 18px;
+  }
+  .line .label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .line .value {
+    font-weight: 500;
+    color: var(--text);
+  }
   .swatch {
-    display: inline-block;
+    flex-shrink: 0;
     width: 8px;
     height: 8px;
-    margin-right: 4px;
     border-radius: 2px;
-    vertical-align: middle;
   }
   .swatch.due {
     background: var(--spending);

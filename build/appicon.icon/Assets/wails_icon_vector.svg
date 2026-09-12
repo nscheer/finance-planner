@@ -1,9 +1,8 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg width="100%" height="100%" viewBox="0 0 583 533" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
-    <g transform="matrix(1,0,0,1,-246,-251)">
-        <g id="Ebene1">
-            <path d="M246,251L265,784L401,784L506,450L507,450L505,784L641,784L829,251L682,251L596,567L595,567L596,251L478,251L378,568L391,251L246,251Z"/>
-        </g>
-    </g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <rect x="40" y="40" width="944" height="944" rx="200" fill="#2f5fd6"/>
+  <g fill="none" stroke="#ffffff" stroke-width="82" stroke-linecap="butt">
+    <path d="M 760.7 289.1 A 300 300 0 1 0 760.7 734.9" stroke-width="82"/>
+  </g>
+  <rect x="250" y="417" width="335" height="66" fill="#ffffff"/>
+  <rect x="250" y="541" width="335" height="66" fill="#ffffff"/>
 </svg>
