@@ -98,7 +98,13 @@
    */
   function onKeydown(event: KeyboardEvent) {
     const target = event.target as HTMLElement | null;
-    const inField = !!target && (["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName) || target.isContentEditable);
+    // Only text entry counts as "in a field"; a focused checkbox or button
+    // must not swallow the shortcuts (e.g. Esc after clicking a checkbox).
+    const textInput =
+      !!target &&
+      target.tagName === "INPUT" &&
+      !["checkbox", "radio", "button", "submit"].includes((target as HTMLInputElement).type);
+    const inField = !!target && (textInput || ["TEXTAREA", "SELECT"].includes(target.tagName) || target.isContentEditable);
     const ctrlF = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "f";
     const ctrlP = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "p";
     const ctrlK = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k";
@@ -241,7 +247,7 @@
     </div>
   </header>
 
-  <main class="content" class:has-selection={selectionCount() > 0}>
+  <main class="content" class:has-selection={app.selectMode}>
     {#if app.state}
       <!-- Shown only on paper (see the print stylesheet). -->
       <header class="print-header">
@@ -316,7 +322,7 @@
   {/if}
 {/if}
 
-{#if selectionCount() > 0}
+{#if app.selectMode}
   <SelectionBar />
 {/if}
 

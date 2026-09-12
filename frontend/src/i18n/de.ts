@@ -127,6 +127,8 @@ export const de: Messages = {
   "selection.resume": "Fortsetzen",
   "selection.delete": "Löschen",
   "selection.clear": "Auswahl aufheben",
+  "selection.done": "Fertig",
+  "selection.count.zero": "Keine Einträge ausgewählt",
   "confirm.deleteEntries.title": "Einträge löschen",
   "confirm.deleteEntries.message.one": "{count} Eintrag löschen?",
   "confirm.deleteEntries.message.other": "{count} Einträge löschen?",

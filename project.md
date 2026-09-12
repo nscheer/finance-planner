@@ -94,8 +94,12 @@ Operations on entries:
   selects all entries of the block, or deselects them when all are
   selected. Ctrl/Cmd+click on a row toggles it and enters the mode as well,
   Shift+click selects a range inside a category; the command palette offers
-  "Select entries" too. Hovering never changes a row. Clearing the selection
-  (toolbar button or *Esc*) leaves the mode and the grips return. Selected rows
+  "Select entries" too. Hovering never changes a row. The floating toolbar
+  is visible for the whole time the mode is on: with nothing selected it
+  says so and its action buttons are disabled, and its last button reads
+  *Done* (or *Clear selection* once entries are selected). That button and
+  *Esc* leave the mode and the grips return. *Esc* works even while a
+  checkbox or button has the focus; only text fields swallow it. Selected rows
   are tinted in the soft accent color. While entries are selected a toolbar
   floating at the bottom center of the window (it never moves the content)
   shows the count and offers: move to another category of the

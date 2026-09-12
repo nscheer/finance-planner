@@ -14,27 +14,29 @@
   import { t, plural } from "../lib/i18n.svelte";
 
   const count = $derived(selectionCount());
+  const none = $derived(count === 0);
   const kind = $derived(selectionKind());
   const targets = $derived(kind === Kind.KindIncome || kind === Kind.KindSpending ? categoriesOf(kind) : []);
   let target = $state("");
 </script>
 
-<div class="selection-bar" role="toolbar" aria-label={plural("selection.count", count)}>
-  <span class="count">{plural("selection.count", count)}</span>
+<div class="selection-bar" role="toolbar" aria-label={none ? t("selection.count.zero") : plural("selection.count", count)}>
+  <span class="count">{none ? t("selection.count.zero") : plural("selection.count", count)}</span>
   <span class="divider"></span>
-  <select class="select select-sm" bind:value={target} disabled={kind === "mixed"} title={kind === "mixed" ? t("selection.mixed") : undefined} aria-label={t("selection.moveTo")}>
+  <select class="select select-sm" bind:value={target} disabled={none || kind === "mixed"} title={kind === "mixed" ? t("selection.mixed") : undefined} aria-label={t("selection.moveTo")}>
     <option value="">{t("selection.moveTo")}</option>
     {#each targets as c (c.id)}
       <option value={c.id}>{c.name}</option>
     {/each}
   </select>
-  <button class="btn btn-sm" type="button" disabled={!target || kind === "mixed"} onclick={() => { const id = target; target = ""; moveSelection(id); }}>{t("selection.move")}</button>
+  <button class="btn btn-sm" type="button" disabled={none || !target || kind === "mixed"} onclick={() => { const id = target; target = ""; moveSelection(id); }}>{t("selection.move")}</button>
   <span class="divider"></span>
-  <button class="btn btn-sm" type="button" onclick={() => pauseSelection(true)}><Icon name="pause" size={14} /> {t("selection.pause")}</button>
-  <button class="btn btn-sm" type="button" onclick={() => pauseSelection(false)}><Icon name="play" size={14} /> {t("selection.resume")}</button>
-  <button class="btn btn-sm btn-danger" type="button" onclick={confirmDeleteSelection}><Icon name="trash" size={14} /> {t("selection.delete")}</button>
+  <button class="btn btn-sm" type="button" disabled={none} onclick={() => pauseSelection(true)}><Icon name="pause" size={14} /> {t("selection.pause")}</button>
+  <button class="btn btn-sm" type="button" disabled={none} onclick={() => pauseSelection(false)}><Icon name="play" size={14} /> {t("selection.resume")}</button>
+  <button class="btn btn-sm btn-danger" type="button" disabled={none} onclick={confirmDeleteSelection}><Icon name="trash" size={14} /> {t("selection.delete")}</button>
   <span class="divider"></span>
-  <button class="btn btn-sm" type="button" onclick={clearSelection}><Icon name="close" size={14} /> {t("selection.clear")}</button>
+  <!-- With nothing selected the button leaves the selection mode ("Done"). -->
+  <button class="btn btn-sm" type="button" onclick={clearSelection}><Icon name="close" size={14} /> {none ? t("selection.done") : t("selection.clear")}</button>
 </div>
 
 <style>

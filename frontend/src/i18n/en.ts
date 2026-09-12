@@ -138,6 +138,8 @@ export const en = {
   "selection.resume": "Resume",
   "selection.delete": "Delete",
   "selection.clear": "Clear selection",
+  "selection.done": "Done",
+  "selection.count.zero": "No entries selected",
   "confirm.deleteEntries.title": "Delete entries",
   "confirm.deleteEntries.message.one": "Delete {count} entry?",
   "confirm.deleteEntries.message.other": "Delete {count} entries?",
