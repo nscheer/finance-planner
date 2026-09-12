@@ -63,6 +63,8 @@ export const en = {
   "block.expandAll": "Expand all",
   "block.collapseAll": "Collapse all",
   "block.addCategory": "Category",
+  "block.addEntry.income": "Income",
+  "block.addEntry.spending": "Spending",
   "block.perMonth": "/ month",
   "block.perYear": "/ year",
   "block.column.name": "Name",

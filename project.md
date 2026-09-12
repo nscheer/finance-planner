@@ -108,7 +108,8 @@ Each block has:
 
 - a header with the kind, the block totals per month and per year, and the
   buttons *Expand all*, *Collapse all*, *Category* (new category) and
-  *Income* / *Spending* (new entry);
+  *Income* / *Spending* (new entry; in German the singular *Einnahme* /
+  *Ausgabe*, while the block titles use the plural *Einnahmen* / *Ausgaben*);
 - a column header: Name · Frequency (German: Zahlweise) · Due · Per month · Per year;
 - the categories in their saved order, each as a collapsible group with a
   drag handle, the name, the number of entries, its subtotals per month and

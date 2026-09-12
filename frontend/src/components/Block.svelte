@@ -51,7 +51,7 @@
         <Icon name="plus" size={14} /> {t("block.addCategory")}
       </button>
       <button class="btn btn-sm {isIncome ? 'btn-income' : 'btn-spending'}" type="button" onclick={() => openDialog({ type: "entry", kind })}>
-        <Icon name="plus" size={14} /> {kindLabel(kind)}
+        <Icon name="plus" size={14} /> {t(kindKey("block.addEntry", kind))}
       </button>
     </div>
   </header>

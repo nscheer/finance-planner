@@ -54,6 +54,8 @@ export const de: Messages = {
   "block.expandAll": "Alle aufklappen",
   "block.collapseAll": "Alle zuklappen",
   "block.addCategory": "Kategorie",
+  "block.addEntry.income": "Einnahme",
+  "block.addEntry.spending": "Ausgabe",
   "block.perMonth": "/ Monat",
   "block.perYear": "/ Jahr",
   "block.column.name": "Name",
