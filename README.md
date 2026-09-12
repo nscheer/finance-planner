@@ -27,6 +27,44 @@ specification is in [project.md](project.md).
   When adding, categories are matched by id, then by name; entries whose id
   already exists are skipped, so overlapping files never create duplicates.
 
+## More features
+
+- **Periods**: entries can be paid monthly, quarterly, half-yearly or yearly.
+  Only monthly entries go to the bank account; all others are saved up with
+  1/n of the amount per month.
+- **Due month**: non-monthly entries can carry the month of a payment. The
+  statistics box then shows a 12-month timeline of what is due when, the
+  balance of the savings account, and the peak buffer it needs.
+- **Paused entries** stay in the table but are excluded from every total.
+- **Notes** per entry (shown as a tooltip and in the edit dialog).
+- **Savings goal** per month with the remaining amount, and banners when
+  spending exceeds income or the goal is not reachable.
+- **Charts**: share of each spending category (bar in the category header and
+  a donut), income vs. spending.
+- **Undo**: deleting an entry or category and importing a file can be undone
+  from the notification.
+- **Backups**: written to `backups/` next to `data.json` before changes (at
+  most every 10 minutes) and before every import; the last 20 are kept and
+  can be restored from the Backups dialog.
+- **CSV export** for spreadsheets (UTF-8 with BOM; `;` and decimal comma in
+  German, `,` and decimal point otherwise).
+- **Sample data** for an empty planner, **search and period filter**,
+  **duplicate entry**, a **dark color scheme** following the system, and the
+  window size and position are remembered.
+
+### Keyboard shortcuts
+
+| Key | Action |
+|---|---|
+| `n` | New spending |
+| `i` | New income |
+| `c` | New spending category |
+| `/` or `Ctrl+F` | Search |
+| `Esc` | Clear search / close dialog |
+| `?` | Show shortcuts |
+
+Shortcuts are ignored while a dialog or an input field is focused.
+
 ## Development
 
 ```sh
@@ -67,6 +105,9 @@ planner/
   store.go                 data.json loading, versioning/migration, atomic saving
   service.go               the service used by the frontend (CRUD, moves, import/export)
   errors.go                coded errors that the frontend translates
+  backup.go                automatic backups next to data.json
+  csv.go                   CSV export
+  sample.go                example data set
   planner_test.go          tests against project.md
 frontend/src/
   App.svelte               shell: top bar, language dropdown, blocks, statistics, dialogs
@@ -76,5 +117,5 @@ frontend/src/
   lib/store.svelte.ts      application state and service calls
   lib/dnd.svelte.ts        drag & drop state and drop handling
   lib/money.ts             € parsing and formatting (cents based)
-  components/              Block, CategoryGroup, EntryRow, StatsPanel, dialogs
+  components/              Block, CategoryGroup, EntryRow, StatsPanel, Timeline, Charts, dialogs
 ```
