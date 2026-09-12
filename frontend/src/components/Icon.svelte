@@ -5,7 +5,7 @@
   export type IconName =
     | "plus" | "edit" | "trash" | "chevron" | "grip" | "download" | "upload"
     | "expand" | "collapse" | "close" | "info" | "check" | "alert" | "globe"
-    | "pause" | "play" | "copy" | "note" | "search" | "keyboard" | "history" | "sparkles" | "target" | "sun" | "printer";
+    | "pause" | "play" | "copy" | "note" | "search" | "keyboard" | "history" | "sparkles" | "target" | "sun" | "printer" | "command";
 
   const paths: Record<IconName, string> = {
     plus: "M12 5v14M5 12h14",
@@ -33,6 +33,8 @@
     target: "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20ZM12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12ZM12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z",
     sun: "M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4",
     printer: "M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v7H6z",
+    // terminal prompt: ">_" – the usual sign for a command palette
+    command: "M4 17l6-5-6-5M12 19h8",
   };
 </script>
 

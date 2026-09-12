@@ -304,7 +304,7 @@ Shortcuts are ignored while a dialog is open or an input field has the focus.
 
 ### 2.14 Command palette
 
-`Ctrl+K` (or the search icon in the top bar) opens a palette: one text box
+`Ctrl+K` (or the prompt icon `>_` in the top bar) opens a palette: one text box
 that searches, case-insensitively, over **actions** (new entry or category
 per kind, import, export, CSV export, print, backups, savings goal, expand
 and collapse all per block, shortcuts, appearance and language choices,
