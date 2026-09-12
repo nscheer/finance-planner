@@ -102,6 +102,20 @@ func migrate(raw []byte, version int) ([]byte, error) {
 				return nil, err
 			}
 			version = 2
+		case 2:
+			// Version 3 added optional entry fields (dueMonth, paused, notes)
+			// and settings (savingsGoalCents, window). All of them default
+			// to their zero value, so only the version changes.
+			var m map[string]json.RawMessage
+			if err := json.Unmarshal(raw, &m); err != nil {
+				return nil, fmt.Errorf("invalid JSON: %w", err)
+			}
+			m["version"] = json.RawMessage("3")
+			var err error
+			if raw, err = json.Marshal(m); err != nil {
+				return nil, err
+			}
+			version = 3
 		default:
 			return nil, fmt.Errorf("no migration from version %d", version)
 		}

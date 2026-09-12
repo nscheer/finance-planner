@@ -216,36 +216,59 @@ func (s *Service) MoveCategory(id string, toIndex int) (State, error) {
 
 // ---- entries --------------------------------------------------------------
 
+// EntryInput holds the editable fields of an entry as entered in the dialog.
+type EntryInput struct {
+	CategoryID  string `json:"categoryId"`
+	Name        string `json:"name"`
+	AmountCents int64  `json:"amountCents"`
+	Period      Period `json:"period"`
+	DueMonth    int    `json:"dueMonth"`
+	Paused      bool   `json:"paused"`
+	Notes       string `json:"notes"`
+}
+
 // AddEntry appends a new entry to a category.
-func (s *Service) AddEntry(categoryID, name string, amountCents int64, period Period) (State, error) {
+func (s *Service) AddEntry(in EntryInput) (State, error) {
 	return s.mutate(func() error {
-		if err := s.validateEntry(categoryID, &name, amountCents, period); err != nil {
+		if err := s.validateEntry(&in); err != nil {
 			return err
 		}
-		s.data.Entries = append(s.data.Entries, Entry{
-			ID: newID(), CategoryID: categoryID, Name: name, AmountCents: amountCents, Period: period,
-		})
+		e := Entry{ID: newID()}
+		in.applyTo(&e)
+		s.data.Entries = append(s.data.Entries, e)
 		return nil
 	})
 }
 
 // UpdateEntry changes all editable fields of an entry. When the category
 // changes, the entry is appended at the end of the new category.
-func (s *Service) UpdateEntry(id, categoryID, name string, amountCents int64, period Period) (State, error) {
+func (s *Service) UpdateEntry(id string, in EntryInput) (State, error) {
 	return s.mutate(func() error {
 		e := s.data.Entry(id)
 		if e == nil {
 			return newError(ErrEntryNotFound)
 		}
-		if err := s.validateEntry(categoryID, &name, amountCents, period); err != nil {
+		if err := s.validateEntry(&in); err != nil {
 			return err
 		}
-		e.Name, e.AmountCents, e.Period = name, amountCents, period
-		if e.CategoryID != categoryID {
-			moved := *e
-			moved.CategoryID = categoryID
-			s.data.Entries = append(removeEntry(s.data.Entries, id), moved)
+		moved := e.CategoryID != in.CategoryID
+		in.applyTo(e)
+		if moved {
+			copied := *e
+			s.data.Entries = append(removeEntry(s.data.Entries, id), copied)
 		}
+		return nil
+	})
+}
+
+// SetEntryPaused excludes an entry from (or includes it again in) all totals.
+func (s *Service) SetEntryPaused(id string, paused bool) (State, error) {
+	return s.mutate(func() error {
+		e := s.data.Entry(id)
+		if e == nil {
+			return newError(ErrEntryNotFound)
+		}
+		e.Paused = paused
 		return nil
 	})
 }
@@ -300,6 +323,29 @@ func (s *Service) MoveEntry(id, targetCategoryID string, toIndex int) (State, er
 }
 
 // ---- settings -------------------------------------------------------------
+
+// SetSavingsGoal stores the monthly savings goal.
+func (s *Service) SetSavingsGoal(cents int64) (State, error) {
+	return s.mutate(func() error {
+		if cents < 0 {
+			return newError(ErrSavingsGoalNegative)
+		}
+		s.data.Settings.SavingsGoalCents = cents
+		return nil
+	})
+}
+
+// SetWindow remembers the window geometry. It is called often while the
+// window is resized, so nothing is written when the geometry is unchanged.
+func (s *Service) SetWindow(w WindowGeometry) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.data.Settings.Window == w {
+		return nil
+	}
+	s.data.Settings.Window = w
+	return s.save()
+}
 
 // SetLanguage stores the UI language chosen in the language dropdown.
 func (s *Service) SetLanguage(language string) (State, error) {
@@ -466,21 +512,40 @@ func (s *Service) findCategoryByName(kind Kind, name string) *Category {
 	return nil
 }
 
-func (s *Service) validateEntry(categoryID string, name *string, amountCents int64, period Period) error {
-	*name = strings.TrimSpace(*name)
-	if s.data.Category(categoryID) == nil {
+// validateEntry checks and normalises the input in place.
+func (s *Service) validateEntry(in *EntryInput) error {
+	in.Name = strings.TrimSpace(in.Name)
+	in.Notes = strings.TrimSpace(in.Notes)
+	if s.data.Category(in.CategoryID) == nil {
 		return newError(ErrEntryCategoryRequired)
 	}
-	if *name == "" {
+	if in.Name == "" {
 		return newError(ErrEntryNameEmpty)
 	}
-	if amountCents <= 0 {
+	if in.AmountCents <= 0 {
 		return newError(ErrEntryAmountPositive)
 	}
-	if !period.Valid() {
-		return newError(ErrPeriodUnknown, "period", period)
+	if !in.Period.Valid() {
+		return newError(ErrPeriodUnknown, "period", in.Period)
+	}
+	if in.DueMonth < 0 || in.DueMonth > 12 {
+		return newError(ErrEntryDueMonthInvalid, "month", in.DueMonth)
+	}
+	if in.Period == PeriodMonthly {
+		in.DueMonth = 0 // monthly entries have no due month
 	}
 	return nil
+}
+
+// applyTo copies the input fields onto an entry (id is left untouched).
+func (in EntryInput) applyTo(e *Entry) {
+	e.CategoryID = in.CategoryID
+	e.Name = in.Name
+	e.AmountCents = in.AmountCents
+	e.Period = in.Period
+	e.DueMonth = in.DueMonth
+	e.Paused = in.Paused
+	e.Notes = in.Notes
 }
 
 func removeCategory(list []Category, id string) []Category {

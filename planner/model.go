@@ -20,7 +20,9 @@ import (
 //
 //	1 - initial structure
 //	2 - added "settings" (language)
-const CurrentVersion = 2
+//	3 - quarterly/half-yearly periods, entry dueMonth/paused/notes,
+//	    settings savingsGoalCents/window
+const CurrentVersion = 3
 
 // Kind distinguishes income from spending. Categories belong to exactly one
 // kind, entries inherit the kind of their category.
@@ -32,13 +34,30 @@ const (
 )
 
 // Period is the "master" period of an entry: the period the user entered the
-// amount for. The other period is derived (see calc.go).
+// amount for. The other values are derived (see calc.go).
 type Period string
 
 const (
-	PeriodMonthly Period = "monthly"
-	PeriodYearly  Period = "yearly"
+	PeriodMonthly    Period = "monthly"
+	PeriodQuarterly  Period = "quarterly"
+	PeriodHalfYearly Period = "halfyearly"
+	PeriodYearly     Period = "yearly"
 )
+
+// Months returns the number of months between two payments (1, 3, 6, 12).
+// Unknown periods count as yearly so that calculations never divide by zero.
+func (p Period) Months() int {
+	switch p {
+	case PeriodMonthly:
+		return 1
+	case PeriodQuarterly:
+		return 3
+	case PeriodHalfYearly:
+		return 6
+	default:
+		return 12
+	}
+}
 
 // Category groups entries. The order of categories inside Data.Categories is
 // the display order (per kind).
@@ -59,6 +78,22 @@ type Entry struct {
 	// AmountCents is the amount the user entered, in cents, for the Period.
 	AmountCents int64  `json:"amountCents"`
 	Period      Period `json:"period"`
+	// DueMonth is the calendar month (1-12) of a payment for non-monthly
+	// entries, 0 if not set. Quarterly and half-yearly entries pay every
+	// 3 or 6 months starting from that month.
+	DueMonth int `json:"dueMonth,omitempty"`
+	// Paused entries are kept but excluded from all totals and statistics.
+	Paused bool `json:"paused,omitempty"`
+	// Notes is free text, e.g. a contract number or cancellation date.
+	Notes string `json:"notes,omitempty"`
+}
+
+// WindowGeometry remembers the window size and position between starts.
+type WindowGeometry struct {
+	Width  int `json:"width"`
+	Height int `json:"height"`
+	X      int `json:"x"`
+	Y      int `json:"y"`
 }
 
 // Settings holds user preferences that are stored together with the data.
@@ -67,6 +102,10 @@ type Settings struct {
 	// "de". It stays empty until a choice was made; the frontend then uses
 	// its default language (German).
 	Language string `json:"language"`
+	// SavingsGoalCents is the amount the user wants to put aside per month.
+	SavingsGoalCents int64 `json:"savingsGoalCents"`
+	// Window is the last window geometry (zero = use the default size).
+	Window WindowGeometry `json:"window"`
 }
 
 // Data is the complete persisted state. It is serialised 1:1 to data.json.
@@ -122,7 +161,13 @@ func newID() string {
 func (k Kind) Valid() bool { return k == KindIncome || k == KindSpending }
 
 // Valid reports whether the period is one of the known periods.
-func (p Period) Valid() bool { return p == PeriodMonthly || p == PeriodYearly }
+func (p Period) Valid() bool {
+	switch p {
+	case PeriodMonthly, PeriodQuarterly, PeriodHalfYearly, PeriodYearly:
+		return true
+	}
+	return false
+}
 
 // Category returns the category with the given id, or nil.
 func (d *Data) Category(id string) *Category {
@@ -188,6 +233,9 @@ func (d *Data) Validate() error {
 	if d.Settings.Language != "" && !ValidLanguage(d.Settings.Language) {
 		return fmt.Errorf("invalid language %q in settings", d.Settings.Language)
 	}
+	if d.Settings.SavingsGoalCents < 0 {
+		return fmt.Errorf("negative savings goal")
+	}
 	entryIDs := map[string]bool{}
 	for _, e := range d.Entries {
 		if e.ID == "" {
@@ -208,6 +256,9 @@ func (d *Data) Validate() error {
 		}
 		if e.AmountCents < 0 {
 			return fmt.Errorf("entry %q has a negative amount", e.Name)
+		}
+		if e.DueMonth < 0 || e.DueMonth > 12 {
+			return fmt.Errorf("entry %q has an invalid due month %d", e.Name, e.DueMonth)
 		}
 	}
 	return nil

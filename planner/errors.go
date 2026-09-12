@@ -31,6 +31,8 @@ const (
 	ErrEntryCategoryRequired = "entry.categoryRequired"
 	ErrEntryNameEmpty        = "entry.nameEmpty"
 	ErrEntryAmountPositive   = "entry.amountPositive"
+	ErrEntryDueMonthInvalid  = "entry.dueMonthInvalid"
+	ErrSavingsGoalNegative   = "settings.savingsGoalNegative"
 	ErrEntryKindMismatch     = "entry.kindMismatch"
 	ErrImportModeUnknown     = "import.modeUnknown"
 	ErrImportInvalidFile     = "import.invalidFile"

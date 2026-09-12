@@ -35,11 +35,10 @@ func mustCategory(t *testing.T, s *Service, kind Kind, name string) Category {
 
 func mustEntry(t *testing.T, s *Service, cat Category, name string, cents int64, period Period) Entry {
 	t.Helper()
-	st, err := s.AddEntry(cat.ID, name, cents, period)
+	_, err := s.AddEntry(EntryInput{CategoryID: cat.ID, Name: name, AmountCents: cents, Period: period})
 	if err != nil {
 		t.Fatalf("AddEntry(%s): %v", name, err)
 	}
-	_ = st
 	for _, e := range s.data.EntriesOf(cat.ID) {
 		if e.Name == name {
 			return e
@@ -72,11 +71,11 @@ func equalStrings(a, b []string) bool {
 // "Categories have to be added first, before spendings can be entered."
 func TestEntryRequiresExistingCategory(t *testing.T) {
 	s, _ := newTestService(t)
-	if _, err := s.AddEntry("does-not-exist", "Rent", 100000, PeriodMonthly); err == nil {
+	if _, err := s.AddEntry(EntryInput{CategoryID: "does-not-exist", Name: "Rent", AmountCents: 100000, Period: PeriodMonthly}); err == nil {
 		t.Fatal("expected error when adding an entry without a category")
 	}
 	cat := mustCategory(t, s, KindSpending, "Housing")
-	if _, err := s.AddEntry(cat.ID, "Rent", 100000, PeriodMonthly); err != nil {
+	if _, err := s.AddEntry(EntryInput{CategoryID: cat.ID, Name: "Rent", AmountCents: 100000, Period: PeriodMonthly}); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
@@ -85,19 +84,18 @@ func TestEntryRequiresExistingCategory(t *testing.T) {
 func TestEntryValidation(t *testing.T) {
 	s, _ := newTestService(t)
 	cat := mustCategory(t, s, KindSpending, "Housing")
-	cases := []struct {
-		name   string
-		cents  int64
-		period Period
-	}{
-		{"", 100, PeriodMonthly},
-		{"   ", 100, PeriodMonthly},
-		{"Rent", 0, PeriodMonthly},
-		{"Rent", -5, PeriodMonthly},
-		{"Rent", 100, Period("weekly")},
+	cases := []EntryInput{
+		{Name: "", AmountCents: 100, Period: PeriodMonthly},
+		{Name: "   ", AmountCents: 100, Period: PeriodMonthly},
+		{Name: "Rent", AmountCents: 0, Period: PeriodMonthly},
+		{Name: "Rent", AmountCents: -5, Period: PeriodMonthly},
+		{Name: "Rent", AmountCents: 100, Period: Period("weekly")},
+		{Name: "Rent", AmountCents: 100, Period: PeriodYearly, DueMonth: 13},
+		{Name: "Rent", AmountCents: 100, Period: PeriodYearly, DueMonth: -1},
 	}
 	for _, c := range cases {
-		if _, err := s.AddEntry(cat.ID, c.name, c.cents, c.period); err == nil {
+		c.CategoryID = cat.ID
+		if _, err := s.AddEntry(c); err == nil {
 			t.Errorf("expected validation error for %+v", c)
 		}
 	}
@@ -230,14 +228,17 @@ func TestStatistics(t *testing.T) {
 
 	st := s.GetState().Stats
 	want := Stats{
-		IncomeMonthlyCents:    310000,
-		IncomeYearlyCents:     3720000,
-		SpendingMonthlyCents:  125000,
-		SpendingYearlyCents:   1500000,
-		SaldoMonthlyCents:     185000,
-		SaldoYearlyCents:      2220000,
-		ToBankMonthlyCents:    120000,
-		ToSavingsMonthlyCents: 5000,
+		IncomeMonthlyCents:      310000,
+		IncomeYearlyCents:       3720000,
+		SpendingMonthlyCents:    125000,
+		SpendingYearlyCents:     1500000,
+		SaldoMonthlyCents:       185000,
+		SaldoYearlyCents:        2220000,
+		ToBankMonthlyCents:      120000,
+		ToSavingsMonthlyCents:   5000,
+		RemainingAfterGoalCents: 185000, // no goal set: equals the saldo
+		GoalReachable:           true,
+		UnscheduledCount:        1, // "Car" has no due month
 	}
 	if st != want {
 		t.Fatalf("stats\n got %+v\nwant %+v", st, want)
@@ -350,7 +351,10 @@ func TestUpdateEntry(t *testing.T) {
 	leisure := mustCategory(t, s, KindSpending, "Leisure")
 	rent := mustEntry(t, s, housing, "Rent", 100000, PeriodMonthly)
 
-	st, err := s.UpdateEntry(rent.ID, leisure.ID, "Rent (new)", 1200000, PeriodYearly)
+	st, err := s.UpdateEntry(rent.ID, EntryInput{
+		CategoryID: leisure.ID, Name: "Rent (new)", AmountCents: 1200000, Period: PeriodYearly,
+		DueMonth: 3, Notes: " contract 42 ",
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -361,7 +365,15 @@ func TestUpdateEntry(t *testing.T) {
 	if e.Name != "Rent (new)" || e.AmountCents != 1200000 || e.Period != PeriodYearly || e.MonthlyCents != 100000 {
 		t.Fatalf("entry not updated: %+v", e)
 	}
-	if _, err := s.UpdateEntry(rent.ID, leisure.ID, "", 1, PeriodMonthly); err == nil {
+	if e.DueMonth != 3 || e.Notes != "contract 42" {
+		t.Fatalf("due month / notes not stored: %+v", e)
+	}
+	// Switching back to monthly clears the due month.
+	st, _ = s.UpdateEntry(rent.ID, EntryInput{CategoryID: leisure.ID, Name: "Rent", AmountCents: 100, Period: PeriodMonthly, DueMonth: 3})
+	if st.Spending[1].Entries[0].DueMonth != 0 {
+		t.Fatal("monthly entries must not keep a due month")
+	}
+	if _, err := s.UpdateEntry(rent.ID, EntryInput{CategoryID: leisure.ID, Name: "", AmountCents: 1, Period: PeriodMonthly}); err == nil {
 		t.Fatal("expected validation error")
 	}
 }
@@ -637,8 +649,18 @@ func TestDecodeVersions(t *testing.T) {
 	if err != nil {
 		t.Fatalf("migrating version 1: %v", err)
 	}
-	if d.Version != 2 || d.Settings.Language != "" || len(d.Entries) != 1 {
+	if d.Version != CurrentVersion || d.Settings.Language != "" || len(d.Entries) != 1 {
 		t.Fatalf("v1 migration result wrong: %+v", d)
+	}
+
+	v2 := []byte(`{"version":2,"settings":{"language":"de"},"categories":[{"id":"c1","name":"X","kind":"spending"}],"entries":[{"id":"e1","categoryId":"c1","name":"Y","amountCents":1200,"period":"yearly"}]}`)
+	d, err = Decode(v2)
+	if err != nil {
+		t.Fatalf("migrating version 2: %v", err)
+	}
+	e := d.Entries[0]
+	if d.Version != 3 || d.Settings.Language != "de" || e.DueMonth != 0 || e.Paused || e.Notes != "" || d.Settings.SavingsGoalCents != 0 {
+		t.Fatalf("v2 migration result wrong: %+v %+v", d.Settings, e)
 	}
 
 	newer := []byte(`{"version":999,"categories":[],"entries":[]}`)
@@ -737,5 +759,171 @@ func TestExportImportReplaceAndMerge(t *testing.T) {
 	}
 	if len(dst.GetState().Spending) != 1 {
 		t.Fatal("failed import must not change the data")
+	}
+}
+
+// Quarterly and half-yearly periods convert exactly like yearly ones.
+func TestQuarterlyAndHalfYearly(t *testing.T) {
+	q := Entry{AmountCents: 30000, Period: PeriodQuarterly}
+	if q.MonthlyCents() != 10000 || q.YearlyCents() != 120000 {
+		t.Fatalf("quarterly: %d / %d", q.MonthlyCents(), q.YearlyCents())
+	}
+	h := Entry{AmountCents: 60000, Period: PeriodHalfYearly}
+	if h.MonthlyCents() != 10000 || h.YearlyCents() != 120000 {
+		t.Fatalf("half-yearly: %d / %d", h.MonthlyCents(), h.YearlyCents())
+	}
+	odd := Entry{AmountCents: 10000, Period: PeriodQuarterly} // 33,333.. -> 33,33
+	if odd.MonthlyCents() != 3333 {
+		t.Fatalf("rounding: %d", odd.MonthlyCents())
+	}
+	for _, p := range []Period{PeriodMonthly, PeriodQuarterly, PeriodHalfYearly, PeriodYearly} {
+		if !p.Valid() {
+			t.Errorf("%s should be valid", p)
+		}
+	}
+	// Non-monthly periods are saved up, only monthly ones go to the bank.
+	s, _ := newTestService(t)
+	cat := mustCategory(t, s, KindSpending, "Insurance")
+	mustEntry(t, s, cat, "Car", 30000, PeriodQuarterly)
+	mustEntry(t, s, cat, "Rent", 100000, PeriodMonthly)
+	st := s.GetState().Stats
+	if st.ToBankMonthlyCents != 100000 || st.ToSavingsMonthlyCents != 10000 || st.SpendingMonthlyCents != 110000 {
+		t.Fatalf("stats: %+v", st)
+	}
+}
+
+// Paused entries stay visible but count nowhere.
+func TestPausedEntries(t *testing.T) {
+	s, _ := newTestService(t)
+	salary := mustCategory(t, s, KindIncome, "Salary")
+	housing := mustCategory(t, s, KindSpending, "Housing")
+	mustEntry(t, s, salary, "Job", 300000, PeriodMonthly)
+	rent := mustEntry(t, s, housing, "Rent", 100000, PeriodMonthly)
+	gym := mustEntry(t, s, housing, "Gym", 12000, PeriodYearly)
+
+	if _, err := s.SetEntryPaused(rent.ID, true); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.SetEntryPaused(gym.ID, true); err != nil {
+		t.Fatal(err)
+	}
+	st := s.GetState()
+	if len(st.Spending[0].Entries) != 2 {
+		t.Fatal("paused entries must stay in the table")
+	}
+	if !st.Spending[0].Entries[0].Paused || st.Spending[0].Entries[0].MonthlyCents != 100000 {
+		t.Fatalf("paused entry view wrong: %+v", st.Spending[0].Entries[0])
+	}
+	if st.Spending[0].MonthlyCents != 0 || st.Spending[0].YearlyCents != 0 {
+		t.Fatalf("paused entries counted in subtotal: %+v", st.Spending[0])
+	}
+	if st.Stats.SpendingMonthlyCents != 0 || st.Stats.ToBankMonthlyCents != 0 || st.Stats.ToSavingsMonthlyCents != 0 || st.Stats.SaldoMonthlyCents != 300000 {
+		t.Fatalf("paused entries counted in stats: %+v", st.Stats)
+	}
+	if st.Stats.PausedCount != 2 {
+		t.Fatalf("paused count = %d", st.Stats.PausedCount)
+	}
+	st, _ = s.SetEntryPaused(rent.ID, false)
+	if st.Stats.SpendingMonthlyCents != 100000 {
+		t.Fatal("resumed entry not counted")
+	}
+	if _, err := s.SetEntryPaused("nope", true); err == nil {
+		t.Fatal("expected error for unknown entry")
+	}
+}
+
+// Timeline: what is due per month and how much the savings account holds.
+func TestTimelineAndPeakBuffer(t *testing.T) {
+	s, _ := newTestService(t)
+	cat := mustCategory(t, s, KindSpending, "Insurance")
+	// Yearly 1200 due in March: saved 100/month, paid in March.
+	if _, err := s.AddEntry(EntryInput{CategoryID: cat.ID, Name: "Car", AmountCents: 120000, Period: PeriodYearly, DueMonth: 3}); err != nil {
+		t.Fatal(err)
+	}
+	// Quarterly 300 due in January (and April, July, October).
+	if _, err := s.AddEntry(EntryInput{CategoryID: cat.ID, Name: "Water", AmountCents: 30000, Period: PeriodQuarterly, DueMonth: 1}); err != nil {
+		t.Fatal(err)
+	}
+	// Yearly without due month: counted in savings, but not in the timeline.
+	mustEntry(t, s, cat, "Misc", 12000, PeriodYearly)
+	// Paused yearly with due month: ignored completely.
+	if _, err := s.AddEntry(EntryInput{CategoryID: cat.ID, Name: "Old", AmountCents: 99999, Period: PeriodYearly, DueMonth: 6, Paused: true}); err != nil {
+		t.Fatal(err)
+	}
+
+	st := s.GetState().Stats
+	tl := st.Timeline
+	if tl[0].DueCents != 30000 || tl[2].DueCents != 120000 || tl[3].DueCents != 30000 || tl[5].DueCents != 0 {
+		t.Fatalf("due wrong: %+v", tl)
+	}
+	// Car: balance at end of month t = 10000 * ((t-2) mod 12); Water: 10000 * (t mod 3).
+	want := func(t int) int64 {
+		car := int64(((t-2)%12+12)%12) * 10000
+		water := int64(t%3) * 10000
+		return car + water
+	}
+	for m := 0; m < 12; m++ {
+		if tl[m].SavedCents != want(m) {
+			t.Fatalf("month %d saved = %d, want %d", m+1, tl[m].SavedCents, want(m))
+		}
+	}
+	// Peak: February = 110000 (car) + 10000 (water) = 120000.
+	if st.PeakBufferCents != 120000 {
+		t.Fatalf("peak buffer = %d", st.PeakBufferCents)
+	}
+	if st.UnscheduledCount != 1 {
+		t.Fatalf("unscheduled = %d", st.UnscheduledCount)
+	}
+	if st.ToSavingsMonthlyCents != 10000+10000+1000 {
+		t.Fatalf("to savings = %d", st.ToSavingsMonthlyCents)
+	}
+}
+
+// Savings goal: remaining after goal and reachability.
+func TestSavingsGoal(t *testing.T) {
+	s, path := newTestService(t)
+	salary := mustCategory(t, s, KindIncome, "Salary")
+	housing := mustCategory(t, s, KindSpending, "Housing")
+	mustEntry(t, s, salary, "Job", 300000, PeriodMonthly)
+	mustEntry(t, s, housing, "Rent", 100000, PeriodMonthly)
+
+	st, err := s.SetSavingsGoal(150000)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if st.Stats.SavingsGoalCents != 150000 || st.Stats.RemainingAfterGoalCents != 50000 || !st.Stats.GoalReachable {
+		t.Fatalf("goal stats: %+v", st.Stats)
+	}
+	st, _ = s.SetSavingsGoal(250000)
+	if st.Stats.RemainingAfterGoalCents != -50000 || st.Stats.GoalReachable {
+		t.Fatalf("unreachable goal stats: %+v", st.Stats)
+	}
+	if _, err := s.SetSavingsGoal(-1); err == nil {
+		t.Fatal("expected error for negative goal")
+	}
+	reloaded, _ := LoadFile(path)
+	if reloaded.Settings.SavingsGoalCents != 250000 {
+		t.Fatal("goal not persisted")
+	}
+}
+
+// Window geometry is stored and only written when it changed.
+func TestWindowGeometry(t *testing.T) {
+	s, path := newTestService(t)
+	w := WindowGeometry{Width: 1500, Height: 950, X: 10, Y: 20}
+	if err := s.SetWindow(w); err != nil {
+		t.Fatal(err)
+	}
+	info1, _ := os.Stat(path)
+	if err := s.SetWindow(w); err != nil {
+		t.Fatal(err)
+	}
+	info2, _ := os.Stat(path)
+	if info1.ModTime() != info2.ModTime() {
+		t.Fatal("unchanged geometry must not rewrite the file")
+	}
+	reloaded, _ := LoadFile(path)
+	if reloaded.Settings.Window != w {
+		t.Fatalf("window not persisted: %+v", reloaded.Settings.Window)
 	}
 }

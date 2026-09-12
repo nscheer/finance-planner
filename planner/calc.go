@@ -3,22 +3,19 @@ package planner
 import "math"
 
 // MonthlyCents returns the monthly equivalent of an entry: the entered amount
-// for monthly entries, 1/12 of the entered amount (rounded to cents) for
-// yearly entries.
+// divided by the number of months per payment, rounded to cents.
 func (e Entry) MonthlyCents() int64 {
-	if e.Period == PeriodYearly {
-		return int64(math.Round(float64(e.AmountCents) / 12))
-	}
-	return e.AmountCents
-}
-
-// YearlyCents returns the yearly equivalent of an entry: 12 times the entered
-// amount for monthly entries, the entered amount for yearly entries.
-func (e Entry) YearlyCents() int64 {
-	if e.Period == PeriodYearly {
+	months := e.Period.Months()
+	if months == 1 {
 		return e.AmountCents
 	}
-	return e.AmountCents * 12
+	return int64(math.Round(float64(e.AmountCents) / float64(months)))
+}
+
+// YearlyCents returns the yearly equivalent of an entry (exact: the amount
+// times the number of payments per year).
+func (e Entry) YearlyCents() int64 {
+	return e.AmountCents * int64(12/e.Period.Months())
 }
 
 // EntryView is an entry enriched with the derived values shown in the table.
@@ -28,7 +25,8 @@ type EntryView struct {
 	YearlyCents  int64 `json:"yearlyCents"`
 }
 
-// CategoryView is a category with its entries and subtotals.
+// CategoryView is a category with its entries and subtotals. Paused entries
+// are listed but do not count towards the subtotals.
 type CategoryView struct {
 	Category
 	Entries      []EntryView `json:"entries"`
@@ -36,12 +34,23 @@ type CategoryView struct {
 	YearlyCents  int64       `json:"yearlyCents"`
 }
 
+// TimelineMonth describes one calendar month (index 0 = January) of the
+// steady-state savings plan.
+type TimelineMonth struct {
+	// DueCents is the sum of non-monthly spendings that are paid in this month.
+	DueCents int64 `json:"dueCents"`
+	// SavedCents is the balance the savings account holds at the end of the
+	// month, after the month's contribution and payments.
+	SavedCents int64 `json:"savedCents"`
+}
+
 // Stats is the content of the statistics box.
 //
 // The background: monthly spendings are paid from the bank account, so that
-// amount has to be transferred to the bank account every month. Yearly
-// spendings are saved up on a savings account with 1/12 of the amount every
-// month, so that the money is available when the spending is due.
+// amount has to be transferred to the bank account every month. Quarterly,
+// half-yearly and yearly spendings are saved up on a savings account with
+// 1/n of the amount every month, so that the money is available when the
+// spending is due.
 type Stats struct {
 	IncomeMonthlyCents   int64 `json:"incomeMonthlyCents"`
 	IncomeYearlyCents    int64 `json:"incomeYearlyCents"`
@@ -51,8 +60,27 @@ type Stats struct {
 	SaldoYearlyCents     int64 `json:"saldoYearlyCents"`
 	// ToBankMonthlyCents is the sum of all spendings entered per month.
 	ToBankMonthlyCents int64 `json:"toBankMonthlyCents"`
-	// ToSavingsMonthlyCents is the sum of 1/12 of all spendings entered per year.
+	// ToSavingsMonthlyCents is the monthly share of all spendings that are
+	// not paid monthly.
 	ToSavingsMonthlyCents int64 `json:"toSavingsMonthlyCents"`
+
+	// SavingsGoalCents is the amount the user wants to put aside per month.
+	SavingsGoalCents int64 `json:"savingsGoalCents"`
+	// RemainingAfterGoalCents is the monthly saldo minus the savings goal.
+	RemainingAfterGoalCents int64 `json:"remainingAfterGoalCents"`
+	GoalReachable           bool  `json:"goalReachable"`
+
+	// Timeline shows, per calendar month, what is due and how much the
+	// savings account holds. Only entries with a due month take part.
+	Timeline [12]TimelineMonth `json:"timeline"`
+	// PeakBufferCents is the highest savings balance of the year, i.e. the
+	// buffer the savings account needs.
+	PeakBufferCents int64 `json:"peakBufferCents"`
+	// UnscheduledCount is the number of active non-monthly spendings without
+	// a due month (not part of the timeline).
+	UnscheduledCount int `json:"unscheduledCount"`
+	// PausedCount is the number of paused entries (income and spending).
+	PausedCount int `json:"pausedCount"`
 }
 
 // State is everything the frontend needs to render the main view.
@@ -72,8 +100,10 @@ func (d *Data) BuildViews(kind Kind) []CategoryView {
 		v := CategoryView{Category: c, Entries: []EntryView{}}
 		for _, e := range d.EntriesOf(c.ID) {
 			ev := EntryView{Entry: e, MonthlyCents: e.MonthlyCents(), YearlyCents: e.YearlyCents()}
-			v.MonthlyCents += ev.MonthlyCents
-			v.YearlyCents += ev.YearlyCents
+			if !e.Paused {
+				v.MonthlyCents += ev.MonthlyCents
+				v.YearlyCents += ev.YearlyCents
+			}
 			v.Entries = append(v.Entries, ev)
 		}
 		views = append(views, v)
@@ -89,6 +119,10 @@ func (d *Data) ComputeStats() Stats {
 		kinds[c.ID] = c.Kind
 	}
 	for _, e := range d.Entries {
+		if e.Paused {
+			s.PausedCount++
+			continue
+		}
 		switch kinds[e.CategoryID] {
 		case KindIncome:
 			s.IncomeMonthlyCents += e.MonthlyCents()
@@ -96,16 +130,51 @@ func (d *Data) ComputeStats() Stats {
 		case KindSpending:
 			s.SpendingMonthlyCents += e.MonthlyCents()
 			s.SpendingYearlyCents += e.YearlyCents()
-			if e.Period == PeriodYearly {
-				s.ToSavingsMonthlyCents += e.MonthlyCents()
-			} else {
+			if e.Period == PeriodMonthly {
 				s.ToBankMonthlyCents += e.MonthlyCents()
+				continue
 			}
+			s.ToSavingsMonthlyCents += e.MonthlyCents()
+			if e.DueMonth == 0 {
+				s.UnscheduledCount++
+				continue
+			}
+			addToTimeline(&s.Timeline, e)
 		}
 	}
 	s.SaldoMonthlyCents = s.IncomeMonthlyCents - s.SpendingMonthlyCents
 	s.SaldoYearlyCents = s.IncomeYearlyCents - s.SpendingYearlyCents
+
+	s.SavingsGoalCents = d.Settings.SavingsGoalCents
+	s.RemainingAfterGoalCents = s.SaldoMonthlyCents - s.SavingsGoalCents
+	s.GoalReachable = s.RemainingAfterGoalCents >= 0
+
+	for _, m := range s.Timeline {
+		if m.SavedCents > s.PeakBufferCents {
+			s.PeakBufferCents = m.SavedCents
+		}
+	}
 	return s
+}
+
+// addToTimeline adds a scheduled non-monthly spending to the timeline.
+//
+// Every month 1/n of the amount is put aside (n = months per payment); in a
+// due month the full amount is taken out again. In the steady state the
+// balance for this entry at the end of month t is therefore
+// monthly × ((t − due) mod n), which is 0 right after a payment and
+// monthly × (n − 1) just before the next one.
+func addToTimeline(tl *[12]TimelineMonth, e Entry) {
+	n := e.Period.Months()
+	monthly := e.MonthlyCents()
+	due := e.DueMonth - 1 // 0-based
+	for t := 0; t < 12; t++ {
+		k := ((t-due)%n + n) % n // months since the last payment
+		tl[t].SavedCents += monthly * int64(k)
+		if k == 0 {
+			tl[t].DueCents += e.AmountCents
+		}
+	}
 }
 
 // BuildState assembles the full frontend state.
