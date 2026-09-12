@@ -92,7 +92,7 @@
 
   <div class="categories">
     {#if categories.length === 0}
-      <div class="empty">{t(kindKey("block.empty", kind))}</div>
+      <div class="empty">{filterActive() ? t("block.noMatch") : t(kindKey("block.empty", kind))}</div>
     {/if}
     {#each categories as category, i (category.id)}
       <div class="cat-drop" class:active={isCategoryTarget(kind, i)} ondragover={(e) => onGapDragOver(e, i)} role="presentation"></div>

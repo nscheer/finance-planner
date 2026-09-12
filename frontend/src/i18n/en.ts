@@ -74,6 +74,7 @@ export const en = {
   "block.column.perYear": "Per year",
   "block.empty.income": "No income categories yet. Add a category first, then add entries to it.",
   "block.empty.spending": "No spending categories yet. Add a category first, then add entries to it.",
+  "block.noMatch": "No entries match the current search or filter.",
 
   // ---- categories ----
   "category.dragHint": "Drag to reorder categories",

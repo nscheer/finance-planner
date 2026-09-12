@@ -125,7 +125,8 @@ per year · actions in this order: edit, duplicate, pause/resume, delete. The va
 entered (the master) is printed bold; the derived value is muted. Paused rows
 carry a subtle diagonal stripe pattern and muted text and badge.
 
-An empty block explains that a category has to be added first. When the
+An empty block explains that a category has to be added first; while a
+search or filter is active and nothing matches, it says so instead. When the
 planner contains no data at all, a "getting started" card offers to load
 **sample data**.
 

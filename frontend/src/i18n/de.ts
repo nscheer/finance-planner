@@ -65,6 +65,7 @@ export const de: Messages = {
   "block.column.perYear": "Pro Jahr",
   "block.empty.income": "Noch keine Einnahmen-Kategorien. Lege zuerst eine Kategorie an und füge ihr dann Einträge hinzu.",
   "block.empty.spending": "Noch keine Ausgaben-Kategorien. Lege zuerst eine Kategorie an und füge ihr dann Einträge hinzu.",
+  "block.noMatch": "Keine Einträge passen zur aktuellen Suche oder zum Filter.",
 
   "category.dragHint": "Ziehen, um Kategorien zu sortieren",
   "category.addEntry": "Eintrag hinzufügen",
