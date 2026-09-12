@@ -38,6 +38,8 @@ test("round trip between input text and cents", () => {
   }
   assert.equal(centsToInput(1250), "12,50");
   assert.equal(centsToInput(5), "0,05");
+  assert.equal(centsToInput(1250, "."), "12.50");
+  assert.equal(parseEuro(centsToInput(123456, ".")), 123456);
 });
 
 test("formats euro amounts per locale", () => {

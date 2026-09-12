@@ -2,12 +2,12 @@
   /** Sets the monthly savings goal shown in the statistics box. */
   import Modal from "./Modal.svelte";
   import { Service, app, apply, closeDialog, errorMessage, notify } from "../lib/store.svelte";
-  import { t } from "../lib/i18n.svelte";
-  import { centsToInput, parseEuro } from "../lib/money";
+  import { t, amountInput, amountPlaceholder } from "../lib/i18n.svelte";
+  import { parseEuro } from "../lib/money";
   import { untrack } from "svelte";
 
   const initial = untrack(() => app.state?.stats.savingsGoalCents ?? 0);
-  let amount = $state(initial > 0 ? centsToInput(initial) : "");
+  let amount = $state(initial > 0 ? amountInput(initial) : "");
   let error = $state("");
   let working = $state(false);
 
@@ -38,7 +38,7 @@
     <div class="field">
       <label for="goal-amount">{t("goalDialog.amount")}</label>
       <div class="input-suffix">
-        <input id="goal-amount" class="input" type="text" inputmode="decimal" bind:value={amount} placeholder="0,00" autocomplete="off" />
+        <input id="goal-amount" class="input" type="text" inputmode="decimal" bind:value={amount} placeholder={amountPlaceholder()} autocomplete="off" />
         <span>€</span>
       </div>
       <span class="hint">{t("goalDialog.hint")}</span>

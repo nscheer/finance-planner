@@ -19,8 +19,8 @@
     openDialog,
     periodMonths,
   } from "../lib/store.svelte";
-  import { t, formatEuro, monthName } from "../lib/i18n.svelte";
-  import { centsToInput, parseEuro } from "../lib/money";
+  import { t, formatEuro, monthName, amountInput, amountPlaceholder } from "../lib/i18n.svelte";
+  import { parseEuro } from "../lib/money";
   import { untrack } from "svelte";
 
   let {
@@ -39,7 +39,7 @@
   const source = initial.entry ?? initial.duplicateOf;
 
   let name = $state(initial.entry?.name ?? (initial.duplicateOf ? initial.duplicateOf.name + t("entryDialog.copySuffix") : ""));
-  let amount = $state(source ? centsToInput(source.amountCents) : "");
+  let amount = $state(source ? amountInput(source.amountCents) : "");
   let period = $state<Period>(source?.period ?? Period.PeriodMonthly);
   let dueMonth = $state(source?.dueMonth ?? 0);
   let notes = $state(source?.notes ?? "");
@@ -132,7 +132,7 @@
         <label for="entry-amount">{t("entryDialog.amount")}</label>
         <div class="row">
           <div class="input-suffix grow">
-            <input id="entry-amount" class="input" type="text" inputmode="decimal" bind:value={amount} placeholder="0,00" autocomplete="off" />
+            <input id="entry-amount" class="input" type="text" inputmode="decimal" bind:value={amount} placeholder={amountPlaceholder()} autocomplete="off" />
             <span>€</span>
           </div>
           <div class="segmented" role="radiogroup" aria-label={t("entryDialog.paid")}>

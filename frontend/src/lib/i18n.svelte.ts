@@ -15,7 +15,7 @@ import {
   type Params,
   type PluralKey,
 } from "../i18n";
-import { formatEuroIn, formatEuroSignedIn } from "./money";
+import { centsToInput, formatEuroIn, formatEuroSignedIn } from "./money";
 
 export { locales };
 export type { LocaleCode, MessageKey };
@@ -37,6 +37,22 @@ export function formatEuro(cents: number): string {
 
 export function formatEuroSigned(cents: number): string {
   return formatEuroSignedIn(cents, i18n.locale.numberLocale);
+}
+
+/** The decimal mark of the current language ("," in German, "." in English). */
+export function decimalMark(): "," | "." {
+  const parts = new Intl.NumberFormat(i18n.locale.numberLocale).formatToParts(1.5);
+  return parts.find((p) => p.type === "decimal")?.value === "," ? "," : ".";
+}
+
+/** Amount as shown in an edit field, in the language's decimal notation. */
+export function amountInput(cents: number): string {
+  return centsToInput(cents, decimalMark());
+}
+
+/** Placeholder of amount fields: "0,00" or "0.00". */
+export function amountPlaceholder(): string {
+  return `0${decimalMark()}00`;
 }
 
 /** Formats a ratio (0..1) as a percentage without decimals, e.g. "23 %". */

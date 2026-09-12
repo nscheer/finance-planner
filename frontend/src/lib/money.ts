@@ -30,12 +30,15 @@ export function formatEuroSignedIn(cents: number, locale: string): string {
   return cents < 0 ? `-${s}` : `+${s}`;
 }
 
-/** Formats cents as a plain editable number ("1234,56") for input fields. */
-export function centsToInput(cents: number): string {
+/**
+ * Formats cents as a plain editable number for input fields, e.g. "1234,56"
+ * with the German decimal mark or "1234.56" with the English one.
+ */
+export function centsToInput(cents: number, decimalMark: "," | "." = ","): string {
   const abs = Math.abs(cents);
   const euros = Math.floor(abs / 100);
   const rest = abs % 100;
-  return `${cents < 0 ? "-" : ""}${euros},${rest.toString().padStart(2, "0")}`;
+  return `${cents < 0 ? "-" : ""}${euros}${decimalMark}${rest.toString().padStart(2, "0")}`;
 }
 
 /**

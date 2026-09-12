@@ -95,8 +95,9 @@ last one is the decimal mark (`1.234,56` and `1,234.56` are both
 thousands separator (`1.234` = 1234 €); otherwise it is the decimal mark
 (`12.5` = 12.50). At most two decimals; spaces and the € sign are ignored;
 a leading minus is parsed but rejected by validation (amounts must be
-positive). Edit fields always show the stored amount as `1234,56`
-regardless of the language.
+positive). Edit fields show the stored amount with the decimal mark of the
+current language (`1234,56` in German, `1234.56` in English), and the
+placeholder of an empty amount field is `0,00` or `0.00` accordingly.
 
 Operations: add, edit, delete (with confirmation and undo), duplicate
 (dialog prefilled with the values, name with a "(copy)" suffix), pause and
