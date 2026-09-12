@@ -291,6 +291,18 @@ select:focus-visible {
   background: #f3ecfb;
   color: #6b3fa0;
 }
+.badge-quarterly {
+  background: #e6f4f6;
+  color: #1b6f7d;
+}
+.badge-halfyearly {
+  background: #fbf0e0;
+  color: #8a5a10;
+}
+.badge-paused {
+  background: var(--surface-3);
+  color: var(--text-2);
+}
 
 /* ---- misc --------------------------------------------------------------- */
 

@@ -7,7 +7,7 @@
   import Icon from "./Icon.svelte";
   import EntryRow from "./EntryRow.svelte";
   import { type CategoryView, openDialog, setCollapsed, confirmDeleteCategory } from "../lib/store.svelte";
-  import { t, formatEuro } from "../lib/i18n.svelte";
+  import { t, formatEuro, formatPercent } from "../lib/i18n.svelte";
   import {
     dnd,
     startDrag,
@@ -20,13 +20,29 @@
     isDraggedCategory,
   } from "../lib/dnd.svelte";
 
-  let { category, index }: { category: CategoryView; index: number } = $props();
+  let {
+    category,
+    index,
+    share = null,
+    draggable = true,
+  }: {
+    category: CategoryView;
+    index: number;
+    /** Share of all spending (0..1) for spending categories, null for income. */
+    share?: number | null;
+    /** false while a filter is active: no drag & drop. */
+    draggable?: boolean;
+  } = $props();
 
   let groupEl: HTMLElement;
   const entries = $derived(category.entries ?? []);
   const count = $derived(entries.length);
 
   function onDragStart(event: DragEvent) {
+    if (!draggable) {
+      event.preventDefault();
+      return;
+    }
     startDrag(event, { type: "category", id: category.id, kind: category.kind, index });
   }
 
@@ -65,7 +81,14 @@
       <span class="name">{category.name}</span>
       <span class="count">{count}</span>
     </button>
-    <span></span>
+    <span class="share-cell">
+      {#if share !== null}
+        <span class="share" title={t("category.share", { percent: formatPercent(share) })}>
+          <span class="share-bar"><span class="share-fill" style:width="{Math.round(share * 100)}%"></span></span>
+          <span class="share-text">{formatPercent(share)}</span>
+        </span>
+      {/if}
+    </span>
     <span class="money subtotal">{formatEuro(category.monthlyCents)}</span>
     <span class="money subtotal">{formatEuro(category.yearlyCents)}</span>
     <span class="actions">
@@ -79,7 +102,7 @@
     <div class="body" role="rowgroup">
       {#each entries as entry, i (entry.id)}
         <div class="drop-line" class:active={isEntryTarget(category.id, i)}></div>
-        <EntryRow {entry} {category} index={i} />
+        <EntryRow {entry} {category} index={i} {draggable} />
       {/each}
       <div class="drop-line" class:active={isEntryTarget(category.id, count)}></div>
       {#if count === 0}
@@ -160,6 +183,36 @@
     font-size: 11px;
     font-weight: 600;
     color: var(--text-2);
+  }
+  .share-cell {
+    display: flex;
+    align-items: center;
+  }
+  .share {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    padding-right: 10px;
+  }
+  .share-bar {
+    flex: 1;
+    height: 5px;
+    border-radius: 3px;
+    background: var(--border);
+    overflow: hidden;
+  }
+  .share-fill {
+    display: block;
+    height: 100%;
+    border-radius: 3px;
+    background: var(--spending);
+  }
+  .share-text {
+    font-size: 11px;
+    color: var(--text-2);
+    min-width: 32px;
+    text-align: right;
   }
   .subtotal {
     text-align: right;

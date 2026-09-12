@@ -1,7 +1,8 @@
 <script lang="ts">
   /**
-   * Add or edit an income/spending entry: name, amount in €, whether the
-   * amount is per month or per year (the "master" period) and the category.
+   * Add, edit or duplicate an income/spending entry: name, amount in €, the
+   * period the amount is paid in (the "master" period), the due month for
+   * non-monthly periods, category, notes and the paused flag.
    */
   import Modal from "./Modal.svelte";
   import {
@@ -16,24 +17,34 @@
     kindKey,
     notify,
     openDialog,
+    periodMonths,
   } from "../lib/store.svelte";
-  import { t, formatEuro } from "../lib/i18n.svelte";
+  import { t, formatEuro, monthName } from "../lib/i18n.svelte";
   import { centsToInput, parseEuro } from "../lib/money";
   import { untrack } from "svelte";
 
-  let { kind, entry, categoryId }: { kind: Kind; entry?: EntryView; categoryId?: string } = $props();
+  let {
+    kind,
+    entry,
+    categoryId,
+    duplicateOf,
+  }: { kind: Kind; entry?: EntryView; categoryId?: string; duplicateOf?: EntryView } = $props();
 
   const categories = $derived(categoriesOf(kind));
 
   // The dialog is created fresh each time it opens, so the form is seeded
   // once from the initial props (untrack: no reactive dependency intended).
-  const initial = untrack(() => ({ entry, categoryId }));
+  const initial = untrack(() => ({ entry, categoryId, duplicateOf }));
   const isEdit = !!initial.entry;
+  const source = initial.entry ?? initial.duplicateOf;
 
-  let name = $state(initial.entry?.name ?? "");
-  let amount = $state(initial.entry ? centsToInput(initial.entry.amountCents) : "");
-  let period = $state<Period>(initial.entry?.period ?? Period.PeriodMonthly);
-  let selectedCategory = $state(initial.entry?.categoryId ?? initial.categoryId ?? "");
+  let name = $state(initial.entry?.name ?? (initial.duplicateOf ? initial.duplicateOf.name + t("entryDialog.copySuffix") : ""));
+  let amount = $state(source ? centsToInput(source.amountCents) : "");
+  let period = $state<Period>(source?.period ?? Period.PeriodMonthly);
+  let dueMonth = $state(source?.dueMonth ?? 0);
+  let notes = $state(source?.notes ?? "");
+  let paused = $state(source?.paused ?? false);
+  let selectedCategory = $state(source?.categoryId ?? initial.categoryId ?? "");
   let error = $state("");
   let working = $state(false);
 
@@ -42,14 +53,28 @@
     if (!selectedCategory && categories.length > 0) selectedCategory = categories[0].id;
   });
 
-  /** Live preview of the derived value while typing. */
+  const periods: { value: Period; label: "entryDialog.perMonth" | "entryDialog.perQuarter" | "entryDialog.perHalfYear" | "entryDialog.perYear" }[] = [
+    { value: Period.PeriodMonthly, label: "entryDialog.perMonth" },
+    { value: Period.PeriodQuarterly, label: "entryDialog.perQuarter" },
+    { value: Period.PeriodHalfYearly, label: "entryDialog.perHalfYear" },
+    { value: Period.PeriodYearly, label: "entryDialog.perYear" },
+  ];
+  const months = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+
+  /** Live preview of the derived values while typing. */
   const preview = $derived.by(() => {
     const cents = parseEuro(amount);
     if (cents === null || cents <= 0) return "";
-    return period === Period.PeriodMonthly
-      ? t("entryDialog.previewYear", { amount: formatEuro(cents * 12) })
-      : t("entryDialog.previewMonth", { amount: formatEuro(Math.round(cents / 12)) });
+    const n = periodMonths(period);
+    return t("entryDialog.preview", {
+      monthly: formatEuro(Math.round(cents / n)),
+      yearly: formatEuro((cents * 12) / n),
+    });
   });
+
+  const title = $derived(
+    t(kindKey(isEdit ? "entryDialog.titleEdit" : initial.duplicateOf ? "entryDialog.titleDuplicate" : "entryDialog.titleNew", kind)),
+  );
 
   async function submit(event: SubmitEvent) {
     event.preventDefault();
@@ -59,13 +84,22 @@
       error = t("entryDialog.invalidAmount");
       return;
     }
+    const input = {
+      categoryId: selectedCategory,
+      name,
+      amountCents: cents,
+      period,
+      dueMonth: period === Period.PeriodMonthly ? 0 : dueMonth,
+      paused,
+      notes,
+    };
     working = true;
     try {
       if (initial.entry) {
-        await apply(Service.UpdateEntry(initial.entry.id, selectedCategory, name, cents, period));
+        await apply(Service.UpdateEntry(initial.entry.id, input));
         notify("success", t("toast.entrySaved", { name: name.trim() }));
       } else {
-        await apply(Service.AddEntry(selectedCategory, name, cents, period));
+        await apply(Service.AddEntry(input));
         notify("success", t("toast.entryAdded", { name: name.trim() }));
       }
       closeDialog();
@@ -81,7 +115,7 @@
   }
 </script>
 
-<Modal title={t(kindKey(isEdit ? "entryDialog.titleEdit" : "entryDialog.titleNew", kind))} width={460} onclose={closeDialog}>
+<Modal {title} width={520} onclose={closeDialog}>
   {#if categories.length === 0}
     <p class="empty">{t(kindKey("entryDialog.noCategories", kind))}</p>
     <div class="empty-actions">
@@ -94,31 +128,51 @@
         <label for="entry-name">{t("entryDialog.name")}</label>
         <input id="entry-name" class="input" type="text" bind:value={name} placeholder={t("entryDialog.namePlaceholder")} autocomplete="off" />
       </div>
-      <div class="row">
-        <div class="field grow">
-          <label for="entry-amount">{t("entryDialog.amount")}</label>
-          <div class="input-suffix">
+      <div class="field">
+        <label for="entry-amount">{t("entryDialog.amount")}</label>
+        <div class="row">
+          <div class="input-suffix grow">
             <input id="entry-amount" class="input" type="text" inputmode="decimal" bind:value={amount} placeholder="0,00" autocomplete="off" />
             <span>€</span>
           </div>
-          <span class="hint">{preview || " "}</span>
-        </div>
-        <div class="field">
-          <label for="entry-period">{t("entryDialog.paid")}</label>
-          <div class="segmented" id="entry-period" role="radiogroup" aria-label={t("entryDialog.paid")}>
-            <button type="button" class:active={period === Period.PeriodMonthly} onclick={() => (period = Period.PeriodMonthly)}>{t("entryDialog.perMonth")}</button>
-            <button type="button" class:active={period === Period.PeriodYearly} onclick={() => (period = Period.PeriodYearly)}>{t("entryDialog.perYear")}</button>
+          <div class="segmented" role="radiogroup" aria-label={t("entryDialog.paid")}>
+            {#each periods as p (p.value)}
+              <button type="button" class:active={period === p.value} onclick={() => (period = p.value)}>{t(p.label)}</button>
+            {/each}
           </div>
         </div>
+        <span class="hint">{preview || " "}</span>
+      </div>
+      <div class="row">
+        <div class="field grow">
+          <label for="entry-category">{t("entryDialog.category")}</label>
+          <select id="entry-category" class="select" bind:value={selectedCategory}>
+            {#each categories as c (c.id)}
+              <option value={c.id}>{c.name}</option>
+            {/each}
+          </select>
+        </div>
+        {#if period !== Period.PeriodMonthly}
+          <div class="field grow">
+            <label for="entry-due">{t("entryDialog.dueMonth")}</label>
+            <select id="entry-due" class="select" bind:value={dueMonth}>
+              <option value={0}>{t("entryDialog.dueMonthNone")}</option>
+              {#each months as m (m)}
+                <option value={m}>{monthName(m)}</option>
+              {/each}
+            </select>
+            <span class="hint">{t("entryDialog.dueMonthHint", { months: periodMonths(period) })}</span>
+          </div>
+        {/if}
       </div>
       <div class="field">
-        <label for="entry-category">{t("entryDialog.category")}</label>
-        <select id="entry-category" class="select" bind:value={selectedCategory}>
-          {#each categories as c (c.id)}
-            <option value={c.id}>{c.name}</option>
-          {/each}
-        </select>
+        <label for="entry-notes">{t("entryDialog.notes")}</label>
+        <textarea id="entry-notes" class="input" rows="2" bind:value={notes} placeholder={t("entryDialog.notesPlaceholder")}></textarea>
       </div>
+      <label class="check">
+        <input type="checkbox" bind:checked={paused} />
+        <span>{t("entryDialog.paused")}</span>
+      </label>
     </form>
   {/if}
   {#snippet footer()}
@@ -134,10 +188,35 @@
 <style>
   .row {
     display: flex;
-    gap: 16px;
+    gap: 12px;
+    align-items: flex-start;
   }
   .grow {
     flex: 1;
+    min-width: 0;
+  }
+  .segmented {
+    flex-shrink: 0;
+  }
+  .segmented button {
+    padding: 7px 10px;
+    font-size: 13px;
+  }
+  textarea.input {
+    resize: vertical;
+    min-height: 40px;
+    font-family: inherit;
+  }
+  .check {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 2px 0 14px;
+    color: var(--text-2);
+    cursor: pointer;
+  }
+  .check input {
+    margin-top: 3px;
   }
   .empty {
     margin: 4px 0 12px;

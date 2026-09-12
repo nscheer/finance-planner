@@ -4,7 +4,8 @@
 
   export type IconName =
     | "plus" | "edit" | "trash" | "chevron" | "grip" | "download" | "upload"
-    | "expand" | "collapse" | "close" | "info" | "check" | "alert" | "globe";
+    | "expand" | "collapse" | "close" | "info" | "check" | "alert" | "globe"
+    | "pause" | "play" | "copy" | "note" | "search" | "keyboard" | "history" | "sparkles" | "target";
 
   const paths: Record<IconName, string> = {
     plus: "M12 5v14M5 12h14",
@@ -21,6 +22,15 @@
     check: "m5 12 5 5L20 7",
     alert: "M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z",
     globe: "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20ZM2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20",
+    pause: "M8 5v14M16 5v14",
+    play: "m7 4 13 8-13 8Z",
+    copy: "M9 9h11v11H9zM5 15H4V4h11v1",
+    note: "M14 3v5h5M6 3h8l5 5v13H6zM9 13h6M9 17h6",
+    search: "M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16ZM21 21l-4.3-4.3",
+    keyboard: "M3 6h18v12H3zM7 10h.01M11 10h.01M15 10h.01M7 14h10",
+    history: "M3 12a9 9 0 1 0 3-6.7M3 3v5h5M12 7v5l3 3",
+    sparkles: "M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8ZM19 17l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7Z",
+    target: "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20ZM12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12ZM12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z",
   };
 </script>
 

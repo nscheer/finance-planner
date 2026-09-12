@@ -39,6 +39,21 @@ export function formatEuroSigned(cents: number): string {
   return formatEuroSignedIn(cents, i18n.locale.numberLocale);
 }
 
+/** Formats a ratio (0..1) as a percentage without decimals, e.g. "23 %". */
+export function formatPercent(ratio: number): string {
+  return new Intl.NumberFormat(i18n.locale.numberLocale, { style: "percent", maximumFractionDigits: 0 }).format(ratio);
+}
+
+/** Full month name (1-12) in the current language. */
+export function monthName(month: number): string {
+  return t(`month.${month}` as MessageKey);
+}
+
+/** Three-letter month abbreviation (1-12). */
+export function monthShort(month: number): string {
+  return monthName(month).slice(0, 3);
+}
+
 /** Applies a language locally (used when the saved choice is loaded). */
 export function applyLocale(code: string): void {
   i18n.locale = findLocale(code);

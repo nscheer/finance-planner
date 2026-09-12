@@ -112,7 +112,7 @@
 {#if app.dialog}
   {@const dialog = app.dialog}
   {#if dialog.type === "entry"}
-    <EntryDialog kind={dialog.kind} entry={dialog.entry} categoryId={dialog.categoryId} />
+    <EntryDialog kind={dialog.kind} entry={dialog.entry} categoryId={dialog.categoryId} duplicateOf={dialog.duplicateOf} />
   {:else if dialog.type === "category"}
     <CategoryDialog kind={dialog.kind} category={dialog.category} returnToEntry={dialog.returnToEntry} />
   {:else if dialog.type === "confirm"}

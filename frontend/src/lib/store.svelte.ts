@@ -26,7 +26,8 @@ export type { State, CategoryView, EntryView, ImportPreview, Stats };
 
 /** Every user input happens in a modal; this union describes the open one. */
 export type Dialog =
-  | { type: "entry"; kind: Kind; entry?: EntryView; categoryId?: string }
+  /** entry: edit this entry; duplicateOf: prefill from this entry but create a new one. */
+  | { type: "entry"; kind: Kind; entry?: EntryView; categoryId?: string; duplicateOf?: EntryView }
   /** returnToEntry: reopen the "new entry" dialog after the category was added. */
   | { type: "category"; kind: Kind; category?: CategoryView; returnToEntry?: boolean }
   | {
@@ -174,6 +175,40 @@ export function kindKey<T extends string>(base: T, kind: Kind): `${T}.income` | 
 
 // ---- actions used by several components ----------------------------------------
 
+/** Translation key of a period badge. */
+export function periodKey(period: Period): MessageKey {
+  switch (period) {
+    case Period.PeriodQuarterly:
+      return "entry.quarterly";
+    case Period.PeriodHalfYearly:
+      return "entry.halfyearly";
+    case Period.PeriodYearly:
+      return "entry.yearly";
+    default:
+      return "entry.monthly";
+  }
+}
+
+/** Months between two payments of a period (1, 3, 6, 12). */
+export function periodMonths(period: Period): number {
+  switch (period) {
+    case Period.PeriodQuarterly:
+      return 3;
+    case Period.PeriodHalfYearly:
+      return 6;
+    case Period.PeriodYearly:
+      return 12;
+    default:
+      return 1;
+  }
+}
+
+export async function pauseEntry(entry: EntryView, paused: boolean): Promise<void> {
+  if (await applyOrAlert(Service.SetEntryPaused(entry.id, paused))) {
+    notify("info", t(paused ? "toast.entryPaused" : "toast.entryResumed", { name: entry.name }));
+  }
+}
+
 export function setCollapsed(categoryId: string, collapsed: boolean): Promise<boolean> {
   return applyOrAlert(Service.SetCategoryCollapsed(categoryId, collapsed));
 }
@@ -183,7 +218,8 @@ export function setAllCollapsed(kind: Kind, collapsed: boolean): Promise<boolean
   return applyOrAlert(Service.SetAllCollapsed(kind, collapsed));
 }
 
-export function confirmDeleteEntry(entry: EntryView): void {
+export function confirmDeleteEntry(entry: EntryView, index = 0): void {
+  void index; // used by the undo action (stage 5)
   openDialog({
     type: "confirm",
     title: t("confirm.deleteEntry.title"),

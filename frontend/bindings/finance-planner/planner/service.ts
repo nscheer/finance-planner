@@ -26,8 +26,8 @@ export function AddCategory(kind: $models.Kind, name: string): $CancellablePromi
 /**
  * AddEntry appends a new entry to a category.
  */
-export function AddEntry(categoryID: string, name: string, amountCents: number, period: $models.Period): $CancellablePromise<$models.State> {
-    return $Call.ByID(532656629, categoryID, name, amountCents, period);
+export function AddEntry($in: $models.EntryInput): $CancellablePromise<$models.State> {
+    return $Call.ByID(532656629, $in);
 }
 
 /**
@@ -50,6 +50,21 @@ export function DeleteCategory(id: string): $CancellablePromise<$models.State> {
  */
 export function DeleteEntry(id: string): $CancellablePromise<$models.State> {
     return $Call.ByID(1471171869, id);
+}
+
+/**
+ * ExportCSV asks the user for a target file and writes the CSV to it.
+ * It returns the chosen path, or "" if the user cancelled.
+ */
+export function ExportCSV(): $CancellablePromise<string> {
+    return $Call.ByID(3958737246);
+}
+
+/**
+ * ExportCSVTo writes all entries as CSV to the given path.
+ */
+export function ExportCSVTo(path: string): $CancellablePromise<void> {
+    return $Call.ByID(1813518083, path);
 }
 
 /**
@@ -80,6 +95,21 @@ export function GetState(): $CancellablePromise<$models.State> {
  */
 export function ImportData(path: string, mode: $models.ImportMode): $CancellablePromise<$models.ImportResult> {
     return $Call.ByID(3233648325, path, mode);
+}
+
+/**
+ * ListBackups returns the available backups, newest first.
+ */
+export function ListBackups(): $CancellablePromise<$models.BackupInfo[] | null> {
+    return $Call.ByID(3842607239);
+}
+
+/**
+ * LoadSampleData fills an empty planner with example data in the given
+ * language. It refuses to run when there already are categories or entries.
+ */
+export function LoadSampleData(lang: string): $CancellablePromise<$models.SampleResult> {
+    return $Call.ByID(1503351070, lang);
 }
 
 /**
@@ -115,6 +145,30 @@ export function RenameCategory(id: string, name: string): $CancellablePromise<$m
 }
 
 /**
+ * RestoreBackup replaces the current data with a backup. The current data
+ * is backed up first, so a restore can be undone as well.
+ */
+export function RestoreBackup(path: string): $CancellablePromise<$models.State> {
+    return $Call.ByID(787788460, path);
+}
+
+/**
+ * RestoreCategory re-inserts a deleted (empty) category with its original
+ * id at the given position among the categories of its kind.
+ */
+export function RestoreCategory(category: $models.Category, index: number): $CancellablePromise<$models.State> {
+    return $Call.ByID(2738738770, category, index);
+}
+
+/**
+ * RestoreEntry re-inserts a deleted entry with its original id at the given
+ * position of its category ("undo" of DeleteEntry).
+ */
+export function RestoreEntry(entry: $models.Entry, index: number): $CancellablePromise<$models.State> {
+    return $Call.ByID(393946482, entry, index);
+}
+
+/**
  * SetAllCollapsed folds or unfolds all categories of one kind ("expand all"
  * / "collapse all" at the top of the income and the spending block).
  */
@@ -130,6 +184,13 @@ export function SetCategoryCollapsed(id: string, collapsed: boolean): $Cancellab
 }
 
 /**
+ * SetEntryPaused excludes an entry from (or includes it again in) all totals.
+ */
+export function SetEntryPaused(id: string, paused: boolean): $CancellablePromise<$models.State> {
+    return $Call.ByID(431773078, id, paused);
+}
+
+/**
  * SetLanguage stores the UI language chosen in the language dropdown.
  */
 export function SetLanguage(language: string): $CancellablePromise<$models.State> {
@@ -137,9 +198,24 @@ export function SetLanguage(language: string): $CancellablePromise<$models.State
 }
 
 /**
+ * SetSavingsGoal stores the monthly savings goal.
+ */
+export function SetSavingsGoal(cents: number): $CancellablePromise<$models.State> {
+    return $Call.ByID(541102472, cents);
+}
+
+/**
+ * SetWindow remembers the window geometry. It is called often while the
+ * window is resized, so nothing is written when the geometry is unchanged.
+ */
+export function SetWindow(w: $models.WindowGeometry): $CancellablePromise<void> {
+    return $Call.ByID(441641220, w);
+}
+
+/**
  * UpdateEntry changes all editable fields of an entry. When the category
  * changes, the entry is appended at the end of the new category.
  */
-export function UpdateEntry(id: string, categoryID: string, name: string, amountCents: number, period: $models.Period): $CancellablePromise<$models.State> {
-    return $Call.ByID(3853723511, id, categoryID, name, amountCents, period);
+export function UpdateEntry(id: string, $in: $models.EntryInput): $CancellablePromise<$models.State> {
+    return $Call.ByID(3853723511, id, $in);
 }

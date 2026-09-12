@@ -13,11 +13,18 @@ export {
 } from "./models.js";
 
 export type {
+    BackupInfo,
+    Category,
     CategoryView,
+    Entry,
+    EntryInput,
     EntryView,
     ImportPreview,
     ImportResult,
+    SampleResult,
     Settings,
     State,
-    Stats
+    Stats,
+    TimelineMonth,
+    WindowGeometry
 } from "./models.js";

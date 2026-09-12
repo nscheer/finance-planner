@@ -15,6 +15,12 @@
   const monthly = $derived(categories.reduce((sum, c) => sum + c.monthlyCents, 0));
   const yearly = $derived(categories.reduce((sum, c) => sum + c.yearlyCents, 0));
 
+  /** Share of a spending category in all spending (null for income / empty). */
+  function shareOf(c: CategoryView): number | null {
+    if (isIncome || monthly <= 0) return null;
+    return c.monthlyCents / monthly;
+  }
+
   /** Space below the last category: dropping a category there appends it. */
   function onTailDragOver(event: DragEvent) {
     if (dnd.source?.type === "category") hoverCategoryTarget(event, kind, categories.length);
@@ -64,7 +70,7 @@
     {/if}
     {#each categories as category, i (category.id)}
       <div class="cat-drop" class:active={isCategoryTarget(kind, i)}></div>
-      <CategoryGroup {category} index={i} />
+      <CategoryGroup {category} index={i} share={shareOf(category)} />
     {/each}
     <div class="cat-drop" class:active={isCategoryTarget(kind, categories.length)}></div>
     <div class="tail" ondragover={onTailDragOver} role="presentation"></div>
