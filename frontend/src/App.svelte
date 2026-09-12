@@ -14,8 +14,9 @@
   import ConfirmDialog from "./components/ConfirmDialog.svelte";
   import AlertDialog from "./components/AlertDialog.svelte";
   import ImportDialog from "./components/ImportDialog.svelte";
+  import SavingsGoalDialog from "./components/SavingsGoalDialog.svelte";
   import { app, Kind, loadState, exportData, startImport, alert, errorMessage } from "./lib/store.svelte";
-  import { i18n, t, locales, setLocale, type LocaleCode } from "./lib/i18n.svelte";
+  import { i18n, t, locales, setLocale, formatEuro, type LocaleCode } from "./lib/i18n.svelte";
   import { dnd, endDrag } from "./lib/dnd.svelte";
 
   onMount(() => {
@@ -94,10 +95,21 @@
       </div>
     {:else if app.state}
       <div class="tables">
+        {#if app.state.stats.saldoMonthlyCents < 0}
+          <div class="banner danger" role="alert">
+            <Icon name="alert" size={16} />
+            <span>{t("warning.negativeSaldo", { amount: formatEuro(-app.state.stats.saldoMonthlyCents) })}</span>
+          </div>
+        {:else if !app.state.stats.goalReachable}
+          <div class="banner warn" role="status">
+            <Icon name="target" size={16} />
+            <span>{t("warning.goal", { amount: formatEuro(-app.state.stats.remainingAfterGoalCents) })}</span>
+          </div>
+        {/if}
         <Block kind={Kind.KindIncome} categories={app.state.income ?? []} />
         <Block kind={Kind.KindSpending} categories={app.state.spending ?? []} />
       </div>
-      <StatsPanel stats={app.state.stats} />
+      <StatsPanel stats={app.state.stats} spending={app.state.spending ?? []} />
     {:else}
       <p class="muted">{t("app.loading")}</p>
     {/if}
@@ -121,6 +133,8 @@
     <AlertDialog title={dialog.title} message={dialog.message} />
   {:else if dialog.type === "import"}
     <ImportDialog preview={dialog.preview} />
+  {:else if dialog.type === "goal"}
+    <SavingsGoalDialog />
   {/if}
 {/if}
 
@@ -201,6 +215,22 @@
     flex-direction: column;
     gap: 20px;
     min-width: 0;
+  }
+  .banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    font-weight: 500;
+  }
+  .banner.danger {
+    background: var(--danger-soft);
+    color: var(--danger);
+  }
+  .banner.warn {
+    background: #fff4dc;
+    color: #8a5a10;
   }
   .load-error {
     grid-column: 1 / -1;

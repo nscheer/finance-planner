@@ -38,6 +38,7 @@ export type Dialog =
       onConfirm: () => Promise<void> | void;
     }
   | { type: "alert"; title: string; message: string }
+  | { type: "goal" }
   | { type: "import"; preview: ImportPreview };
 
 export interface Toast {

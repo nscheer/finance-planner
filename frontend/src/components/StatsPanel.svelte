@@ -6,10 +6,13 @@
    *  - to the savings account: 1/12 of all spendings that are paid yearly,
    *    so the money is there when the yearly spending is due.
    */
-  import type { Stats } from "../lib/store.svelte";
-  import { t, formatEuro, formatEuroSigned } from "../lib/i18n.svelte";
+  import Icon from "./Icon.svelte";
+  import Timeline from "./Timeline.svelte";
+  import Charts from "./Charts.svelte";
+  import { type Stats, type CategoryView, openDialog } from "../lib/store.svelte";
+  import { t, plural, formatEuro, formatEuroSigned } from "../lib/i18n.svelte";
 
-  let { stats }: { stats: Stats } = $props();
+  let { stats, spending }: { stats: Stats; spending: CategoryView[] } = $props();
 
   const sign = (cents: number) => (cents < 0 ? "negative" : cents > 0 ? "positive" : "");
 </script>
@@ -46,6 +49,19 @@
         <dt>{t("stats.saldoPerMonth")}</dt>
         <dd class="money {sign(stats.saldoMonthlyCents)}">{formatEuroSigned(stats.saldoMonthlyCents)}</dd>
       </div>
+      <div class="goal">
+        <dt>
+          {t("stats.goal")}
+          <button class="icon-btn small" type="button" title={t("stats.goalEdit")} aria-label={t("stats.goalEdit")} onclick={() => openDialog({ type: "goal" })}><Icon name="target" size={13} /></button>
+        </dt>
+        <dd class="money">{stats.savingsGoalCents > 0 ? formatEuro(stats.savingsGoalCents) : t("stats.goalNone")}</dd>
+      </div>
+      {#if stats.savingsGoalCents > 0}
+        <div class="total">
+          <dt>{t("stats.remainingAfterGoal")}</dt>
+          <dd class="money {sign(stats.remainingAfterGoalCents)}">{formatEuroSigned(stats.remainingAfterGoalCents)}</dd>
+        </div>
+      {/if}
     </dl>
     <dl>
       <div>
@@ -61,6 +77,29 @@
         <dd class="money {sign(stats.saldoYearlyCents)}">{formatEuroSigned(stats.saldoYearlyCents)}</dd>
       </div>
     </dl>
+  </section>
+
+  <section class="group">
+    <h3>{t("stats.timeline")}</h3>
+    <Timeline {stats} />
+    {#if stats.peakBufferCents > 0}
+      <dl class="compact">
+        <div class="total">
+          <dt>{t("stats.peakBuffer")}</dt>
+          <dd class="money">{formatEuro(stats.peakBufferCents)}</dd>
+        </div>
+      </dl>
+    {/if}
+    {#if stats.unscheduledCount > 0}
+      <p class="note">{plural("stats.unscheduled", stats.unscheduledCount)}</p>
+    {/if}
+    {#if stats.pausedCount > 0}
+      <p class="note">{plural("stats.paused", stats.pausedCount)}</p>
+    {/if}
+  </section>
+
+  <section class="group">
+    <Charts {spending} {stats} />
   </section>
 
   <p class="note">{t("stats.note")}</p>
@@ -154,6 +193,25 @@
   .total dd {
     font-weight: 700;
     font-size: 15px;
+  }
+  .goal dt {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .icon-btn.small {
+    width: 22px;
+    height: 22px;
+  }
+  dl.compact {
+    margin-top: 6px;
+  }
+  dl.compact .total dt {
+    font-weight: 500;
+    font-size: 12.5px;
+  }
+  dl.compact .total dd {
+    font-size: 13px;
   }
   .note {
     margin: 0;
