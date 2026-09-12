@@ -399,3 +399,122 @@ select:focus-visible {
 .muted {
   color: var(--text-3);
 }
+
+/* ---- print ---------------------------------------------------------------
+   One column: the tables, then the statistics. Interactive chrome is hidden,
+   every category is rendered expanded by the frontend while printing. */
+@page {
+  margin: 15mm;
+}
+@media print {
+  :root,
+  :root[data-theme="dark"] {
+    color-scheme: light;
+    --bg: #ffffff;
+    --surface: #ffffff;
+    --surface-2: #f6f7f9;
+    --surface-3: #eceef2;
+    --border: #cfd4dc;
+    --border-strong: #b5bcc8;
+    --text: #000000;
+    --text-2: #333a48;
+    --text-3: #5d6676;
+    --shadow: none;
+    --shadow-lg: none;
+    --stripe: rgba(0, 0, 0, 0.08);
+  }
+  html,
+  body,
+  #app {
+    height: auto;
+    overflow: visible;
+    background: #fff;
+  }
+  body {
+    font-size: 11px;
+  }
+  .no-print,
+  .topbar,
+  .icon-btn,
+  .btn,
+  .toasts,
+  .backdrop,
+  .handle,
+  .drop-line,
+  .cat-drop,
+  .tail,
+  .banner,
+  .get-started,
+  .bar {
+    display: none !important;
+  }
+  .app {
+    min-width: 0;
+    height: auto;
+  }
+  .content {
+    display: block !important;
+    overflow: visible !important;
+    max-width: none;
+    padding: 0 !important;
+  }
+  .print-header {
+    display: flex !important;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border-strong);
+  }
+  .print-header h1 {
+    font-size: 16px;
+  }
+  .print-header span {
+    font-size: 10px;
+    color: var(--text-3);
+  }
+  .tables {
+    padding-top: 0 !important;
+    gap: 12px !important;
+  }
+  .block,
+  .stats {
+    box-shadow: none !important;
+    border: 1px solid var(--border-strong);
+    break-inside: avoid;
+  }
+  .stats {
+    position: static !important;
+    margin-top: 12px !important;
+  }
+  .group,
+  .stats .group {
+    break-inside: avoid;
+  }
+  .block-head .buttons {
+    display: none !important;
+  }
+  .actions {
+    display: none !important;
+  }
+  .row,
+  .head {
+    background: transparent !important;
+  }
+  .head {
+    background: var(--surface-3) !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .badge,
+  .share-fill,
+  .tile,
+  .swatch {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .lever {
+    cursor: default;
+  }
+}

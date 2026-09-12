@@ -6,7 +6,7 @@
    */
   import Icon from "./Icon.svelte";
   import EntryRow from "./EntryRow.svelte";
-  import { type CategoryView, openDialog, setCollapsed, confirmDeleteCategory } from "../lib/store.svelte";
+  import { app, type CategoryView, openDialog, setCollapsed, confirmDeleteCategory } from "../lib/store.svelte";
   import { t, formatEuro, formatPercent } from "../lib/i18n.svelte";
   import {
     dnd,
@@ -104,7 +104,7 @@
     </span>
   </header>
 
-  {#if !category.collapsed}
+  {#if !category.collapsed || app.printing}
     <div class="body" role="rowgroup">
       {#each entries as entry, i (entry.id)}
         <div class="drop-line" class:active={isEntryTarget(category.id, i)}></div>

@@ -4,11 +4,12 @@
   import { closeDialog } from "../lib/store.svelte";
   import { t } from "../lib/i18n.svelte";
 
-  const rows: { keys: string[]; label: "shortcuts.newSpending" | "shortcuts.newIncome" | "shortcuts.newCategory" | "shortcuts.search" | "shortcuts.clear" | "shortcuts.help" }[] = [
+  const rows: { keys: string[]; label: "shortcuts.newSpending" | "shortcuts.newIncome" | "shortcuts.newCategory" | "shortcuts.search" | "shortcuts.print" | "shortcuts.clear" | "shortcuts.help" }[] = [
     { keys: ["N"], label: "shortcuts.newSpending" },
     { keys: ["I"], label: "shortcuts.newIncome" },
     { keys: ["C"], label: "shortcuts.newCategory" },
     { keys: ["/", "Ctrl + F"], label: "shortcuts.search" },
+    { keys: ["Ctrl + P"], label: "shortcuts.print" },
     { keys: ["Esc"], label: "shortcuts.clear" },
     { keys: ["?"], label: "shortcuts.help" },
   ];

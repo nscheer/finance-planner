@@ -21,6 +21,8 @@ export const en = {
   "app.export": "Export",
   "app.exportCsv": "Export CSV",
   "app.backups": "Backups",
+  "app.print": "Print",
+  "print.generated": "Printed on {date}",
   "app.shortcuts": "Keyboard shortcuts",
   "app.search": "Search entries…",
   "app.searchClear": "Clear search",
@@ -54,6 +56,7 @@ export const en = {
   "shortcuts.newCategory": "New spending category",
   "shortcuts.search": "Search",
   "shortcuts.clear": "Clear search / clear selection / close dialog",
+  "shortcuts.print": "Print",
   "shortcuts.help": "Show this list",
   "shortcuts.hint": "Shortcuts work while no dialog or input field is focused.",
 

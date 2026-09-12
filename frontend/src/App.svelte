@@ -38,9 +38,10 @@
     confirmLoadSampleData,
     selectionCount,
     clearSelection,
+    printPlanner,
     type PeriodFilter,
   } from "./lib/store.svelte";
-  import { i18n, t, locales, setLocale, formatEuro, type LocaleCode } from "./lib/i18n.svelte";
+  import { i18n, t, locales, setLocale, formatEuro, formatDateTime, type LocaleCode } from "./lib/i18n.svelte";
   import { theme, themes, setTheme, type Theme } from "./lib/theme.svelte";
   import { dnd, endDrag } from "./lib/dnd.svelte";
 
@@ -98,10 +99,16 @@
     const target = event.target as HTMLElement | null;
     const inField = !!target && (["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName) || target.isContentEditable);
     const ctrlF = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "f";
+    const ctrlP = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "p";
 
     if (ctrlF) {
       event.preventDefault();
       if (!app.dialog) searchEl?.focus();
+      return;
+    }
+    if (ctrlP) {
+      event.preventDefault();
+      if (!app.dialog && app.state) printPlanner();
       return;
     }
     if (event.key === "Escape") {
@@ -204,6 +211,7 @@
       <button class="btn btn-sm" type="button" onclick={exportData}><Icon name="download" size={14} /> {t("app.export")}</button>
       <button class="btn btn-sm" type="button" onclick={exportCSV}><Icon name="download" size={14} /> {t("app.exportCsv")}</button>
       <button class="btn btn-sm" type="button" onclick={() => openDialog({ type: "backups" })}><Icon name="history" size={14} /> {t("app.backups")}</button>
+      <button class="btn btn-sm" type="button" onclick={printPlanner}><Icon name="printer" size={14} /> {t("app.print")}</button>
       <button class="icon-btn" type="button" title={t("app.shortcuts")} aria-label={t("app.shortcuts")} onclick={() => openDialog({ type: "shortcuts" })}><Icon name="keyboard" size={16} /></button>
       <span class="divider"></span>
       <label class="language" title={t("app.theme")}>
@@ -226,6 +234,13 @@
   </header>
 
   <main class="content">
+    {#if app.state}
+      <!-- Shown only on paper (see the print stylesheet). -->
+      <header class="print-header">
+        <h1>{t("app.title")}</h1>
+        <span>{t("print.generated", { date: formatDateTime(new Date()) })} · {app.state.dataPath}</span>
+      </header>
+    {/if}
     {#if app.loadError}
       <div class="load-error">
         <strong>{t("app.loadError")}</strong>
@@ -455,6 +470,9 @@
   .banner.warn {
     background: var(--warn-soft);
     color: var(--warn);
+  }
+  .print-header {
+    display: none;
   }
   .load-error {
     grid-column: 1 / -1;

@@ -15,6 +15,8 @@ export const de: Messages = {
   "app.export": "Exportieren",
   "app.exportCsv": "CSV exportieren",
   "app.backups": "Backups",
+  "app.print": "Drucken",
+  "print.generated": "Gedruckt am {date}",
   "app.shortcuts": "Tastenkürzel",
   "app.search": "Einträge suchen…",
   "app.searchClear": "Suche löschen",
@@ -48,6 +50,7 @@ export const de: Messages = {
   "shortcuts.newCategory": "Neue Ausgaben-Kategorie",
   "shortcuts.search": "Suchen",
   "shortcuts.clear": "Suche löschen / Auswahl aufheben / Dialog schließen",
+  "shortcuts.print": "Drucken",
   "shortcuts.help": "Diese Liste anzeigen",
   "shortcuts.hint": "Tastenkürzel gelten, solange kein Dialog oder Eingabefeld aktiv ist.",
 

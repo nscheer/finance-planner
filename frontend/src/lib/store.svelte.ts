@@ -68,6 +68,8 @@ export const app = $state({
   toasts: [] as Toast[],
   /** Search text and period filter of the top bar. */
   filter: { query: "", period: "all" as PeriodFilter },
+  /** True while the print layout is active (all categories expanded). */
+  printing: false,
   /** Ids of the selected entries (multi-select for bulk actions). */
   selection: {} as Record<string, true>,
   /** Last entry selected by click; anchor for Shift+click ranges. */
@@ -513,6 +515,23 @@ export function confirmDeleteSelection(): void {
       }
     },
   });
+}
+
+/**
+ * Opens the system print dialog. While printing, every category is rendered
+ * expanded (see CategoryGroup) and the print stylesheet lays the page out in
+ * one column.
+ */
+export function printPlanner(): void {
+  if (app.printing) return;
+  app.printing = true;
+  const done = () => {
+    app.printing = false;
+    window.removeEventListener("afterprint", done);
+  };
+  window.addEventListener("afterprint", done);
+  // Let Svelte render the expanded categories before the dialog opens.
+  setTimeout(() => window.print(), 50);
 }
 
 /** Whether the planner has no categories and no entries at all. */

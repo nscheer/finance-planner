@@ -296,11 +296,24 @@ only be loaded when there are no categories and entries.
 | `c` | New spending category |
 | `/` or `Ctrl+F` | Focus the search box |
 | `Esc` | Clear the search (when the search box is focused) / clear the selection / close a dialog |
+| `Ctrl+P` | Print |
 | `?` | Show the list of shortcuts |
 
 Shortcuts are ignored while a dialog is open or an input field has the focus.
 
-### 2.14 Window
+### 2.14 Print and PDF
+
+- A *Print* button in the top bar (and `Ctrl+P`) opens the system print
+  dialog, which also allows saving as PDF. While printing, every category is
+  rendered expanded regardless of its collapsed state.
+- The print layout is a single column: a header with the application name,
+  print date and data file path, then the income and spending tables, then
+  the statistics box. Buttons, drag handles, the top bar, banners, toasts
+  and dialogs are hidden; shadows become borders; light colors are forced
+  even in dark mode; category groups and statistics sections avoid page
+  breaks inside; page margins are 15 mm.
+
+### 2.15 Window
 
 - Default size 1440 × 900, minimum 1200 × 700, so the table with all its
   columns and the statistics box always fit side by side.
