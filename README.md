@@ -2,7 +2,8 @@
 
 A small desktop application to plan monthly and yearly income and spendings.
 Built with [Wails v3](https://v3.wails.io), Svelte 5 and TypeScript; the
-specification is in [project.md](project.md).
+specification is in [harness/specs.md](harness/specs.md); the reference
+copies of the language files live next to it (see the specification, 7.10).
 
 ## How it works
 

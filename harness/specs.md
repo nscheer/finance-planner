@@ -8,6 +8,9 @@ This document is the complete specification of the application as it is
 implemented. It is the reference for behaviour, data, technology and visual
 design, so that the application could be rebuilt from it.
 
+This file lives in `harness/` together with the reference copies of the
+language files (see 7.10).
+
 **Contents**
 
 1. Purpose and planning model
@@ -456,8 +459,9 @@ All settings are stored in `data.json` (see 6.1).
 - Number and currency formatting follow the language (`1.234,56 €` in
   German, `€1,234.56` in English); amounts can be typed with comma or point.
 - All texts, including backend error messages, come from language files with
-  keys (see 7.5 and Appendix A); adding a language means adding one file and
-  one registry line.
+  keys (see 7.5); the complete copy in both languages is part of this
+  specification as the files `harness/en.ts` and `harness/de.ts` (see 7.10).
+  Adding a language means adding one file and one registry line.
 - Month names are the keys `month.1` to `month.12`; abbreviations (timeline
   axis, readout) are their first three letters.
 
@@ -616,6 +620,9 @@ The backend never returns free-text errors for user mistakes. It returns a
 ### 7.3 Project layout
 
 ```
+harness/
+  specs.md                 this specification
+  en.ts, de.ts             reference copies of the language files (see 7.10)
 main.go                    window setup, service registration, window geometry
 planner/
   model.go                 data structures, validation, language and theme checks
@@ -674,9 +681,9 @@ frontend/src/
   versioning and migration, import merge/replace rules, backups, CSV, sample
   data, language, theme and window settings, coded errors).
 - **Node**: money parsing and formatting per locale, drag index arithmetic,
-  language file completeness and interpolation, and a compile-level test that
+  language file completeness and interpolation, a compile-level test that
   dialog props in the shell are not bound directly to the mutable dialog
-  state.
+  state, and the harness sync test (see 7.10).
 - `svelte-check` must report no errors and no warnings.
 
 ### 7.7 Build, run and workflow
@@ -741,6 +748,24 @@ Non-obvious decisions that must survive a rewrite:
   fonts such as Segoe UI render low in their line box.
 - **Errors**: coded errors are marshalled through the Wails service option
   `MarshalError` and arrive in the frontend as `error.cause = {code, params}`.
+
+### 7.10 Specification harness
+
+The folder `harness/` holds this specification and the **reference copies
+of the language files** `en.ts` and `de.ts`. They are the complete UI copy
+in both languages and are kept as real TypeScript files rather than as a
+table, so they can be used directly.
+
+Sync mechanism: the copies must be byte-identical to
+`frontend/src/i18n/en.ts` and `frontend/src/i18n/de.ts`. The Node test
+`frontend/src/i18n/harness.test.ts` (part of `npm test` and therefore of
+`wails3 task test`) compares the files and fails with the name of the file
+that differs. Whenever a text is added or changed in the application, copy
+the changed language file into `harness/` in the same commit:
+
+```sh
+cp frontend/src/i18n/en.ts frontend/src/i18n/de.ts harness/
+```
 
 ---
 
@@ -926,327 +951,3 @@ between slices, the hovered slice grows to 14; the timeline uses thin bars
 - Do not install anything without asking.
 - Commit in meaningful stages on `main`; every commit builds and passes the
   tests.
-
----
-
-## Appendix A – UI texts
-
-The complete user-facing copy in both languages. The language files
-`frontend/src/i18n/en.ts` and `de.ts` are the source of this table;
-regenerate it when they change. `{name}` are placeholders, `⏎` marks a line
-break inside a text (used in tooltips), keys ending in `.one` / `.other`
-are plural forms, `errors.*` translate the backend error codes and `tip.*`
-are the explanatory tooltips.
-
-| Key | English | German |
-|---|---|---|
-| `app.title` | Finance Planner | Finanzplaner |
-| `app.language` | Language | Sprache |
-| `app.theme` | Appearance | Darstellung |
-| `theme.light` | Light | Hell |
-| `theme.dark` | Dark | Dunkel |
-| `theme.system` | System | System |
-| `app.loading` | Loading… | Lädt… |
-| `app.loadError` | Could not load the data file. | Die Datendatei konnte nicht geladen werden. |
-| `app.retry` | Retry | Erneut versuchen |
-| `app.import` | Import | Importieren |
-| `app.export` | Export | Exportieren |
-| `app.exportCsv` | Export CSV | CSV exportieren |
-| `app.backups` | Backups | Backups |
-| `app.print` | Print | Drucken |
-| `app.selectMode` | Select entries | Einträge auswählen |
-| `print.generated` | Printed on {date} | Gedruckt am {date} |
-| `app.shortcuts` | Keyboard shortcuts | Tastenkürzel |
-| `app.search` | Search entries… | Einträge suchen… |
-| `app.searchClear` | Clear search | Suche löschen |
-| `app.filterReset` | Reset search and filter | Suche und Filter zurücksetzen |
-| `app.filter.all` | All periods | Alle Zeiträume |
-| `app.filter.paused` | Paused only | Nur pausierte |
-| `app.filterResult` | {shown} of {total} entries shown | {shown} von {total} Einträgen angezeigt |
-| `app.getStarted.title` | Your planner is empty. | Dein Planer ist leer. |
-| `app.getStarted.text` | Add categories and entries, import a file, or load a small example to see how the planner works. | Lege Kategorien und Einträge an, importiere eine Datei oder lade ein kleines Beispiel, um zu sehen, wie der Planer funktioniert. |
-| `app.getStarted.sample` | Load sample data | Beispieldaten laden |
-| `confirm.sample.title` | Load sample data | Beispieldaten laden |
-| `confirm.sample.message` | Load an example set of categories and entries? You can delete or edit everything afterwards. | Ein Beispiel mit Kategorien und Einträgen laden? Alles kann danach bearbeitet oder gelöscht werden. |
-| `confirm.sample.confirm` | Load | Laden |
-| `toast.sampleLoaded` | Loaded {categories} and {entries}. | {categories} und {entries} geladen. |
-| `toast.exportedCsv` | CSV exported to {path} | CSV exportiert nach {path} |
-| `toast.undo` | Undo | Rückgängig |
-| `toast.undoImport` | Undo import | Import rückgängig |
-| `toast.restored` | Restored. | Wiederhergestellt. |
-| `toast.backupRestored` | Backup restored. | Backup wiederhergestellt. |
-| `backups.title` | Backups | Backups |
-| `backups.intro` | Backups are written automatically before changes (at most every 10 minutes) and before every import. The last 20 are kept in the backups folder next to data.json. | Backups werden automatisch vor Änderungen (höchstens alle 10 Minuten) und vor jedem Import angelegt. Die letzten 20 bleiben im Ordner backups neben data.json erhalten. |
-| `backups.empty` | No backups yet. | Noch keine Backups. |
-| `backups.restore` | Restore | Wiederherstellen |
-| `backups.content` | {categories}, {entries} | {categories}, {entries} |
-| `confirm.restoreBackup.title` | Restore backup | Backup wiederherstellen |
-| `confirm.restoreBackup.message` | Replace the current data with the backup from {time}? The current data is backed up first. | Die aktuellen Daten durch das Backup vom {time} ersetzen? Die aktuellen Daten werden vorher gesichert. |
-| `confirm.restoreBackup.confirm` | Restore | Wiederherstellen |
-| `palette.placeholder` | Type a command, a category or an entry… | Befehl, Kategorie oder Eintrag eingeben… |
-| `palette.actions` | Actions | Aktionen |
-| `palette.categories` | Categories | Kategorien |
-| `palette.entries` | Entries | Einträge |
-| `palette.empty` | Nothing matches. | Nichts gefunden. |
-| `palette.hint` | ↑↓ to move · Enter to run · Esc to close | ↑↓ bewegen · Enter ausführen · Esc schließen |
-| `palette.expandIncome` | Expand all income categories | Alle Einnahmen-Kategorien aufklappen |
-| `palette.collapseIncome` | Collapse all income categories | Alle Einnahmen-Kategorien zuklappen |
-| `palette.expandSpending` | Expand all spending categories | Alle Ausgaben-Kategorien aufklappen |
-| `palette.collapseSpending` | Collapse all spending categories | Alle Ausgaben-Kategorien zuklappen |
-| `palette.newIncomeCategory` | New income category | Neue Einnahmen-Kategorie |
-| `palette.newSpendingCategory` | New spending category | Neue Ausgaben-Kategorie |
-| `palette.theme` | Appearance: {name} | Darstellung: {name} |
-| `palette.language` | Language: {name} | Sprache: {name} |
-| `palette.goal` | Set savings goal | Sparziel festlegen |
-| `shortcuts.palette` | Command palette | Befehlspalette |
-| `shortcuts.title` | Keyboard shortcuts | Tastenkürzel |
-| `shortcuts.newSpending` | New spending | Neue Ausgabe |
-| `shortcuts.newIncome` | New income | Neue Einnahme |
-| `shortcuts.newCategory` | New spending category | Neue Ausgaben-Kategorie |
-| `shortcuts.search` | Search | Suchen |
-| `shortcuts.clear` | Clear search / clear selection / close dialog | Suche löschen / Auswahl aufheben / Dialog schließen |
-| `shortcuts.print` | Print | Drucken |
-| `shortcuts.help` | Show this list | Diese Liste anzeigen |
-| `shortcuts.hint` | Shortcuts work while no dialog or input field is focused. | Tastenkürzel gelten, solange kein Dialog oder Eingabefeld aktiv ist. |
-| `kind.income` | Income | Einnahmen |
-| `kind.spending` | Spending | Ausgaben |
-| `kindInline.income` | income | Einnahmen |
-| `kindInline.spending` | spending | Ausgaben |
-| `block.expandAll` | Expand all | Alle aufklappen |
-| `block.collapseAll` | Collapse all | Alle zuklappen |
-| `block.addCategory` | Category | Kategorie |
-| `block.addEntry.income` | Income | Einnahme |
-| `block.addEntry.spending` | Spending | Ausgabe |
-| `block.perMonth` | / month | / Monat |
-| `block.perYear` | / year | / Jahr |
-| `block.column.name` | Name | Name |
-| `block.column.entered` | Frequency | Zahlweise |
-| `block.column.due` | Due | Fällig |
-| `block.selectAll` | Select entries (click again to select all of this block) | Einträge auswählen (nochmals klicken wählt alle dieses Blocks) |
-| `block.column.perMonth` | Per month | Pro Monat |
-| `block.column.perYear` | Per year | Pro Jahr |
-| `block.empty.income` | No income categories yet. Add a category first, then add entries to it. | Noch keine Einnahmen-Kategorien. Lege zuerst eine Kategorie an und füge ihr dann Einträge hinzu. |
-| `block.empty.spending` | No spending categories yet. Add a category first, then add entries to it. | Noch keine Ausgaben-Kategorien. Lege zuerst eine Kategorie an und füge ihr dann Einträge hinzu. |
-| `block.noMatch` | No entries match the current search or filter. | Keine Einträge passen zur aktuellen Suche oder zum Filter. |
-| `category.dragHint` | Drag to reorder categories | Ziehen, um Kategorien zu sortieren |
-| `category.addEntry` | Add entry | Eintrag hinzufügen |
-| `category.rename` | Rename | Umbenennen |
-| `category.delete` | Delete | Löschen |
-| `category.inUse` | Category is in use | Kategorie wird verwendet |
-| `category.noEntries` | No entries yet | Noch keine Einträge |
-| `category.dropHere` | Drop here | Hier ablegen |
-| `category.dropInto` | Drop to add to "{name}" | Ablegen, um zu „{name}“ hinzuzufügen |
-| `entry.dragHint` | Drag to reorder or move to another category | Ziehen, um zu sortieren oder in eine andere Kategorie zu verschieben |
-| `entry.edit` | Edit | Bearbeiten |
-| `entry.delete` | Delete | Löschen |
-| `entry.monthly` | monthly | monatlich |
-| `entry.quarterly` | quarterly | vierteljährlich |
-| `entry.halfyearly` | half-yearly | halbjährlich |
-| `entry.yearly` | yearly | jährlich |
-| `entry.paused` | paused | pausiert |
-| `entry.pause` | Pause (exclude from totals) | Pausieren (nicht mitzählen) |
-| `entry.resume` | Resume (include in totals) | Fortsetzen (wieder mitzählen) |
-| `entry.duplicate` | Duplicate | Duplizieren |
-| `entry.notes` | Notes | Notizen |
-| `entry.select` | Select (Ctrl+click toggles, Shift+click selects a range) | Auswählen (Strg+Klick wechselt, Umschalt+Klick wählt einen Bereich) |
-| `selection.count.one` | {count} entry selected | {count} Eintrag ausgewählt |
-| `selection.count.other` | {count} entries selected | {count} Einträge ausgewählt |
-| `selection.moveTo` | Move to… | Verschieben nach… |
-| `selection.move` | Move | Verschieben |
-| `selection.mixed` | Income and spending entries can't be moved together. | Einnahmen und Ausgaben können nicht gemeinsam verschoben werden. |
-| `selection.pause` | Pause | Pausieren |
-| `selection.resume` | Resume | Fortsetzen |
-| `selection.delete` | Delete | Löschen |
-| `selection.clear` | Clear selection | Auswahl aufheben |
-| `selection.done` | Done | Fertig |
-| `selection.count.zero` | No entries selected | Keine Einträge ausgewählt |
-| `confirm.deleteEntries.title` | Delete entries | Einträge löschen |
-| `confirm.deleteEntries.message.one` | Delete {count} entry? | {count} Eintrag löschen? |
-| `confirm.deleteEntries.message.other` | Delete {count} entries? | {count} Einträge löschen? |
-| `toast.entriesDeleted.one` | {count} entry deleted. | {count} Eintrag gelöscht. |
-| `toast.entriesDeleted.other` | {count} entries deleted. | {count} Einträge gelöscht. |
-| `toast.entriesMoved.one` | {count} entry moved to "{name}". | {count} Eintrag nach „{name}“ verschoben. |
-| `toast.entriesMoved.other` | {count} entries moved to "{name}". | {count} Einträge nach „{name}“ verschoben. |
-| `toast.entriesPaused.one` | {count} entry paused. | {count} Eintrag pausiert. |
-| `toast.entriesPaused.other` | {count} entries paused. | {count} Einträge pausiert. |
-| `toast.entriesResumed.one` | {count} entry resumed. | {count} Eintrag fortgesetzt. |
-| `toast.entriesResumed.other` | {count} entries resumed. | {count} Einträge fortgesetzt. |
-| `month.1` | January | Januar |
-| `month.2` | February | Februar |
-| `month.3` | March | März |
-| `month.4` | April | April |
-| `month.5` | May | Mai |
-| `month.6` | June | Juni |
-| `month.7` | July | Juli |
-| `month.8` | August | August |
-| `month.9` | September | September |
-| `month.10` | October | Oktober |
-| `month.11` | November | November |
-| `month.12` | December | Dezember |
-| `stats.title` | Statistics | Statistik |
-| `stats.transfers` | Monthly transfers | Monatliche Überweisungen |
-| `stats.toBank` | To bank account | Auf das Girokonto |
-| `stats.toBankSub` | spendings paid per month | monatlich bezahlte Ausgaben |
-| `stats.toSavings` | To savings account | Auf das Sparkonto |
-| `stats.toSavingsSub` | 1/12 of spendings paid per year | 1/12 der jährlich bezahlten Ausgaben |
-| `stats.overview` | Overview | Übersicht |
-| `stats.incomePerMonth` | Income per month | Einnahmen pro Monat |
-| `stats.avgCostPerMonth` | Average cost per month | Durchschnittliche Kosten pro Monat |
-| `stats.saldoPerMonth` | Saldo per month | Saldo pro Monat |
-| `stats.incomePerYear` | Income per year | Einnahmen pro Jahr |
-| `stats.costPerYear` | Cost per year | Kosten pro Jahr |
-| `stats.saldoPerYear` | Saldo per year | Saldo pro Jahr |
-| `stats.goal` | Savings goal per month | Sparziel pro Monat |
-| `stats.goalNone` | no goal set | kein Sparziel |
-| `stats.goalEdit` | Set savings goal | Sparziel festlegen |
-| `stats.remainingAfterGoal` | Remaining after goal | Verbleibend nach Sparziel |
-| `stats.peakBuffer` | Savings buffer needed (peak) | Benötigter Puffer auf dem Sparkonto (Spitze) |
-| `stats.unscheduled.one` | {count} non-monthly entry without due month is not in the timeline. | {count} nicht-monatlicher Eintrag ohne Fälligkeitsmonat fehlt in der Zeitleiste. |
-| `stats.unscheduled.other` | {count} non-monthly entries without due month are not in the timeline. | {count} nicht-monatliche Einträge ohne Fälligkeitsmonat fehlen in der Zeitleiste. |
-| `stats.paused.one` | {count} paused entry is not counted. | {count} pausierter Eintrag wird nicht mitgezählt. |
-| `stats.paused.other` | {count} paused entries are not counted. | {count} pausierte Einträge werden nicht mitgezählt. |
-| `stats.timeline` | Payment timeline | Zahlungs-Zeitleiste |
-| `stats.timelineDue` | due | fällig |
-| `stats.timelineSaved` | on savings account | auf dem Sparkonto |
-| `stats.timelineEmpty` | Give non-monthly spendings a due month to see when they are due and how the savings account fills up. | Gib nicht-monatlichen Ausgaben einen Fälligkeitsmonat, um zu sehen, wann sie fällig sind und wie sich das Sparkonto füllt. |
-| `stats.levers` | Biggest levers | Größte Hebel |
-| `stats.leversHint` | The five active spendings with the highest yearly cost. | Die fünf aktiven Ausgaben mit den höchsten Jahreskosten. |
-| `stats.leversEmpty` | No spendings yet. | Noch keine Ausgaben. |
-| `stats.byCategory` | Spending by category | Ausgaben nach Kategorie |
-| `stats.otherCategories` | Other | Sonstige |
-| `stats.chartsEmpty` | No spending yet. | Noch keine Ausgaben. |
-| `warning.negativeSaldo` | Spending exceeds income by {amount} per month. | Die Ausgaben übersteigen die Einnahmen um {amount} pro Monat. |
-| `warning.goal` | The savings goal is not reachable: {amount} short per month. | Das Sparziel ist nicht erreichbar: es fehlen {amount} pro Monat. |
-| `goalDialog.title` | Savings goal | Sparziel |
-| `goalDialog.amount` | Amount to put aside per month | Betrag, der monatlich zurückgelegt werden soll |
-| `goalDialog.hint` | Enter 0 to remove the goal. | 0 eingeben, um das Sparziel zu entfernen. |
-| `toast.goalSaved` | Savings goal saved. | Sparziel gespeichert. |
-| `stats.note` | Monthly spendings are paid from the bank account. Yearly spendings are saved up month by month on the savings account, so the money is available when they are due. | Monatliche Ausgaben werden vom Girokonto bezahlt. Jährliche Ausgaben werden Monat für Monat auf dem Sparkonto angespart, damit das Geld bei Fälligkeit vorhanden ist. |
-| `dialog.cancel` | Cancel | Abbrechen |
-| `dialog.ok` | OK | OK |
-| `dialog.close` | Close | Schließen |
-| `dialog.save` | Save | Speichern |
-| `dialog.add` | Add | Hinzufügen |
-| `dialog.delete` | Delete | Löschen |
-| `dialog.dismiss` | Dismiss | Ausblenden |
-| `categoryDialog.titleNew.income` | New income category | Neue Einnahmen-Kategorie |
-| `categoryDialog.titleNew.spending` | New spending category | Neue Ausgaben-Kategorie |
-| `categoryDialog.titleRename` | Rename category | Kategorie umbenennen |
-| `categoryDialog.name` | Name | Name |
-| `categoryDialog.namePlaceholder` | e.g. Housing | z. B. Wohnen |
-| `categoryDialog.submit` | Add category | Kategorie anlegen |
-| `entryDialog.titleNew.income` | New income | Neue Einnahme |
-| `entryDialog.titleNew.spending` | New spending | Neue Ausgabe |
-| `entryDialog.titleEdit.income` | Edit income | Einnahme bearbeiten |
-| `entryDialog.titleEdit.spending` | Edit spending | Ausgabe bearbeiten |
-| `entryDialog.noCategories.income` | There are no income categories yet. Categories have to be added before entries can be entered. | Es gibt noch keine Einnahmen-Kategorien. Kategorien müssen angelegt werden, bevor Einträge erfasst werden können. |
-| `entryDialog.noCategories.spending` | There are no spending categories yet. Categories have to be added before entries can be entered. | Es gibt noch keine Ausgaben-Kategorien. Kategorien müssen angelegt werden, bevor Einträge erfasst werden können. |
-| `entryDialog.addCategoryFirst` | Add a category first | Zuerst eine Kategorie anlegen |
-| `entryDialog.name` | Name | Name |
-| `entryDialog.namePlaceholder` | e.g. Rent | z. B. Miete |
-| `entryDialog.amount` | Amount | Betrag |
-| `entryDialog.paid` | Paid | Zahlung |
-| `entryDialog.perMonth` | per month | pro Monat |
-| `entryDialog.perQuarter` | per quarter | pro Quartal |
-| `entryDialog.perHalfYear` | per half-year | pro Halbjahr |
-| `entryDialog.perYear` | per year | pro Jahr |
-| `entryDialog.category` | Category | Kategorie |
-| `entryDialog.preview` | = {monthly} per month · {yearly} per year | = {monthly} pro Monat · {yearly} pro Jahr |
-| `entryDialog.dueMonth` | Due month | Fälligkeitsmonat |
-| `entryDialog.dueMonthNone` | not set | nicht festgelegt |
-| `entryDialog.dueMonthHint` | Month of a payment; further payments follow every {months} months. Needed for the timeline. | Monat einer Zahlung; weitere Zahlungen folgen alle {months} Monate. Wird für die Zeitleiste benötigt. |
-| `entryDialog.notes` | Notes | Notizen |
-| `entryDialog.notesPlaceholder` | e.g. contract number, cancellation date | z. B. Vertragsnummer, Kündigungsfrist |
-| `entryDialog.paused` | Paused – keep the entry but leave it out of all totals | Pausiert – Eintrag behalten, aber bei allen Summen weglassen |
-| `entryDialog.titleDuplicate.income` | Duplicate income | Einnahme duplizieren |
-| `entryDialog.titleDuplicate.spending` | Duplicate spending | Ausgabe duplizieren |
-| `entryDialog.copySuffix` |  (copy) |  (Kopie) |
-| `entryDialog.invalidAmount` | Please enter a valid amount, e.g. 12.50. | Bitte einen gültigen Betrag eingeben, z. B. 12,50. |
-| `confirm.deleteEntry.title` | Delete entry | Eintrag löschen |
-| `confirm.deleteEntry.message` | Delete "{name}"? This can't be undone. | „{name}“ löschen? Das kann nicht rückgängig gemacht werden. |
-| `confirm.deleteCategory.title` | Delete category | Kategorie löschen |
-| `confirm.deleteCategory.message` | Delete the category "{name}"? | Die Kategorie „{name}“ löschen? |
-| `confirm.categoryInUse.title` | Category in use | Kategorie wird verwendet |
-| `confirm.categoryInUse.message.one` | "{name}" still contains {count} entry. Move or delete it first, then delete the category. | „{name}“ enthält noch {count} Eintrag. Verschiebe oder lösche ihn zuerst, dann kann die Kategorie gelöscht werden. |
-| `confirm.categoryInUse.message.other` | "{name}" still contains {count} entries. Move or delete them first, then delete the category. | „{name}“ enthält noch {count} Einträge. Verschiebe oder lösche sie zuerst, dann kann die Kategorie gelöscht werden. |
-| `importDialog.title` | Import data | Daten importieren |
-| `importDialog.summary` | {file} contains {categories} and {entries} (file version {version}). | {file} enthält {categories} und {entries} (Dateiversion {version}). |
-| `importDialog.categories.one` | {count} category | {count} Kategorie |
-| `importDialog.categories.other` | {count} categories | {count} Kategorien |
-| `importDialog.entries.one` | {count} entry | {count} Eintrag |
-| `importDialog.entries.other` | {count} entries | {count} Einträge |
-| `importDialog.question` | How should the data be imported? | Wie sollen die Daten importiert werden? |
-| `importDialog.merge.title` | Add to current data | Zu den aktuellen Daten hinzufügen |
-| `importDialog.merge.description` | Keeps everything you have. Categories with the same name are reused, entries that already exist are skipped. | Behält alles Vorhandene. Kategorien mit gleichem Namen werden wiederverwendet, bereits vorhandene Einträge übersprungen. |
-| `importDialog.replace.title` | Replace current data | Aktuelle Daten ersetzen |
-| `importDialog.replace.description` | Deletes all current categories and entries and uses the imported file instead. | Löscht alle aktuellen Kategorien und Einträge und verwendet stattdessen die importierte Datei. |
-| `toast.entryAdded` | Added "{name}". | „{name}“ hinzugefügt. |
-| `toast.entrySaved` | Saved "{name}". | „{name}“ gespeichert. |
-| `toast.entryDeleted` | Deleted "{name}". | „{name}“ gelöscht. |
-| `toast.entryPaused` | "{name}" paused. | „{name}“ pausiert. |
-| `toast.entryResumed` | "{name}" resumed. | „{name}“ fortgesetzt. |
-| `toast.categoryAdded.income` | Added income category "{name}". | Einnahmen-Kategorie „{name}“ angelegt. |
-| `toast.categoryAdded.spending` | Added spending category "{name}". | Ausgaben-Kategorie „{name}“ angelegt. |
-| `toast.categoryRenamed` | Renamed category to "{name}". | Kategorie in „{name}“ umbenannt. |
-| `toast.categoryDeleted` | Deleted category "{name}". | Kategorie „{name}“ gelöscht. |
-| `toast.exported` | Exported to {path} | Exportiert nach {path} |
-| `toast.importedMerge` | Import finished: {entries}, {skipped}, {categories}. | Import abgeschlossen: {entries}, {skipped}, {categories}. |
-| `toast.importedMerge.entries.one` | {count} entry added | {count} Eintrag hinzugefügt |
-| `toast.importedMerge.entries.other` | {count} entries added | {count} Einträge hinzugefügt |
-| `toast.importedMerge.skipped.one` | {count} already existed | {count} bereits vorhanden |
-| `toast.importedMerge.skipped.other` | {count} already existed | {count} bereits vorhanden |
-| `toast.importedMerge.categories.one` | {count} new category | {count} neue Kategorie |
-| `toast.importedMerge.categories.other` | {count} new categories | {count} neue Kategorien |
-| `toast.importedReplace` | Data replaced by import: {entries} in {categories}. | Daten durch Import ersetzt: {entries} in {categories}. |
-| `tip.blockMonthly` | Sum of all active {kind} entries per month.⏎Non-monthly amounts count with their monthly share.⏎Paused entries are not counted. | Summe aller aktiven {kind}-Einträge pro Monat.⏎Nicht monatliche Beträge zählen mit ihrem Monatsanteil.⏎Pausierte Einträge zählen nicht. |
-| `tip.blockYearly` | Sum of all active {kind} entries per year.⏎Monthly amounts count × 12.⏎Paused entries are not counted. | Summe aller aktiven {kind}-Einträge pro Jahr.⏎Monatliche Beträge zählen × 12.⏎Pausierte Einträge zählen nicht. |
-| `tip.categoryMonthly` | Monthly total of the active entries in "{name}".⏎Paused entries are not counted. | Monatssumme der aktiven Einträge in „{name}“.⏎Pausierte Einträge zählen nicht. |
-| `tip.categoryYearly` | Yearly total of the active entries in "{name}".⏎Paused entries are not counted. | Jahressumme der aktiven Einträge in „{name}“.⏎Pausierte Einträge zählen nicht. |
-| `tip.categoryShare` | Monthly total of "{name}":⏎{percent} of all monthly spending⏎{income} of the monthly income | Monatssumme von „{name}“:⏎{percent} aller monatlichen Ausgaben⏎{income} der monatlichen Einnahmen |
-| `tip.categoryShareNoIncome` | Monthly total of "{name}":⏎{percent} of all monthly spending | Monatssumme von „{name}“:⏎{percent} aller monatlichen Ausgaben |
-| `tip.entryMaster` | Amount as entered:⏎{amount} {period} | Betrag wie eingegeben:⏎{amount} {period} |
-| `tip.entryMonthlyDerived` | Calculated:⏎{amount} {period} ÷ {months} months | Berechnet:⏎{amount} {period} ÷ {months} Monate |
-| `tip.entryYearlyDerived` | Calculated:⏎{amount} {period} × {payments} payments per year | Berechnet:⏎{amount} {period} × {payments} Zahlungen pro Jahr |
-| `tip.toBank` | Sum of all spendings that are paid monthly.⏎Transfer this amount to the bank account every month. | Summe aller monatlich bezahlten Ausgaben.⏎Diesen Betrag jeden Monat auf das Girokonto überweisen. |
-| `tip.toSavings` | Monthly share of all spendings that are not paid monthly⏎(quarterly ÷ 3, half-yearly ÷ 6, yearly ÷ 12).⏎Put this amount aside on the savings account every month. | Monatsanteil aller nicht monatlich bezahlten Ausgaben⏎(vierteljährlich ÷ 3, halbjährlich ÷ 6, jährlich ÷ 12).⏎Diesen Betrag jeden Monat auf das Sparkonto legen. |
-| `tip.incomePerMonth` | Sum of all active income per month.⏎Non-monthly income counts with its monthly share. | Summe aller aktiven Einnahmen pro Monat.⏎Nicht monatliche Einnahmen zählen mit ihrem Monatsanteil. |
-| `tip.avgCostPerMonth` | Sum of all active spendings per month⏎= transfer to the bank account + transfer to the savings account. | Summe aller aktiven Ausgaben pro Monat⏎= Überweisung auf das Girokonto + Überweisung auf das Sparkonto. |
-| `tip.saldoPerMonth` | Income per month − average cost per month | Einnahmen pro Monat − durchschnittliche Kosten pro Monat |
-| `tip.goal` | The amount you want to put aside every month,⏎on top of all spendings. | Der Betrag, der jeden Monat zusätzlich zu allen Ausgaben⏎zurückgelegt werden soll. |
-| `tip.remainingAfterGoal` | Saldo per month − savings goal.⏎Negative means the goal is not reachable. | Saldo pro Monat − Sparziel.⏎Negativ bedeutet: Das Sparziel ist nicht erreichbar. |
-| `tip.incomePerYear` | Sum of all active income per year. | Summe aller aktiven Einnahmen pro Jahr. |
-| `tip.costPerYear` | Sum of all active spendings per year. | Summe aller aktiven Ausgaben pro Jahr. |
-| `tip.saldoPerYear` | Income per year − cost per year | Einnahmen pro Jahr − Kosten pro Jahr |
-| `tip.peakBuffer` | Highest balance the savings account reaches during the year.⏎This is the buffer the account needs so that every scheduled payment is covered. | Höchster Stand des Sparkontos im Jahresverlauf.⏎Das ist der Puffer, den das Konto braucht, damit jede geplante Zahlung gedeckt ist. |
-| `tip.timelineDue` | Sum of the non-monthly spendings paid in this month. | Summe der nicht monatlichen Ausgaben, die in diesem Monat bezahlt werden. |
-| `tip.timelineSaved` | Balance of the savings account at the end of this month:⏎what was put aside minus what was paid out. | Stand des Sparkontos am Monatsende:⏎Zurückgelegtes minus Ausgezahltes. |
-| `tip.lever` | {yearly} per year⏎{monthly} per month⏎{share} of all monthly spending⏎{income} of the monthly income⏎⏎Click to edit. | {yearly} pro Jahr⏎{monthly} pro Monat⏎{share} aller monatlichen Ausgaben⏎{income} der monatlichen Einnahmen⏎⏎Zum Bearbeiten anklicken. |
-| `tip.leverNoIncome` | {yearly} per year⏎{monthly} per month⏎{share} of all monthly spending⏎⏎Click to edit. | {yearly} pro Jahr⏎{monthly} pro Monat⏎{share} aller monatlichen Ausgaben⏎⏎Zum Bearbeiten anklicken. |
-| `tip.donutSlice` | {name}⏎{amount} per month⏎{percent} of all monthly spending | {name}⏎{amount} pro Monat⏎{percent} aller monatlichen Ausgaben |
-| `alert.generic` | Something went wrong | Etwas ist schiefgelaufen |
-| `alert.deleteFailed` | Delete failed | Löschen fehlgeschlagen |
-| `alert.moveFailed` | Move failed | Verschieben fehlgeschlagen |
-| `alert.exportFailed` | Export failed | Export fehlgeschlagen |
-| `alert.importFailed` | Import failed | Import fehlgeschlagen |
-| `errors.kind.unknown` | Unknown kind "{kind}". | Unbekannte Art „{kind}“. |
-| `errors.period.unknown` | Unknown period "{period}". | Unbekannter Zeitraum „{period}“. |
-| `errors.category.notFound` | The category was not found. | Die Kategorie wurde nicht gefunden. |
-| `errors.category.nameEmpty` | The category name must not be empty. | Der Kategoriename darf nicht leer sein. |
-| `errors.category.exists` | A {kind} category named "{name}" already exists. | Eine {kind}-Kategorie mit dem Namen „{name}“ existiert bereits. |
-| `errors.category.inUse.one` | The category "{name}" is still used by {count} entry and can't be deleted. | Die Kategorie „{name}“ wird noch von {count} Eintrag verwendet und kann nicht gelöscht werden. |
-| `errors.category.inUse.other` | The category "{name}" is still used by {count} entries and can't be deleted. | Die Kategorie „{name}“ wird noch von {count} Einträgen verwendet und kann nicht gelöscht werden. |
-| `errors.entry.notFound` | The entry was not found. | Der Eintrag wurde nicht gefunden. |
-| `errors.entry.categoryRequired` | Please choose a category. | Bitte eine Kategorie auswählen. |
-| `errors.entry.nameEmpty` | The name must not be empty. | Der Name darf nicht leer sein. |
-| `errors.entry.amountPositive` | The amount must be greater than 0. | Der Betrag muss größer als 0 sein. |
-| `errors.entry.dueMonthInvalid` | The due month must be between 1 and 12. | Der Fälligkeitsmonat muss zwischen 1 und 12 liegen. |
-| `errors.entry.idExists` | The entry already exists. | Der Eintrag existiert bereits. |
-| `errors.category.idExists` | The category already exists. | Die Kategorie existiert bereits. |
-| `errors.settings.savingsGoalNegative` | The savings goal must not be negative. | Das Sparziel darf nicht negativ sein. |
-| `errors.settings.themeInvalid` | Unknown appearance "{theme}". | Unbekannte Darstellung „{theme}“. |
-| `errors.sample.notEmpty` | Sample data can only be loaded into an empty planner. | Beispieldaten können nur in einen leeren Planer geladen werden. |
-| `errors.backup.invalidPath` | Only files from the backup folder can be restored. | Es können nur Dateien aus dem Backup-Ordner wiederhergestellt werden. |
-| `errors.entry.kindMismatch` | An {from} entry can't be moved into a {to} category. | Ein {from}-Eintrag kann nicht in eine {to}-Kategorie verschoben werden. |
-| `errors.import.modeUnknown` | Unknown import mode "{mode}". | Unbekannter Importmodus „{mode}“. |
-| `errors.import.invalidFile` | {file} is not a valid planner file: {detail} | {file} ist keine gültige Planer-Datei: {detail} |
-| `errors.language.invalid` | Unsupported language "{language}". | Nicht unterstützte Sprache „{language}“. |
