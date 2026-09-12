@@ -61,9 +61,6 @@ func Decode(raw []byte) (Data, error) {
 	if d.Entries == nil {
 		d.Entries = []Entry{}
 	}
-	if d.Settings.Language == "" {
-		d.Settings.Language = DefaultLanguage
-	}
 	d.Version = CurrentVersion
 	if err := d.Validate(); err != nil {
 		return Data{}, err
@@ -97,7 +94,7 @@ func migrate(raw []byte, version int) ([]byte, error) {
 				return nil, fmt.Errorf("invalid JSON: %w", err)
 			}
 			if _, ok := m["settings"]; !ok {
-				m["settings"] = json.RawMessage(`{"language":"` + DefaultLanguage + `"}`)
+				m["settings"] = json.RawMessage(`{"language":""}`)
 			}
 			m["version"] = json.RawMessage("2")
 			var err error

@@ -32,14 +32,17 @@ test("plural keys come in one/other pairs", () => {
   }
 });
 
-test("German and English are available and English is the fallback", () => {
+test("German and English are available and German is the default", () => {
   assert.deepEqual(
     locales.map((l) => l.code).sort(),
     ["de", "en"],
   );
+  assert.equal(findLocale("en").label, "English");
   assert.equal(findLocale("de").label, "Deutsch");
-  assert.equal(findLocale("xx").code, "en");
-  assert.equal(findLocale(undefined).code, "en");
+  // No choice saved yet (empty / missing) or an unknown code -> German.
+  assert.equal(findLocale("").code, "de");
+  assert.equal(findLocale(undefined).code, "de");
+  assert.equal(findLocale("xx").code, "de");
 });
 
 test("interpolation replaces placeholders and keeps unknown ones", () => {

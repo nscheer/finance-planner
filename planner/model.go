@@ -22,9 +22,6 @@ import (
 //	2 - added "settings" (language)
 const CurrentVersion = 2
 
-// DefaultLanguage is used when no language was chosen yet.
-const DefaultLanguage = "en"
-
 // Kind distinguishes income from spending. Categories belong to exactly one
 // kind, entries inherit the kind of their category.
 type Kind string
@@ -66,7 +63,9 @@ type Entry struct {
 
 // Settings holds user preferences that are stored together with the data.
 type Settings struct {
-	// Language is the UI language code, e.g. "en" or "de".
+	// Language is the UI language code chosen by the user, e.g. "en" or
+	// "de". It stays empty until a choice was made; the frontend then uses
+	// its default language (German).
 	Language string `json:"language"`
 }
 
@@ -82,7 +81,6 @@ type Data struct {
 func NewData() Data {
 	return Data{
 		Version:    CurrentVersion,
-		Settings:   Settings{Language: DefaultLanguage},
 		Categories: []Category{},
 		Entries:    []Entry{},
 	}
@@ -187,7 +185,7 @@ func (d *Data) Validate() error {
 			return fmt.Errorf("category %q has unknown kind %q", c.Name, c.Kind)
 		}
 	}
-	if !ValidLanguage(d.Settings.Language) {
+	if d.Settings.Language != "" && !ValidLanguage(d.Settings.Language) {
 		return fmt.Errorf("invalid language %q in settings", d.Settings.Language)
 	}
 	entryIDs := map[string]bool{}

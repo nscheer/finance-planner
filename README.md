@@ -18,8 +18,9 @@ specification is in [project.md](project.md).
   is built on: the sum of monthly spendings (to the bank account) and 1/12 of
   the yearly spendings (to the savings account), plus the saldo per month and
   per year.
-- The UI is available in **English and German**; the dropdown in the top
-  right corner switches the language and the choice is saved in `data.json`.
+- The UI is available in **German and English**; German is the default until
+  a language is chosen. The dropdown in the top right corner switches the
+  language and the choice is saved in `data.json`.
 - All data is stored in `data.json` next to the binary. The file carries a
   `version` number so the structure can be migrated later. Data can be
   exported to and imported from JSON files (add to or replace current data).

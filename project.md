@@ -75,6 +75,7 @@ Notifications can be in a modal as well or just as popups, depending on severity
 The application should be multi-lingual. It should support German and English. Language can be selected via a dropdown in one of the corners of the app.
 The choice should be saved.
 Use language files and language keys in a way that makes this easy to use and professional, so that changes can be done easily and it is easy to add a language later.
+German should be the default language, if a choice has not been made and saved.
 
 ## General guideline
 

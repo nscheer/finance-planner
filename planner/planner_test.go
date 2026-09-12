@@ -529,11 +529,18 @@ func TestMergeMatchesByID(t *testing.T) {
 	}
 }
 
-// "The application should be multi-lingual ... The choice should be saved."
+// "The application should be multi-lingual ... The choice should be saved.
+// German should be the default language, if a choice has not been made and
+// saved." - the backend stores an empty language until the user chooses,
+// the frontend maps that to German (see frontend/src/i18n/index.ts).
 func TestLanguageSetting(t *testing.T) {
 	s, path := newTestService(t)
-	if s.GetState().Settings.Language != DefaultLanguage {
-		t.Fatalf("default language = %q", s.GetState().Settings.Language)
+	if s.GetState().Settings.Language != "" {
+		t.Fatalf("language before any choice = %q, want empty", s.GetState().Settings.Language)
+	}
+	raw, _ := os.ReadFile(path)
+	if d, err := Decode(raw); err != nil || d.Settings.Language != "" {
+		t.Fatalf("empty (unchosen) language must survive load: %v %+v", err, d.Settings)
 	}
 	st, err := s.SetLanguage("de")
 	if err != nil {
@@ -621,7 +628,7 @@ func TestDecodeVersions(t *testing.T) {
 	if err != nil {
 		t.Fatalf("migrating version 0: %v", err)
 	}
-	if d.Version != CurrentVersion || len(d.Categories) != 1 || d.Settings.Language != DefaultLanguage {
+	if d.Version != CurrentVersion || len(d.Categories) != 1 || d.Settings.Language != "" {
 		t.Fatalf("migration result wrong: %+v", d)
 	}
 
@@ -630,7 +637,7 @@ func TestDecodeVersions(t *testing.T) {
 	if err != nil {
 		t.Fatalf("migrating version 1: %v", err)
 	}
-	if d.Version != 2 || d.Settings.Language != DefaultLanguage || len(d.Entries) != 1 {
+	if d.Version != 2 || d.Settings.Language != "" || len(d.Entries) != 1 {
 		t.Fatalf("v1 migration result wrong: %+v", d)
 	}
 
