@@ -339,6 +339,13 @@ option {
   font-size: 12px;
   color: var(--text-3);
 }
+.hint.error {
+  color: var(--danger);
+}
+.input.invalid,
+.input.invalid:focus {
+  border-color: var(--danger);
+}
 .form-error {
   margin: 0 0 12px;
   padding: 8px 10px;

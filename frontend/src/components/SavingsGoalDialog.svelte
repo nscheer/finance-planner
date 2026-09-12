@@ -2,20 +2,24 @@
   /** Sets the monthly savings goal shown in the statistics box. */
   import Modal from "./Modal.svelte";
   import { Service, app, apply, closeDialog, errorMessage, notify } from "../lib/store.svelte";
-  import { t, amountInput, amountPlaceholder, parseAmount } from "../lib/i18n.svelte";
-  import { untrack } from "svelte";
+  import { t, amountInput, amountPlaceholder } from "../lib/i18n.svelte";
+  import { AmountField } from "../lib/validate.svelte";
+  import { onDestroy, untrack } from "svelte";
 
   const initial = untrack(() => app.state?.stats.savingsGoalCents ?? 0);
-  let amount = $state(initial > 0 ? amountInput(initial) : "");
+  const amount = new AmountField(initial > 0 ? amountInput(initial) : "", true);
+  let amountEl: HTMLInputElement | undefined = $state();
+  onDestroy(() => amount.dispose());
   let error = $state("");
   let working = $state(false);
 
   async function submit(event: SubmitEvent) {
     event.preventDefault();
     error = "";
-    const cents = amount.trim() === "" ? 0 : parseAmount(amount);
-    if (cents === null || cents < 0) {
-      error = t("entryDialog.invalidAmount");
+    amount.touch();
+    const cents = amount.cents;
+    if (cents === null) {
+      amountEl?.focus();
       return;
     }
     working = true;
@@ -37,10 +41,23 @@
     <div class="field">
       <label for="goal-amount">{t("goalDialog.amount")}</label>
       <div class="input-suffix">
-        <input id="goal-amount" class="input" type="text" inputmode="decimal" bind:value={amount} placeholder={amountPlaceholder()} autocomplete="off" />
+        <input
+          id="goal-amount"
+          class="input"
+          class:invalid={!!amount.error}
+          type="text"
+          inputmode="decimal"
+          bind:value={amount.value}
+          bind:this={amountEl}
+          oninput={() => amount.changed()}
+          onblur={() => amount.touch()}
+          aria-invalid={!!amount.error}
+          placeholder={amountPlaceholder()}
+          autocomplete="off"
+        />
         <span>€</span>
       </div>
-      <span class="hint">{t("goalDialog.hint")}</span>
+      <span class="hint" class:error={!!amount.error}>{amount.error || t("goalDialog.hint")}</span>
     </div>
   </form>
   {#snippet footer()}

@@ -301,6 +301,12 @@ priority.
   goal). Dialogs close with *Esc*, the close icon or a click on the backdrop;
   the first form field gets the focus. Validation errors appear inline in the
   form.
+- **Amount fields** (entry and savings goal) are validated while typing:
+  the error appears 400 ms after the last change or as soon as the field
+  loses focus, and disappears immediately when the value becomes valid. An
+  invalid field gets a red border and the message replaces the hint or
+  preview line below it; submitting with an invalid amount focuses the
+  field instead of saving.
 - **Entry dialog**: name, amount with € suffix and a segmented control for
   the period, a live preview line "= x per month · y per year" while typing,
   the category (preselected when the dialog was opened from a category

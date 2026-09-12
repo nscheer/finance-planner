@@ -19,8 +19,9 @@
     openDialog,
     periodMonths,
   } from "../lib/store.svelte";
-  import { t, formatEuro, monthName, amountInput, amountPlaceholder, parseAmount } from "../lib/i18n.svelte";
-  import { untrack } from "svelte";
+  import { t, formatEuro, monthName, amountInput, amountPlaceholder } from "../lib/i18n.svelte";
+  import { AmountField } from "../lib/validate.svelte";
+  import { onDestroy, untrack } from "svelte";
 
   let {
     kind,
@@ -38,7 +39,9 @@
   const source = initial.entry ?? initial.duplicateOf;
 
   let name = $state(initial.entry?.name ?? (initial.duplicateOf ? initial.duplicateOf.name + t("entryDialog.copySuffix") : ""));
-  let amount = $state(source ? amountInput(source.amountCents) : "");
+  const amount = new AmountField(source ? amountInput(source.amountCents) : "");
+  let amountEl: HTMLInputElement | undefined = $state();
+  onDestroy(() => amount.dispose());
   let period = $state<Period>(source?.period ?? Period.PeriodMonthly);
   let dueMonth = $state(source?.dueMonth ?? 0);
   let notes = $state(source?.notes ?? "");
@@ -62,7 +65,7 @@
 
   /** Live preview of the derived values while typing. */
   const preview = $derived.by(() => {
-    const cents = parseAmount(amount);
+    const cents = amount.cents;
     if (cents === null || cents <= 0) return "";
     const n = periodMonths(period);
     return t("entryDialog.preview", {
@@ -78,9 +81,10 @@
   async function submit(event: SubmitEvent) {
     event.preventDefault();
     error = "";
-    const cents = parseAmount(amount);
+    amount.touch();
+    const cents = amount.cents;
     if (cents === null) {
-      error = t("entryDialog.invalidAmount");
+      amountEl?.focus();
       return;
     }
     const input = {
@@ -131,7 +135,20 @@
         <label for="entry-amount">{t("entryDialog.amount")}</label>
         <div class="row">
           <div class="input-suffix grow">
-            <input id="entry-amount" class="input" type="text" inputmode="decimal" bind:value={amount} placeholder={amountPlaceholder()} autocomplete="off" />
+            <input
+              id="entry-amount"
+              class="input"
+              class:invalid={!!amount.error}
+              type="text"
+              inputmode="decimal"
+              bind:value={amount.value}
+              bind:this={amountEl}
+              oninput={() => amount.changed()}
+              onblur={() => amount.touch()}
+              aria-invalid={!!amount.error}
+              placeholder={amountPlaceholder()}
+              autocomplete="off"
+            />
             <span>€</span>
           </div>
           <div class="segmented" role="radiogroup" aria-label={t("entryDialog.paid")}>
@@ -140,7 +157,7 @@
             {/each}
           </div>
         </div>
-        <span class="hint">{preview || " "}</span>
+        <span class="hint" class:error={!!amount.error}>{amount.error || preview || " "}</span>
       </div>
       <div class="row">
         <div class="field grow">
