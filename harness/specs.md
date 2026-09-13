@@ -387,12 +387,31 @@ shown; arrow keys move the highlight, Enter runs it, Esc closes.
 
 *Print* in the top bar (or `Ctrl+P`) opens the system print dialog, which
 also allows saving as PDF. While printing every category is rendered
-expanded. The print layout is a single column: a header with application
-name, print date and data file path, then the income and spending tables,
-then the statistics box. Buttons, drag handles, the top bar, banners, toasts
-and dialogs are hidden; shadows become borders; light colors are forced even
-in dark mode; category groups and statistics sections avoid page breaks
-inside; page margins are 15 mm.
+expanded. Page margins are 15 mm and the light palette is forced even in
+dark mode.
+
+The printed page is laid out as a **document, not as a picture of the
+application**: a single column with a header carrying the application name,
+the print date and the path of the data file, then the income table, the
+spending table and the statistics.
+
+- Cards lose their border, corners, shadow and inner padding; the structure
+  is carried by hairline rules instead. The block title prints as a small
+  uppercase heading above a rule, the column labels in mixed case above a
+  second rule.
+- Category rows are plain lines with the name in bold, no grey band, no
+  accent bar and no chevron; the number of entries prints as plain text in
+  brackets. Entries are indented under their category and their rows are
+  tightened.
+- Long names **wrap** instead of being truncated, because paper has no
+  tooltip to reveal the rest.
+- Frequency badges and category share bars keep their colours.
+- The top bar, buttons, drag handles, drop indicators, banners, toasts and
+  dialogs are not printed, but the cells they occupied keep their place in
+  the table grid (see 7.9).
+- A category never breaks across pages, and a block heading or a column
+  header never ends a page on its own. A block longer than a page splits
+  normally.
 
 ---
 
@@ -780,6 +799,13 @@ Non-obvious decisions that must survive a rewrite:
   fonts such as Segoe UI render low in their line box.
 - **Errors**: coded errors are marshalled through the Wails service option
   `MarshalError` and arrive in the frontend as `error.cause = {code, params}`.
+- **Hiding a table cell in print**: the table rows are CSS grids, so
+  `display: none` on a cell removes it from the flow and pulls every
+  following cell one column to the left, silently breaking the alignment
+  with the column headers. In the print stylesheet such a cell is emptied
+  with `visibility: hidden` while its track is set to zero width in the
+  print value of `--cols`. This is invisible on screen and only shows up on
+  paper.
 
 ### 7.10 Specification harness
 

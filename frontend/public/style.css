@@ -488,7 +488,6 @@ option {
   .btn,
   .toasts,
   .backdrop,
-  .handle,
   .drop-line,
   .cat-drop,
   .tail,
@@ -528,15 +527,12 @@ option {
     padding-top: 0 !important;
     gap: 12px !important;
   }
-  .block,
-  .stats {
-    box-shadow: none !important;
-    border: 1px solid var(--border-strong);
-    break-inside: avoid;
-  }
   .stats {
     position: static !important;
-    margin-top: 12px !important;
+  }
+  .block-head,
+  .columns {
+    break-after: avoid;
   }
   .group,
   .stats .group {
@@ -545,17 +541,101 @@ option {
   .block-head .buttons {
     display: none !important;
   }
-  .actions {
-    display: none !important;
+
+  /* Grid cells must keep their place: display:none would pull every
+     following cell one column to the left, which is what made the printed
+     table slide out of its own column headers. Empty tracks, hidden
+     content. */
+  .block {
+    --cols: 0 minmax(150px, 1fr) 104px 88px 112px 112px 0 !important;
   }
-  .row,
+  .handle,
+  .actions,
+  .select-all {
+    visibility: hidden;
+    overflow: hidden;
+  }
+  .table-scroll {
+    overflow: visible !important;
+  }
+
+  /* A document, not a screenshot of an application: no cards, hairline
+     rules, and names that wrap instead of being cut off. */
+  .block,
+  .stats,
+  .group {
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+  .block + .block {
+    margin-top: 16px;
+  }
+  .stats {
+    margin-top: 16px !important;
+    border-top: 1px solid var(--text) !important;
+    padding-top: 8px !important;
+  }
+  .block-head {
+    margin-bottom: 0;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--text);
+  }
+  .block-head h2 {
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .block-head .dot {
+    display: none;
+  }
+  .columns {
+    padding: 6px 8px 4px 0;
+    font-size: 10px;
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--text-2);
+    border-bottom: 1px solid var(--border-strong);
+  }
   .head {
     background: transparent !important;
+    border-left: 0 !important;
+    border-top: 1px solid var(--border-strong);
+    padding-left: 0 !important;
+    min-height: 0 !important;
   }
-  .head {
-    background: var(--surface-3) !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
+  .head .title {
+    padding-block: 5px 3px;
+  }
+  .chevron {
+    display: none;
+  }
+  .count {
+    border: 0;
+    background: transparent;
+    padding: 0;
+  }
+  .count::before {
+    content: "(";
+  }
+  .count::after {
+    content: ")";
+  }
+  .row {
+    background: transparent !important;
+    min-height: 0 !important;
+    padding-block: 3px;
+  }
+  .row .name {
+    padding-left: 10px;
+  }
+  .name-text,
+  .cat-title .name,
+  .lever-name {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
   }
   .badge,
   .share-fill,
