@@ -771,11 +771,20 @@ wails3 task test    # Go tests + frontend unit tests
 
 ### 7.8 Packaging and icon
 
-- `build/config.yml`: product name "Finance Planner", identifier
-  `de.scheer.financeplanner`, company and copyright "Nicolai Scheer",
-  description "Plan monthly and yearly income and spendings". The Wails
+- `build/config.yml` is the single source of the application's metadata:
+  product name "Finance Planner", identifier `de.scheer-ware.financeplanner`,
+  company "Nicolai Scheer", copyright "© 2026 Nicolai Scheer", description
+  "Plan monthly and yearly income and spendings", version 1.0.0. The Wails
   application uses the same name and description; the window background
   colour is `rgb(245, 246, 250)` (the light page background).
+- Everything else that carries metadata is **generated** from that file by
+  `wails3 task common:update:build-assets`: the Windows version resource
+  `build/windows/info.json` (which the linker embeds, so it is what the
+  Details tab of the executable shows), the macOS `Info.plist`, the Linux
+  desktop entry and the package manifests. Editing those by hand is lost at
+  the next regeneration; change `config.yml` and regenerate instead. The
+  Windows resource stays language neutral, because one binary carries both
+  languages. Regenerating does not touch the icon files.
 - The application icon is a blue rounded square (`#2f5fd6`) with a white
   € sign. Geometry on a 1024 × 1024 canvas: square inset 40 px with corner
   radius 200; the € ring is centred at (560, 512) with outer radius 300 and

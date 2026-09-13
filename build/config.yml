@@ -7,11 +7,11 @@ version: '3'
 info:
   companyName: "Nicolai Scheer" # The name of the company
   productName: "Finance Planner" # The name of the application
-  productIdentifier: "de.scheer.financeplanner" # The unique product identifier
+  productIdentifier: "de.scheer-ware.financeplanner" # The unique product identifier
   description: "Plan monthly and yearly income and spendings" # The application description
-  copyright: "(c) 2026, Nicolai Scheer" # Copyright text
-  comments: "Finance Planner" # Comments
-  version: "0.0.1" # The application version
+  copyright: "© 2026 Nicolai Scheer" # Copyright text
+  comments: "Household budget planner" # Comments
+  version: "1.0.0" # The application version
   # cfBundleIconName: "appicon" # The macOS icon name in Assets.car icon bundles (optional)
   #                               # Should match the name of your .icon file without the extension
   #                               # If not set and Assets.car exists, defaults to "appicon"
