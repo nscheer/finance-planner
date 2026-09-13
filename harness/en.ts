@@ -72,6 +72,7 @@ export const en = {
   "shortcuts.newIncome": "New income",
   "shortcuts.newCategory": "New spending category",
   "shortcuts.search": "Search",
+  "shortcuts.saveAndNext": "Save and start the next entry (in the entry dialog)",
   "shortcuts.clear": "Clear search / clear selection / close dialog",
   "shortcuts.print": "Print",
   "shortcuts.help": "Show this list",
@@ -221,6 +222,8 @@ export const en = {
   "categoryDialog.name": "Name",
   "categoryDialog.namePlaceholder": "e.g. Housing",
   "categoryDialog.submit": "Add category",
+  "categoryDialog.submitAndEntry": "Add and continue",
+  "categoryDialog.submitAndEntryTip": "Creates the category and opens the dialog for its first entry.",
 
   // ---- entry dialog ----
   "entryDialog.titleNew.income": "New income",
@@ -251,6 +254,8 @@ export const en = {
   "entryDialog.titleDuplicate.income": "Duplicate income",
   "entryDialog.titleDuplicate.spending": "Duplicate spending",
   "entryDialog.copySuffix": " (copy)",
+  "entryDialog.saveAndNext": "Save and next",
+  "entryDialog.saveAndNextTip": "Saves and keeps the dialog open for the next entry, with the category and the frequency unchanged (Ctrl+Enter).",
   "entryDialog.invalidAmount": "Please enter a valid amount, e.g. 12.50.",
 
   // ---- confirmations ----

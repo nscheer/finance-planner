@@ -18,7 +18,10 @@
     notify,
     openDialog,
     periodMonths,
+    recentFor,
+    rememberEntryDefaults,
   } from "../lib/store.svelte";
+  import { pickCategory } from "../lib/entryDefaults";
   import { t, formatEuro, monthName, amountInput, amountPlaceholder } from "../lib/i18n.svelte";
   import { AmountField } from "../lib/validate.svelte";
   import { onDestroy, untrack } from "svelte";
@@ -38,11 +41,15 @@
   const isEdit = !!initial.entry;
   const source = initial.entry ?? initial.duplicateOf;
 
+  // Where the last entry of this kind went; a new entry starts there.
+  const remembered = untrack(() => recentFor(kind));
+
   let name = $state(initial.entry?.name ?? (initial.duplicateOf ? initial.duplicateOf.name + t("entryDialog.copySuffix") : ""));
+  let nameEl: HTMLInputElement | undefined = $state();
   const amount = new AmountField(source ? amountInput(source.amountCents) : "");
   let amountEl: HTMLInputElement | undefined = $state();
   onDestroy(() => amount.dispose());
-  let period = $state<Period>(source?.period ?? Period.PeriodMonthly);
+  let period = $state<Period>(source?.period ?? remembered.period);
   let dueMonth = $state(source?.dueMonth ?? 0);
   let notes = $state(source?.notes ?? "");
   let paused = $state(source?.paused ?? false);
@@ -50,9 +57,12 @@
   let error = $state("");
   let working = $state(false);
 
-  // Default to the first category when none was preselected.
+  // Nothing preselected: continue in the category last used, else the first
+  // one. Runs again when a category is created from inside this dialog.
   $effect(() => {
-    if (!selectedCategory && categories.length > 0) selectedCategory = categories[0].id;
+    if (!selectedCategory && categories.length > 0) {
+      selectedCategory = pickCategory(categories, remembered.categoryId);
+    }
   });
 
   const periods: { value: Period; label: "entryDialog.perMonth" | "entryDialog.perQuarter" | "entryDialog.perHalfYear" | "entryDialog.perYear" }[] = [
@@ -78,8 +88,12 @@
     t(kindKey(isEdit ? "entryDialog.titleEdit" : initial.duplicateOf ? "entryDialog.titleDuplicate" : "entryDialog.titleNew", kind)),
   );
 
-  async function submit(event: SubmitEvent) {
-    event.preventDefault();
+  /**
+   * Saves the entry. With keepOpen the dialog stays open for the next one:
+   * category, period and due month are kept, everything that belongs to the
+   * single entry is cleared and the cursor returns to the name field.
+   */
+  async function save(keepOpen: boolean) {
     error = "";
     amount.touch();
     const cents = amount.cents;
@@ -105,12 +119,57 @@
         await apply(Service.AddEntry(input));
         notify("success", t("toast.entryAdded", { name: name.trim() }));
       }
+      rememberEntryDefaults(kind, selectedCategory, period);
+      if (keepOpen && !initial.entry) {
+        name = "";
+        amount.reset();
+        notes = "";
+        paused = false;
+        nameEl?.focus();
+        return;
+      }
       closeDialog();
     } catch (err) {
       error = errorMessage(err);
     } finally {
       working = false;
     }
+  }
+
+  /** Ctrl/Cmd+Enter saves; while adding it goes straight to the next entry. */
+  function onFormKeydown(event: KeyboardEvent) {
+    if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+      event.preventDefault();
+      save(!isEdit);
+    }
+  }
+
+  /** Arrow keys move the period selection; the group is one tab stop. */
+  let periodEls: (HTMLButtonElement | undefined)[] = [];
+  function onPeriodKeydown(event: KeyboardEvent) {
+    const current = periods.findIndex((p) => p.value === period);
+    let next: number;
+    switch (event.key) {
+      case "ArrowRight":
+      case "ArrowDown":
+        next = (current + 1) % periods.length;
+        break;
+      case "ArrowLeft":
+      case "ArrowUp":
+        next = (current - 1 + periods.length) % periods.length;
+        break;
+      case "Home":
+        next = 0;
+        break;
+      case "End":
+        next = periods.length - 1;
+        break;
+      default:
+        return;
+    }
+    event.preventDefault();
+    period = periods[next].value;
+    periodEls[next]?.focus();
   }
 
   function addCategoryFirst() {
@@ -125,11 +184,13 @@
       <button class="btn btn-primary" type="button" onclick={addCategoryFirst}>{t("entryDialog.addCategoryFirst")}</button>
     </div>
   {:else}
-    <form id="entry-form" onsubmit={submit}>
+    <!-- The keydown carries the Ctrl+Enter shortcut for the whole form. -->
+    <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+    <form id="entry-form" onsubmit={(e) => { e.preventDefault(); save(false); }} onkeydown={onFormKeydown}>
       {#if error}<p class="form-error">{error}</p>{/if}
       <div class="field">
         <label for="entry-name">{t("entryDialog.name")}</label>
-        <input id="entry-name" class="input" type="text" bind:value={name} placeholder={t("entryDialog.namePlaceholder")} autocomplete="off" />
+        <input id="entry-name" class="input" type="text" bind:value={name} bind:this={nameEl} placeholder={t("entryDialog.namePlaceholder")} autocomplete="off" />
       </div>
       <div class="field">
         <label for="entry-amount">{t("entryDialog.amount")}</label>
@@ -151,9 +212,18 @@
             />
             <span>€</span>
           </div>
-          <div class="segmented" role="radiogroup" aria-label={t("entryDialog.paid")}>
-            {#each periods as p (p.value)}
-              <button type="button" class:active={period === p.value} onclick={() => (period = p.value)}>{t(p.label)}</button>
+          <!-- tabindex="-1": the group itself is skipped, the selected radio is the tab stop. -->
+          <div class="segmented" role="radiogroup" tabindex="-1" aria-label={t("entryDialog.paid")} onkeydown={onPeriodKeydown}>
+            {#each periods as p, i (p.value)}
+              <button
+                type="button"
+                role="radio"
+                aria-checked={period === p.value}
+                tabindex={period === p.value ? 0 : -1}
+                class:active={period === p.value}
+                bind:this={periodEls[i]}
+                onclick={() => (period = p.value)}
+              >{t(p.label)}</button>
             {/each}
           </div>
         </div>
@@ -194,6 +264,11 @@
   {#snippet footer()}
     <button class="btn" type="button" onclick={closeDialog}>{t("dialog.cancel")}</button>
     {#if categories.length > 0}
+      {#if !isEdit}
+        <button class="btn" type="button" disabled={working} title={t("entryDialog.saveAndNextTip")} onclick={() => save(true)}>
+          {t("entryDialog.saveAndNext")}
+        </button>
+      {/if}
       <button class="btn btn-primary" type="submit" form="entry-form" disabled={working}>
         {isEdit ? t("dialog.save") : t("dialog.add")}
       </button>

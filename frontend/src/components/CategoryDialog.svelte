@@ -6,6 +6,7 @@
     Kind,
     type CategoryView,
     apply,
+    categoriesOf,
     closeDialog,
     errorMessage,
     kindKey,
@@ -25,20 +26,25 @@
   let error = $state("");
   let working = $state(false);
 
-  async function submit(event: SubmitEvent) {
-    event.preventDefault();
+  /**
+   * Saves the category. With openEntry (and in the returnToEntry flow) the
+   * entry dialog follows, already pointing at the category just created.
+   */
+  async function save(openEntry: boolean) {
     error = "";
     working = true;
     try {
       if (initial) {
         await apply(Service.RenameCategory(initial.id, name));
         notify("success", t("toast.categoryRenamed", { name: name.trim() }));
-      } else {
-        await apply(Service.AddCategory(kind, name));
-        notify("success", t(kindKey("toast.categoryAdded", kind), { name: name.trim() }));
+        closeDialog();
+        return;
       }
-      if (returnToEntry) {
-        openDialog({ type: "entry", kind });
+      await apply(Service.AddCategory(kind, name));
+      notify("success", t(kindKey("toast.categoryAdded", kind), { name: name.trim() }));
+      if (openEntry || returnToEntry) {
+        const list = categoriesOf(kind);
+        openDialog({ type: "entry", kind, categoryId: list.length > 0 ? list[list.length - 1].id : undefined });
         return;
       }
       closeDialog();
@@ -51,7 +57,7 @@
 </script>
 
 <Modal title={isEdit ? t("categoryDialog.titleRename") : t(kindKey("categoryDialog.titleNew", kind))} width={420} onclose={closeDialog}>
-  <form id="category-form" onsubmit={submit}>
+  <form id="category-form" onsubmit={(e) => { e.preventDefault(); save(false); }}>
     {#if error}<p class="form-error">{error}</p>{/if}
     <div class="field">
       <label for="category-name">{t("categoryDialog.name")}</label>
@@ -60,6 +66,11 @@
   </form>
   {#snippet footer()}
     <button class="btn" type="button" onclick={closeDialog}>{t("dialog.cancel")}</button>
+    {#if !isEdit && !returnToEntry}
+      <button class="btn" type="button" disabled={working} title={t("categoryDialog.submitAndEntryTip")} onclick={() => save(true)}>
+        {t("categoryDialog.submitAndEntry")}
+      </button>
+    {/if}
     <button class="btn btn-primary" type="submit" form="category-form" disabled={working}>
       {isEdit ? t("dialog.save") : t("categoryDialog.submit")}
     </button>

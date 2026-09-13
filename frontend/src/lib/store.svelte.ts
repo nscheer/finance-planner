@@ -71,6 +71,11 @@ export const app = $state({
   filter: { query: "", period: "all" as PeriodFilter },
   /** True while the print layout is active (all categories expanded). */
   printing: false,
+  /**
+   * Where the last entry was added, so the next one starts there. Session
+   * only: this is a habit of the moment, not part of the plan on disk.
+   */
+  recent: { income: "", spending: "", period: Period.PeriodMonthly as Period },
   /** Selection mode: all rows show a checkbox instead of the drag grip. */
   selectMode: false,
   /** Ids of the selected entries (multi-select for bulk actions). */
@@ -260,6 +265,21 @@ export function kindKey<T extends string>(base: T, kind: Kind): `${T}.income` | 
 }
 
 // ---- actions used by several components ----------------------------------------
+
+/** Remembers where an entry was just added. */
+export function rememberEntryDefaults(kind: Kind, categoryId: string, period: Period): void {
+  if (kind === Kind.KindIncome) app.recent.income = categoryId;
+  else app.recent.spending = categoryId;
+  app.recent.period = period;
+}
+
+/** The category and period a new entry of this kind should start with. */
+export function recentFor(kind: Kind): { categoryId: string; period: Period } {
+  return {
+    categoryId: kind === Kind.KindIncome ? app.recent.income : app.recent.spending,
+    period: app.recent.period,
+  };
+}
 
 /** Translation key of a period badge. */
 export function periodKey(period: Period): MessageKey {

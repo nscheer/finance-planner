@@ -310,13 +310,31 @@ priority.
   Submitting with an invalid amount focuses the field instead of saving.
 - **Entry dialog**: name, amount with € suffix and a segmented control for
   the period, a live preview line "= x per month · y per year" while typing,
-  the category (preselected when the dialog was opened from a category
-  header, otherwise the first category of the kind), the due month select
-  (only for non-monthly periods, with a hint naming the payment interval),
-  notes, and the paused checkbox. Saving a monthly entry clears the due
-  month. Duplicating uses the same dialog with the values prefilled.
-- **Category dialog**: name only (add or rename). **Savings goal dialog**:
-  one amount, empty or 0 removes the goal.
+  the category, the due month select (only for non-monthly periods, with a
+  hint naming the payment interval), notes, and the paused checkbox. Saving
+  a monthly entry clears the due month. Duplicating uses the same dialog
+  with the values prefilled.
+  - The category is preselected when the dialog was opened from a category
+    header; otherwise the **category and period last used** in this session
+    are taken, falling back to the first category of the kind when the
+    remembered one no longer exists. This memory is deliberately not stored
+    in `data.json`.
+  - Adding (not editing) offers **Save and next** beside the primary button:
+    it saves and keeps the dialog open for the following entry, keeping the
+    category, the period and the due month, clearing the name, the amount
+    and the notes, resetting the paused flag, and putting the cursor back in
+    the name field. Filling a whole category is therefore one dialog and one
+    burst of typing per entry.
+  - The period control is a keyboard radio group: one tab stop, the arrow
+    keys move the selection (wrapping), *Home* and *End* jump to the first
+    and last period.
+  - *Ctrl+Enter* saves from anywhere in the form; while adding it behaves as
+    *Save and next*, while editing it simply saves.
+- **Category dialog**: name only (add or rename). When adding, a second
+  button **Add and continue** creates the category and immediately opens the
+  entry dialog for it; the same happens after creating a category from
+  inside the entry dialog. **Savings goal dialog**: one amount, empty or 0
+  removes the goal.
 - **Import dialog**: file name, number of categories and entries, file
   version, and two option buttons with descriptions (add / replace).
 - **Backups dialog**: one row per backup with date and time (medium date,
@@ -345,12 +363,15 @@ priority.
 | `/` or `Ctrl+F` | Focus the search box |
 | `Ctrl+K` | Command palette |
 | `Ctrl+P` | Print |
+| `Ctrl+Enter` | In the entry dialog: save, and start the next entry while adding |
 | `Esc` | Clear the search (when the search box is focused) / leave selection mode / close a dialog |
 | `?` | Show the list of shortcuts |
 
 Single-key shortcuts are ignored while a dialog is open or a text field
 (input, textarea, select) has the focus; a focused checkbox or button does
-not block them.
+not block them. `Ctrl+Enter` is the exception: it belongs to the entry
+dialog and works inside its fields, including the notes box where a plain
+*Enter* inserts a line break.
 
 The **command palette** (`Ctrl+K` or the prompt icon) is one text box that
 searches, case-insensitively, over **actions** (new entry or category per

@@ -53,6 +53,9 @@ copies of the language files live next to it (see the specification, 7.10).
   German, `,` and decimal point otherwise).
 - **Multi-select** (header checkbox of a block or Ctrl+click) with bulk move,
   pause, resume and delete (with undo).
+- **Fast entry**: *Save and next* keeps the dialog open for the following
+  entry (`Ctrl+Enter`), new entries start in the category and frequency last
+  used, and a new category can continue straight into its first entry.
 - **Command palette** (`Ctrl+K`) over actions, categories and entries.
 - **Print / PDF** via the system print dialog (`Ctrl+P`); all categories are
   expanded, one column, light colors.

@@ -47,6 +47,13 @@ export class AmountField {
     this.timer = setTimeout(() => (this.shown = true), SHOW_DELAY_MS);
   }
 
+  /** Clears the field for the next entry, without leaving a stale error. */
+  reset(value = ""): void {
+    clearTimeout(this.timer);
+    this.shown = false;
+    this.value = value;
+  }
+
   /** Call on blur or submit: shows the error immediately if invalid. */
   touch(): void {
     clearTimeout(this.timer);
