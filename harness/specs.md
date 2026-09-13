@@ -1011,6 +1011,15 @@ between slices, the hovered slice grows to 14; the timeline uses thin bars
   behaviour is specified here first or documented here afterwards.
 - Build reusable components and clean data structures; comment where it
   helps; keep tests that cover this specification.
+- **Never reproduce real data.** Amounts, entry names, category names and
+  account balances from someone's actual plan do not belong in examples,
+  in questions asked while working, in commit messages, in documentation,
+  in this specification, in test fixtures or on any published page. Use the
+  built-in example plan (4.4) or obviously invented placeholders such as
+  "Category A" and 12,34 €. A screenshot of a real plan may be used to
+  diagnose a problem, but its figures are never quoted back in text.
+- The data file and its backups are personal: `data.json` and `backups/`
+  stay out of the repository, and nothing derived from them is committed.
 - Do not install anything without asking.
 - Commit in meaningful stages on `main`; every commit builds and passes the
   tests.
