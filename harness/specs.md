@@ -119,6 +119,21 @@ Subtotals, block totals and all statistics are sums of these per-entry
 values, so the table columns always add up to the shown totals. Paused
 entries contribute nothing.
 
+Two consequences of that order are deliberate and must not be "fixed":
+
+- The monthly value is rounded **per entry**, and every monthly total is the
+  sum of those rounded values. A calculation that sums the amounts first and
+  divides afterwards, as a spreadsheet usually does, can differ by up to half
+  a cent per entry: with the example plan the savings transfer is 260,09 €
+  here and 260,08 € that way. The rule chosen keeps the visible rows adding
+  up to the visible total and each entry's share equal to its own bill
+  divided by its own interval.
+- The yearly values carry **no rounding at all**, so a monthly figure times
+  twelve can differ from the yearly figure by a few cents. The yearly saldo
+  is the true annual amount, never twelve times a rounded month.
+
+`TestMonthlyRoundingIsPerEntry` pins both.
+
 Derived statistics (see 3.7 for their presentation):
 
 - *to bank account* = sum of the monthly values of all spendings paid monthly

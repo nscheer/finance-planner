@@ -1311,3 +1311,39 @@ func TestBulkEntryOperations(t *testing.T) {
 		t.Fatal("a failed bulk delete must not delete anything")
 	}
 }
+
+// The monthly share is rounded per entry and the totals are the sum of those
+// rounded values; the yearly values are exact. A calculation that sums first
+// and divides afterwards (the way a spreadsheet usually does it) gives a
+// different total, which is expected rather than a defect - this test pins
+// the order so a refactor cannot swap it silently.
+func TestMonthlyRoundingIsPerEntry(t *testing.T) {
+	s, _ := newTestService(t)
+	cat := mustCategory(t, s, KindSpending, "Insurance")
+	mustEntry(t, s, cat, "Car", 62000, PeriodYearly)      // 620,00 / 12 = 51,6667 -> 51,67
+	mustEntry(t, s, cat, "Liability", 6500, PeriodYearly) // 65,00 / 12 =  5,4167 ->  5,42
+
+	st := s.GetState()
+	if got := st.Spending[0].Entries[0].MonthlyCents; got != 5167 {
+		t.Fatalf("first entry monthly = %d, want 5167", got)
+	}
+	if got := st.Spending[0].Entries[1].MonthlyCents; got != 542 {
+		t.Fatalf("second entry monthly = %d, want 542", got)
+	}
+
+	// 5167 + 542 = 5709. Summing first would give round(68500/12) = 5708.
+	if got := st.Stats.ToSavingsMonthlyCents; got != 5709 {
+		t.Fatalf("savings transfer = %d, want 5709 (the sum of the rounded entries)", got)
+	}
+	if got := st.Spending[0].MonthlyCents; got != 5709 {
+		t.Fatalf("category subtotal = %d: the rows must add up to the total", got)
+	}
+
+	// The yearly side carries no rounding at all, so it is not 12 x monthly.
+	if got := st.Stats.SpendingYearlyCents; got != 68500 {
+		t.Fatalf("yearly spending = %d, want 68500 (exact)", got)
+	}
+	if st.Stats.SpendingMonthlyCents*12 == st.Stats.SpendingYearlyCents {
+		t.Fatal("this data must show the deliberate gap between 12 x monthly and the exact year")
+	}
+}
