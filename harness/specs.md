@@ -395,17 +395,25 @@ application**: a single column with a header carrying the application name,
 the print date and the path of the data file, then the income table, the
 spending table and the statistics.
 
+- Sizes are given in points: body 10 pt, category names 11 pt bold, block
+  and statistics headings 12 pt uppercase, column labels and sub-labels
+  8.5 pt, the header line 13 pt with 8 pt meta text.
 - Cards lose their border, corners, shadow and inner padding; the structure
   is carried by hairline rules instead. The block title prints as a small
   uppercase heading above a rule, the column labels in mixed case above a
   second rule.
 - Category rows are plain lines with the name in bold, no grey band, no
-  accent bar and no chevron; the number of entries prints as plain text in
-  brackets. Entries are indented under their category and their rows are
-  tightened.
+  accent bar, no chevron and no count. Entries are indented under their
+  category and their rows are tightened.
 - Long names **wrap** instead of being truncated, because paper has no
-  tooltip to reveal the rest.
-- Frequency badges and category share bars keep their colours.
+  tooltip to reveal the rest. For the same reason the note icon is not
+  printed: it carries nothing without a pointer.
+- The frequency prints as a plain lower-case word instead of a coloured
+  chip. A category's share prints as an outlined track with a coloured
+  fill, so the bar is visible on paper.
+- The statistics print as plain label and value rows with hairlines,
+  matching the tables above them; the two transfers keep their sub-label on
+  a second line instead of a tile.
 - The top bar, buttons, drag handles, drop indicators, banners, toasts and
   dialogs are not printed, but the cells they occupied keep their place in
   the table grid (see 7.9).
@@ -806,6 +814,13 @@ Non-obvious decisions that must survive a rewrite:
   with `visibility: hidden` while its track is set to zero width in the
   print value of `--cols`. This is invisible on screen and only shows up on
   paper.
+- **Print overrides need `!important`**: component styles are Svelte-scoped
+  (`.block.svelte-hash`), which is more specific than any plain selector in
+  the global print stylesheet. Without `!important` an override silently
+  loses. The symptom is a page that prints with screen styling, or worse,
+  one that is clipped at the edge of the paper, which is what
+  `.app { min-width: var(--page-min) }` did until the print rule was made
+  important.
 
 ### 7.10 Specification harness
 

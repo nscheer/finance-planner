@@ -456,32 +456,48 @@ option {
   margin: 15mm;
 }
 @media print {
+  /* A document, not a picture of the application: one column, hairline
+     rules, plain text instead of chips and pills, sizes in points.
+
+     Every declaration below carries !important on purpose. The component
+     styles are Svelte-scoped (.block.svelte-hash and friends), which is
+     more specific than anything written here, so an override without
+     !important silently loses: the page then prints with screen styling,
+     or - in the case of min-width - clipped at the edge of the paper.
+     A grid cell is emptied with visibility:hidden and a zero-width track,
+     never with display:none, which would pull every following cell one
+     column to the left. */
   :root,
   :root[data-theme="dark"] {
     color-scheme: light;
     --bg: #ffffff;
     --surface: #ffffff;
-    --surface-2: #f6f7f9;
-    --surface-3: #eceef2;
-    --border: #cfd4dc;
-    --border-strong: #b5bcc8;
+    --surface-2: #ffffff;
+    --surface-3: #ffffff;
+    --border: #c8ccd4;
+    --border-strong: #9aa1ad;
     --text: #000000;
-    --text-2: #333a48;
+    --text-2: #2c3340;
     --text-3: #5d6676;
     --shadow: none;
     --shadow-lg: none;
-    --stripe: rgba(0, 0, 0, 0.08);
+    --stripe: rgba(0, 0, 0, 0.09);
   }
+
   html,
   body,
   #app {
-    height: auto;
-    overflow: visible;
-    background: #fff;
+    height: auto !important;
+    overflow: visible !important;
+    background: #fff !important;
   }
   body {
-    font-size: 11px;
+    font-size: 10pt !important;
+    line-height: 1.35 !important;
   }
+
+  /* Everything that only works with a pointer, plus the screen furniture
+     that carries no information on paper. */
   .no-print,
   .topbar,
   .icon-btn,
@@ -493,158 +509,250 @@ option {
   .tail,
   .banner,
   .get-started,
-  .selection-bar {
+  .selection-bar,
+  .block-head .buttons,
+  .block-head .dot,
+  .chevron,
+  .count,
+  .name-icon {
     display: none !important;
   }
+
+  /* The layout must not be wider than the sheet. */
   .app {
-    min-width: 0;
-    height: auto;
+    min-width: 0 !important;
+    height: auto !important;
   }
   .content,
   .page {
     display: block !important;
     overflow: visible !important;
-    max-width: none;
+    max-width: none !important;
+    min-width: 0 !important;
     padding: 0 !important;
   }
+  .tables {
+    padding-top: 0 !important;
+    gap: 0 !important;
+  }
+
   .print-header {
     display: flex !important;
     align-items: baseline;
     justify-content: space-between;
     gap: 12px;
-    margin-bottom: 12px;
-    padding-bottom: 6px;
-    border-bottom: 1px solid var(--border-strong);
+    margin-bottom: 10px !important;
+    padding-bottom: 5px !important;
+    border-bottom: 1px solid var(--text) !important;
   }
   .print-header h1 {
-    font-size: 16px;
+    font-size: 13pt !important;
   }
   .print-header span {
-    font-size: 10px;
-    color: var(--text-3);
-  }
-  .tables {
-    padding-top: 0 !important;
-    gap: 12px !important;
-  }
-  .stats {
-    position: static !important;
-  }
-  .block-head,
-  .columns {
-    break-after: avoid;
-  }
-  .group,
-  .stats .group {
-    break-inside: avoid;
-  }
-  .block-head .buttons {
-    display: none !important;
+    font-size: 8pt !important;
+    color: var(--text-3) !important;
   }
 
-  /* Grid cells must keep their place: display:none would pull every
-     following cell one column to the left, which is what made the printed
-     table slide out of its own column headers. Empty tracks, hidden
-     content. */
+  /* ---- the two tables ---- */
   .block {
-    --cols: 0 minmax(150px, 1fr) 104px 88px 112px 112px 0 !important;
+    /* Zero-width tracks where the handle and the actions sit. */
+    --cols: 0 minmax(0, 1fr) 112px 88px 108px 112px 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    break-inside: auto !important;
+  }
+  .block + .block {
+    margin-top: 16px !important;
   }
   .handle,
   .actions,
   .select-all {
-    visibility: hidden;
-    overflow: hidden;
+    visibility: hidden !important;
+    overflow: hidden !important;
   }
   .table-scroll {
     overflow: visible !important;
   }
 
-  /* A document, not a screenshot of an application: no cards, hairline
-     rules, and names that wrap instead of being cut off. */
-  .block,
-  .stats,
+  .block-head {
+    margin-bottom: 0 !important;
+    padding-bottom: 3px !important;
+    border-bottom: 1px solid var(--text) !important;
+    break-after: avoid !important;
+  }
+  .block-head h2 {
+    font-size: 12pt !important;
+    letter-spacing: 0.08em !important;
+    text-transform: uppercase !important;
+  }
+  .block-head .totals {
+    font-size: 9pt !important;
+  }
+  .columns {
+    padding: 5px 8px 3px 0 !important;
+    font-size: 8.5pt !important;
+    letter-spacing: 0 !important;
+    text-transform: none !important;
+    color: var(--text-2) !important;
+    border-bottom: 1px solid var(--border-strong) !important;
+    break-after: avoid !important;
+  }
+
   .group {
     border: 0 !important;
     border-radius: 0 !important;
     box-shadow: none !important;
     padding: 0 !important;
-  }
-  .block + .block {
-    margin-top: 16px;
-  }
-  .stats {
-    margin-top: 16px !important;
-    border-top: 1px solid var(--text) !important;
-    padding-top: 8px !important;
-  }
-  .block-head {
-    margin-bottom: 0;
-    padding-bottom: 4px;
-    border-bottom: 1px solid var(--text);
-  }
-  .block-head h2 {
-    font-size: 12px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-  }
-  .block-head .dot {
-    display: none;
-  }
-  .columns {
-    padding: 6px 8px 4px 0;
-    font-size: 10px;
-    letter-spacing: 0;
-    text-transform: none;
-    color: var(--text-2);
-    border-bottom: 1px solid var(--border-strong);
+    break-inside: avoid !important;
   }
   .head {
     background: transparent !important;
     border-left: 0 !important;
-    border-top: 1px solid var(--border-strong);
+    border-top: 1px solid var(--border-strong) !important;
     padding-left: 0 !important;
     min-height: 0 !important;
+    cursor: default !important;
   }
   .head .title {
-    padding-block: 5px 3px;
+    padding: 4px 4px 2px 0 !important;
+    font-size: 11pt !important;
   }
-  .chevron {
-    display: none;
+  .subtotal {
+    font-size: 10pt !important;
+    color: var(--text) !important;
   }
-  .count {
-    border: 0;
-    background: transparent;
-    padding: 0;
+
+  /* The share of a spending category needs a visible track on paper. */
+  .share {
+    padding-right: 12px !important;
   }
-  .count::before {
-    content: "(";
+  .share-bar {
+    height: 7px !important;
+    background: transparent !important;
+    border: 1px solid var(--text-3) !important;
+    border-radius: 2px !important;
   }
-  .count::after {
-    content: ")";
+  .share-pct {
+    font-size: 8.5pt !important;
+    color: var(--text-2) !important;
   }
+
   .row {
     background: transparent !important;
     min-height: 0 !important;
-    padding-block: 3px;
+    padding-block: 2px !important;
   }
   .row .name {
-    padding-left: 10px;
+    padding-left: 10px !important;
   }
   .name-text,
   .cat-title .name,
   .lever-name {
-    white-space: normal;
-    overflow: visible;
-    text-overflow: clip;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
   }
-  .badge,
+  /* The frequency prints as a plain word, not as a chip. */
+  .badge {
+    background: transparent !important;
+    color: var(--text) !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    font-size: 10pt !important;
+    font-weight: 400 !important;
+    letter-spacing: 0 !important;
+    text-transform: none !important;
+  }
+  .due {
+    font-size: 10pt !important;
+    color: var(--text) !important;
+  }
+  .amt {
+    font-size: 10pt !important;
+  }
+  .amt.derived {
+    color: var(--text-2) !important;
+  }
+
+  /* ---- statistics as plain label / value rows ---- */
+  .stats {
+    position: static !important;
+    border: 0 !important;
+    border-top: 1px solid var(--text) !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    margin-top: 18px !important;
+    padding: 6px 0 0 !important;
+    gap: 12px !important;
+  }
+  .stats h2 {
+    font-size: 12pt !important;
+    letter-spacing: 0.08em !important;
+    text-transform: uppercase !important;
+  }
+  .stats h3 {
+    font-size: 8.5pt !important;
+  }
+  .tile {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    column-gap: 12px !important;
+    background: transparent !important;
+    border: 0 !important;
+    border-bottom: 1px solid var(--border) !important;
+    border-radius: 0 !important;
+    padding: 3px 0 !important;
+    break-inside: avoid !important;
+  }
+  .tile + .tile {
+    margin-top: 0 !important;
+  }
+  .tile .label {
+    grid-column: 1;
+    font-size: 10pt !important;
+  }
+  .tile .value {
+    grid-column: 2;
+    grid-row: 1;
+    text-align: right;
+    font-size: 11pt !important;
+  }
+  .tile .sub {
+    grid-column: 1;
+    font-size: 8.5pt !important;
+  }
+  .kv {
+    font-size: 10pt !important;
+    padding: 2px 0 !important;
+  }
+  .kv.total dd {
+    font-size: 10.5pt !important;
+  }
+  .readout,
+  .legend,
+  .note,
+  .levers .tx small,
+  .levers .vv small {
+    font-size: 8.5pt !important;
+  }
+  .levers .tx b,
+  .levers .vv b {
+    font-size: 10pt !important;
+  }
+  .lever {
+    cursor: default !important;
+  }
+
+  /* Fills that must survive the printer's colour handling. */
   .share-fill,
-  .tile,
-  .swatch {
+  .swatch,
+  .row.paused {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
-  .lever {
-    cursor: default;
+  .share-fill {
+    background: var(--spending) !important;
   }
 }
