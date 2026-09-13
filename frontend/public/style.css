@@ -212,6 +212,21 @@ select:focus-visible {
   background: var(--accent-strong);
   border-color: var(--accent-strong);
 }
+/* Tonal: the third level between the solid primary and the white secondary,
+   for a secondary action that is still a real action (e.g. "add another"). */
+.btn-tonal {
+  background: var(--accent-soft);
+  border-color: transparent;
+  color: var(--accent-strong);
+}
+.btn-tonal:hover {
+  background: color-mix(in srgb, var(--accent-soft) 82%, var(--accent));
+  border-color: var(--accent);
+  color: var(--accent-strong);
+}
+.btn-tonal:active {
+  background: color-mix(in srgb, var(--accent-soft) 70%, var(--accent));
+}
 .btn-income {
   background: var(--income);
   border-color: var(--income);

@@ -66,7 +66,7 @@ export const de: Messages = {
   "shortcuts.newIncome": "Neue Einnahme",
   "shortcuts.newCategory": "Neue Ausgaben-Kategorie",
   "shortcuts.search": "Suchen",
-  "shortcuts.saveAndNext": "Speichern und nächsten Eintrag beginnen (im Eintrags-Dialog)",
+  "shortcuts.saveAndNext": "Speichern und neu (im Eintrags-Dialog)",
   "shortcuts.clear": "Suche löschen / Auswahl aufheben / Dialog schließen",
   "shortcuts.print": "Drucken",
   "shortcuts.help": "Diese Liste anzeigen",
@@ -208,7 +208,7 @@ export const de: Messages = {
   "categoryDialog.name": "Name",
   "categoryDialog.namePlaceholder": "z. B. Wohnen",
   "categoryDialog.submit": "Kategorie anlegen",
-  "categoryDialog.submitAndEntry": "Anlegen und weiter",
+  "categoryDialog.submitAndEntry": "Anlegen und Eintrag erfassen",
   "categoryDialog.submitAndEntryTip": "Legt die Kategorie an und öffnet den Dialog für den ersten Eintrag.",
 
   "entryDialog.titleNew.income": "Neue Einnahme",
@@ -239,8 +239,8 @@ export const de: Messages = {
   "entryDialog.titleDuplicate.income": "Einnahme duplizieren",
   "entryDialog.titleDuplicate.spending": "Ausgabe duplizieren",
   "entryDialog.copySuffix": " (Kopie)",
-  "entryDialog.saveAndNext": "Speichern und weiter",
-  "entryDialog.saveAndNextTip": "Speichert und lässt den Dialog für den nächsten Eintrag offen, Kategorie und Zahlweise bleiben stehen (Strg+Enter).",
+  "entryDialog.saveAndNext": "Speichern und neu",
+  "entryDialog.saveAndNextTip": "Speichert diesen Eintrag und lässt den Dialog für den nächsten offen, Kategorie und Zahlweise bleiben stehen (Strg+Enter).",
   "entryDialog.invalidAmount": "Bitte einen gültigen Betrag eingeben, z. B. 12,50.",
 
   "confirm.deleteEntry.title": "Eintrag löschen",

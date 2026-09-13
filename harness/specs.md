@@ -319,7 +319,8 @@ priority.
     are taken, falling back to the first category of the kind when the
     remembered one no longer exists. This memory is deliberately not stored
     in `data.json`.
-  - Adding (not editing) offers **Save and next** beside the primary button:
+  - Adding (not editing) offers **Save and add another** beside the primary
+    button (tonal accent style, see 8.6):
     it saves and keeps the dialog open for the following entry, keeping the
     category, the period and the due month, clearing the name, the amount
     and the notes, resetting the paused flag, and putting the cursor back in
@@ -329,10 +330,10 @@ priority.
     keys move the selection (wrapping), *Home* and *End* jump to the first
     and last period.
   - *Ctrl+Enter* saves from anywhere in the form; while adding it behaves as
-    *Save and next*, while editing it simply saves.
+    *Save and add another*, while editing it simply saves.
 - **Category dialog**: name only (add or rename). When adding, a second
-  button **Add and continue** creates the category and immediately opens the
-  entry dialog for it; the same happens after creating a category from
+  button **Add and create entry** (tonal accent style) creates the category
+  and immediately opens the entry dialog for it; the same happens after creating a category from
   inside the entry dialog. **Savings goal dialog**: one amount, empty or 0
   removes the goal.
 - **Import dialog**: file name, number of categories and entries, file
@@ -906,7 +907,12 @@ between slices, the hovered slice grows to 14; the timeline uses thin bars
   strong border, white surface, hover darkens the surface; primary in
   accent, income and spending buttons in their color, danger in red; icon
   buttons are 28 × 28 px transparent squares with a surface-3 background on
-  hover.
+  hover. A **tonal** variant (accent-soft fill, accent-strong text, no
+  border; hover mixes a little accent into the fill and shows an accent
+  border) is the third level between the solid primary and the white
+  secondary: it marks a secondary action that is still a real action, used
+  for *Save and add another* and *Add and create entry* so they group with
+  the primary button instead of with Cancel.
 - **Inputs and selects**: 8 × 10 px padding (selects 30 px on the right so
   the text keeps the same distance from the native arrow as from the left
   edge; small selects 4 × 8 px with 28 px right), strong border, accent

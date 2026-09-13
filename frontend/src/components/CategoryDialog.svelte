@@ -67,7 +67,7 @@
   {#snippet footer()}
     <button class="btn" type="button" onclick={closeDialog}>{t("dialog.cancel")}</button>
     {#if !isEdit && !returnToEntry}
-      <button class="btn" type="button" disabled={working} title={t("categoryDialog.submitAndEntryTip")} onclick={() => save(true)}>
+      <button class="btn btn-tonal" type="button" disabled={working} title={t("categoryDialog.submitAndEntryTip")} onclick={() => save(true)}>
         {t("categoryDialog.submitAndEntry")}
       </button>
     {/if}

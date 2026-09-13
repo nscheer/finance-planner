@@ -265,7 +265,7 @@
     <button class="btn" type="button" onclick={closeDialog}>{t("dialog.cancel")}</button>
     {#if categories.length > 0}
       {#if !isEdit}
-        <button class="btn" type="button" disabled={working} title={t("entryDialog.saveAndNextTip")} onclick={() => save(true)}>
+        <button class="btn btn-tonal" type="button" disabled={working} title={t("entryDialog.saveAndNextTip")} onclick={() => save(true)}>
           {t("entryDialog.saveAndNext")}
         </button>
       {/if}
