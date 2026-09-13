@@ -39,6 +39,10 @@
 
   let hovered = $state<number | null>(null);
   const currentMonth = new Date().getMonth();
+
+  /** Row indices of the first half year; the second half is +6. */
+  const firstHalf = [0, 1, 2, 3, 4, 5];
+  const dash = "–";
 </script>
 
 <div class="timeline">
@@ -70,6 +74,32 @@
         <span class="money value">{hovered !== null ? formatEuro(months[hovered].savedCents) : ""}</span>
       </div>
     </div>
+    <!-- Paper cannot be hovered, so the figures are listed. Two half years
+         side by side keep the block short. -->
+    <table class="print-values">
+      <thead>
+        <tr>
+          <th scope="col">{t("stats.timelineMonth")}</th>
+          <th scope="col" class="num">{t("stats.timelineDue")}</th>
+          <th scope="col" class="num gap-after">{t("stats.timelineSaved")}</th>
+          <th scope="col">{t("stats.timelineMonth")}</th>
+          <th scope="col" class="num">{t("stats.timelineDue")}</th>
+          <th scope="col" class="num">{t("stats.timelineSaved")}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {#each firstHalf as i (i)}
+          <tr>
+            <th scope="row">{monthShort(i + 1)}</th>
+            <td class="num">{months[i].dueCents > 0 ? formatEuro(months[i].dueCents) : dash}</td>
+            <td class="num gap-after">{formatEuro(months[i].savedCents)}</td>
+            <th scope="row">{monthShort(i + 7)}</th>
+            <td class="num">{months[i + 6].dueCents > 0 ? formatEuro(months[i + 6].dueCents) : dash}</td>
+            <td class="num">{formatEuro(months[i + 6].savedCents)}</td>
+          </tr>
+        {/each}
+      </tbody>
+    </table>
   {:else}
     <p class="empty">{t("stats.timelineEmpty")}</p>
   {/if}
@@ -148,6 +178,42 @@
   .swatch.saved {
     background: var(--savings);
   }
+  /* Only on paper: the numbers the chart shows on hover. */
+  .print-values {
+    display: none;
+  }
+  @media print {
+    .print-values {
+      display: table;
+      width: 100%;
+      margin-top: 6px;
+      border-collapse: collapse;
+      font-size: 8.5pt;
+      break-inside: avoid;
+    }
+    .print-values th,
+    .print-values td {
+      padding: 2px 0;
+      border-bottom: 1px solid var(--border);
+      font-weight: 400;
+      text-align: left;
+      white-space: nowrap;
+    }
+    .print-values thead th {
+      font-weight: 600;
+      color: var(--text-2);
+      border-bottom-color: var(--border-strong);
+    }
+    .print-values .num {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      padding-left: 10px;
+    }
+    .print-values .gap-after {
+      padding-right: 22px;
+    }
+  }
+
   .empty {
     margin: 0;
     font-size: 12px;

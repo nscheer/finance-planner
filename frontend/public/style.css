@@ -730,6 +730,23 @@ option {
   .kv.total dd {
     font-size: 10.5pt !important;
   }
+  /* The chart cannot be hovered on paper: no readout, no current month,
+     and three quarters of the width. Its labels live in viewBox units, so
+     they shrink there rather than in points. */
+  .timeline .readout {
+    display: none !important;
+  }
+  .timeline svg {
+    width: 75% !important;
+  }
+  .timeline text {
+    font-size: 5.5px !important;
+  }
+  .timeline .current {
+    font-weight: 400 !important;
+    fill: var(--text-3) !important;
+  }
+
   .readout,
   .legend,
   .note,

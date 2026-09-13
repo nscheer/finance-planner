@@ -176,6 +176,7 @@ export const de: Messages = {
   "stats.paused.one": "{count} pausierter Eintrag wird nicht mitgezählt.",
   "stats.paused.other": "{count} pausierte Einträge werden nicht mitgezählt.",
   "stats.timeline": "Zahlungs-Zeitleiste",
+  "stats.timelineMonth": "Monat",
   "stats.timelineDue": "fällig",
   "stats.timelineSaved": "auf dem Sparkonto",
   "stats.timelineEmpty": "Gib nicht-monatlichen Ausgaben einen Fälligkeitsmonat, um zu sehen, wann sie fällig sind und wie sich das Sparkonto füllt.",

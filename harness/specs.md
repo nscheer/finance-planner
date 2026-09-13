@@ -414,6 +414,11 @@ spending table and the statistics.
 - The statistics print as plain label and value rows with hairlines,
   matching the tables above them; the two transfers keep their sub-label on
   a second line instead of a tile.
+- The payment timeline prints at three quarters of its width, without the
+  hover readout (which would be empty on paper) and without the
+  current-month highlight. Below it the twelve months are listed as a
+  table, the two half years side by side, each with what is due and the
+  savings balance; a month without a payment shows an en dash.
 - The top bar, buttons, drag handles, drop indicators, banners, toasts and
   dialogs are not printed, but the cells they occupied keep their place in
   the table grid (see 7.9).

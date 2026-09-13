@@ -188,6 +188,7 @@ export const en = {
   "stats.paused.one": "{count} paused entry is not counted.",
   "stats.paused.other": "{count} paused entries are not counted.",
   "stats.timeline": "Payment timeline",
+  "stats.timelineMonth": "Month",
   "stats.timelineDue": "due",
   "stats.timelineSaved": "on savings account",
   "stats.timelineEmpty": "Give non-monthly spendings a due month to see when they are due and how the savings account fills up.",
