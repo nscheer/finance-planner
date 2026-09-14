@@ -712,16 +712,38 @@ func (s *Service) LoadSampleData(lang string) (SampleResult, error) {
 
 // ---- dialogs (need a running Wails application) ---------------------------
 
+// isDialogCancelled reports whether err is the "user pressed Cancel" answer
+// of a native file dialog rather than a real failure.
+//
+// Linux and macOS answer a cancelled dialog with an empty path and no error,
+// which is the contract the three methods below promise and the frontend
+// relies on. Windows instead returns an error: cfd.ErrorCancelled,
+// "cancelled by user" (wails/v3@v3.0.0-beta.20,
+// internal/go-common-file-dialog/cfd/errors.go). That package is internal,
+// so there is no sentinel to compare against and the text is all there is;
+// the match stays loose enough to survive a re-wording or the American
+// spelling.
+func isDialogCancelled(err error) bool {
+	return err != nil && strings.Contains(strings.ToLower(err.Error()), "cancel")
+}
+
 // ExportCSV asks the user for a target file and writes the CSV to it.
-// It returns the chosen path, or "" if the user cancelled.
+// It returns the chosen path, or "" if the user cancelled (on Windows a
+// cancelled dialog arrives as an error, see isDialogCancelled).
 func (s *Service) ExportCSV() (string, error) {
 	path, err := application.Get().Dialog.SaveFile().
 		SetMessage("Export CSV").
 		SetFilename("finance-planner-export.csv").
 		AddFilter("CSV files", "*.csv").
 		PromptForSingleSelection()
-	if err != nil || path == "" {
+	if err != nil {
+		if isDialogCancelled(err) {
+			return "", nil
+		}
 		return "", err
+	}
+	if path == "" {
+		return "", nil
 	}
 	if filepath.Ext(path) == "" {
 		path += ".csv"
@@ -730,15 +752,22 @@ func (s *Service) ExportCSV() (string, error) {
 }
 
 // ExportData asks the user for a target file and writes the data to it.
-// It returns the chosen path, or "" if the user cancelled.
+// It returns the chosen path, or "" if the user cancelled (on Windows a
+// cancelled dialog arrives as an error, see isDialogCancelled).
 func (s *Service) ExportData() (string, error) {
 	path, err := application.Get().Dialog.SaveFile().
 		SetMessage("Export planner data").
 		SetFilename("finance-planner-export.json").
 		AddFilter("JSON files", "*.json").
 		PromptForSingleSelection()
-	if err != nil || path == "" {
+	if err != nil {
+		if isDialogCancelled(err) {
+			return "", nil
+		}
 		return "", err
+	}
+	if path == "" {
+		return "", nil
 	}
 	if filepath.Ext(path) == "" {
 		path += ".json"
@@ -747,14 +776,21 @@ func (s *Service) ExportData() (string, error) {
 }
 
 // ChooseImportFile asks the user for a file and returns a preview of its
-// content. The preview's Path is "" if the user cancelled.
+// content. The preview's Path is "" if the user cancelled (on Windows a
+// cancelled dialog arrives as an error, see isDialogCancelled).
 func (s *Service) ChooseImportFile() (ImportPreview, error) {
 	path, err := application.Get().Dialog.OpenFile().
 		SetTitle("Import planner data").
 		AddFilter("JSON files", "*.json").
 		PromptForSingleSelection()
-	if err != nil || path == "" {
+	if err != nil {
+		if isDialogCancelled(err) {
+			return ImportPreview{}, nil
+		}
 		return ImportPreview{}, err
+	}
+	if path == "" {
+		return ImportPreview{}, nil
 	}
 	return s.PreviewImport(path)
 }

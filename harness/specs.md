@@ -500,6 +500,10 @@ The bar is not printed; the printed header carries the path instead (3.10).
 **Export** writes the complete data file to a location chosen in a native
 save dialog.
 
+Cancelling a file dialog — import, export or CSV export — does nothing at
+all: no message, no error, no change. See 7.9 for the platform difference
+that makes this worth stating.
+
 **Import** opens a native file dialog, validates the file, shows what it
 contains (categories, entries, file version) and asks whether the data should
 be **added** to or **replace** the current data:
@@ -900,6 +904,15 @@ Non-obvious decisions that must survive a rewrite:
   with `visibility: hidden` while its track is set to zero width in the
   print value of `--cols`. This is invisible on screen and only shows up on
   paper.
+- **A cancelled file dialog**: the service contract is that a cancelled
+  native dialog returns an empty path and no error, and the frontend treats
+  an empty path as "do nothing". Linux and macOS behave that way, but
+  Windows reports the cancellation as an *error* (`cancelled by user`, from
+  the internal `cfd` package Wails vendors), so code that trusts
+  `if err != nil` turns a pressed Cancel button into a failure modal
+  carrying that untranslated text — on Windows only, which is why it
+  survives every test run on Linux. `isDialogCancelled` in `service.go`
+  filters it out.
 - **Print overrides need `!important`**: component styles are Svelte-scoped
   (`.block.svelte-hash`), which is more specific than any plain selector in
   the global print stylesheet. Without `!important` an override silently

@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"math"
 	"os"
 	"path/filepath"
@@ -1410,4 +1411,27 @@ func TestAppVersionMatchesBuildConfig(t *testing.T) {
 		return
 	}
 	t.Fatal("no version found below info: in build/config.yml")
+}
+
+// Pressing Cancel in a file dialog is not a failure. Windows reports it as
+// an error ("cancelled by user"), which used to reach the user as the modal
+// "Import failed" carrying that untranslated text.
+func TestDialogCancelIsNotAnError(t *testing.T) {
+	cancelled := []error{
+		errors.New("cancelled by user"), // the exact Wails text
+		errors.New("canceled by user"),  // American spelling
+		errors.New("The user cancelled the dialog"),
+		fmt.Errorf("open dialog: %w", errors.New("cancelled by user")), // wrapped
+	}
+	for _, err := range cancelled {
+		if !isDialogCancelled(err) {
+			t.Errorf("isDialogCancelled(%q) = false, want true", err)
+		}
+	}
+	real := []error{nil, errors.New("permission denied"), errors.New("no such file or directory")}
+	for _, err := range real {
+		if isDialogCancelled(err) {
+			t.Errorf("isDialogCancelled(%v) = true, want false: a real failure must still be shown", err)
+		}
+	}
 }

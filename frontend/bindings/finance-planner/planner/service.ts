@@ -32,7 +32,8 @@ export function AddEntry($in: $models.EntryInput): $CancellablePromise<$models.S
 
 /**
  * ChooseImportFile asks the user for a file and returns a preview of its
- * content. The preview's Path is "" if the user cancelled.
+ * content. The preview's Path is "" if the user cancelled (on Windows a
+ * cancelled dialog arrives as an error, see isDialogCancelled).
  */
 export function ChooseImportFile(): $CancellablePromise<$models.ImportPreview> {
     return $Call.ByID(1686174830);
@@ -61,7 +62,8 @@ export function DeleteEntry(id: string): $CancellablePromise<$models.State> {
 
 /**
  * ExportCSV asks the user for a target file and writes the CSV to it.
- * It returns the chosen path, or "" if the user cancelled.
+ * It returns the chosen path, or "" if the user cancelled (on Windows a
+ * cancelled dialog arrives as an error, see isDialogCancelled).
  */
 export function ExportCSV(): $CancellablePromise<string> {
     return $Call.ByID(3958737246);
@@ -76,7 +78,8 @@ export function ExportCSVTo(path: string): $CancellablePromise<void> {
 
 /**
  * ExportData asks the user for a target file and writes the data to it.
- * It returns the chosen path, or "" if the user cancelled.
+ * It returns the chosen path, or "" if the user cancelled (on Windows a
+ * cancelled dialog arrives as an error, see isDialogCancelled).
  */
 export function ExportData(): $CancellablePromise<string> {
     return $Call.ByID(1763547262);
