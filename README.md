@@ -17,12 +17,18 @@ copies of the language files live next to it (see the specification, 7.10).
 - Categories and entries can be reordered with **drag & drop**; entries can be
   dragged into another category of the same kind. The order is saved.
 - The statistics box shows the two monthly transfers the planning approach
-  is built on: the sum of monthly spendings (to the bank account) and 1/12 of
-  the yearly spendings (to the savings account), plus the saldo per month and
-  per year.
+  is built on: the sum of monthly spendings (to the bank account) and 1/n of
+  every spending paid less often (to the savings account), plus the saldo per
+  month and per year. The timeline reads as a plan that is already running;
+  see the specification, 1.2.
 - The UI is available in **German and English**; German is the default until
   a language is chosen. The dropdown in the top right corner switches the
   language and the choice is saved in `data.json`.
+- The top bar carries the search box, the period filter, the **Data** menu
+  (import, export, CSV export, backups), Print, the command palette and the
+  two setting dropdowns. Along the bottom edge a **status bar** shows the
+  path of the data file (click to copy), how much is planned, and the
+  version.
 - All data is stored in `data.json` next to the binary. The file carries a
   `version` number so the structure can be migrated later. Data can be
   exported to and imported from JSON files (add to or replace current data).
@@ -53,7 +59,7 @@ copies of the language files live next to it (see the specification, 7.10).
   German, `,` and decimal point otherwise).
 - **Multi-select** (header checkbox of a block or Ctrl+click) with bulk move,
   pause, resume and delete (with undo).
-- **Fast entry**: *Save and next* keeps the dialog open for the following
+- **Fast entry**: *Save and add another* keeps the dialog open for the following
   entry (`Ctrl+Enter`), new entries start in the category and frequency last
   used, and a new category can continue straight into its first entry.
 - **Command palette** (`Ctrl+K`) over actions, categories and entries.
@@ -82,9 +88,11 @@ Shortcuts are ignored while a dialog or an input field is focused.
 ## Development
 
 ```sh
-wails3 dev          # run with hot reload
-wails3 build        # production build -> bin/finance-planner
-wails3 task test    # Go tests + frontend unit tests
+cd frontend && npm install   # once after cloning
+wails3 dev                   # run with hot reload
+wails3 build                 # production build -> bin/finance-planner
+wails3 task test             # Go tests + frontend unit tests
+wails3 task test:e2e         # end-to-end tests in a browser
 ```
 
 The tests can also be run directly:
@@ -93,6 +101,16 @@ The tests can also be run directly:
 go test ./planner/...          # backend: model, calculations, persistence, service
 cd frontend && npm test        # frontend helpers (Node's built-in test runner)
 cd frontend && npm run check   # svelte-check / TypeScript
+cd frontend && npx playwright test   # end-to-end, needs a built frontend
+```
+
+The end-to-end tests drive the real application in Chromium: `cmd/e2e-host`
+serves the built frontend and answers the Wails calls from a real service, so
+the shipped code runs unmodified. The browser is a one-time setup:
+
+```sh
+cd frontend && npx playwright install chromium
+sudo npx playwright install-deps chromium   # Linux: its system libraries
 ```
 
 Note: `go build`/`go vet` at the module root need `frontend/dist` to exist
@@ -122,7 +140,8 @@ planner/
   backup.go                automatic backups next to data.json
   csv.go                   CSV export
   sample.go                example data set
-  planner_test.go          tests against project.md
+  version.go               the application version (checked against build/config.yml)
+  planner_test.go          tests against the specification
 frontend/src/
   App.svelte               shell: top bar, language dropdown, blocks, statistics, dialogs
   i18n/en.ts, de.ts        language files (en.ts defines the key set)
@@ -131,5 +150,16 @@ frontend/src/
   lib/store.svelte.ts      application state and service calls
   lib/dnd.svelte.ts        drag & drop state and drop handling
   lib/money.ts             € parsing and formatting (cents based)
-  components/              Block, CategoryGroup, EntryRow, StatsPanel, Timeline, Charts, dialogs
+  lib/theme.svelte.ts      light/dark/system handling
+  lib/reorder.ts           drag index arithmetic
+  lib/amountField.ts       amount validation while typing
+  components/              Block, CategoryGroup, EntryRow, StatsPanel, Timeline,
+                           Charts, Menu, StatusBar, SelectionBar, CommandPalette,
+                           Toasts, Modal, Icon, dialogs
+frontend/e2e/              end-to-end tests (Playwright)
+cmd/e2e-host/              test host: serves the frontend and the service over HTTP
+harness/
+  specs.md                 the specification
+  en.ts, de.ts             reference copies of the language files
+build/config.yml           application metadata (name, identifier, version)
 ```

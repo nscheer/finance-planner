@@ -1193,6 +1193,14 @@ between slices, the hovered slice grows to 14; the timeline uses thin bars
   is finished.
 - Keep this document in sync with the implementation: every new or changed
   behaviour is specified here first or documented here afterwards.
+- **Keep `README.md` in sync too, when the change is visible in it.** This
+  specification is the authority and describes everything; the README is the
+  short introduction someone reads first, on GitHub. A change belongs in it
+  when it adds or renames a feature, changes a command, moves or adds a file
+  the layout section names, or changes wording the README quotes. A change
+  to an internal detail the README never mentions does not. When in doubt,
+  read the README through after the change: what it claims must still be
+  true. It is updated in the same commit, like the language files (7.10).
 - Build reusable components and clean data structures; comment where it
   helps; keep tests that cover this specification.
 - **Never reproduce real data.** Amounts, entry names, category names and
