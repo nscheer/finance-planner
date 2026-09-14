@@ -21,7 +21,7 @@ copies of the language files live next to it (see the specification, 7.10).
   every spending paid less often (to the savings account), plus the saldo per
   month and per year. The timeline reads as a plan that is already running;
   see the specification, 1.2.
-- The UI is available in **German and English**; German is the default until
+- The UI is available in **English and German**; English is the default until
   a language is chosen. The dropdown in the top right corner switches the
   language and the choice is saved in `data.json`.
 - The top bar carries the search box, the period filter, the **Data** menu

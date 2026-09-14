@@ -238,7 +238,7 @@ export interface Settings {
     /**
      * Language is the UI language code chosen by the user, e.g. "en" or
      * "de". It stays empty until a choice was made; the frontend then uses
-     * its default language (German).
+     * its default language (English).
      */
     "language": string;
 

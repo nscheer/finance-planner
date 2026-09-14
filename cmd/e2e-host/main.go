@@ -61,7 +61,7 @@ func main() {
 	flag.Parse()
 
 	h := &host{}
-	if err := h.reset(*data, ""); err != nil {
+	if err := h.reset(*data, "", ""); err != nil {
 		log.Fatalf("start service: %v", err)
 	}
 
@@ -86,7 +86,7 @@ func main() {
 
 // reset starts a fresh service. An empty dir means a new temp directory, so
 // every test begins with an empty planner.
-func (h *host) reset(dir, sampleLang string) error {
+func (h *host) reset(dir, sampleLang, language string) error {
 	if dir == "" {
 		var err error
 		dir, err = os.MkdirTemp("", "finance-planner-e2e-")
@@ -100,6 +100,11 @@ func (h *host) reset(dir, sampleLang string) error {
 	service, err := planner.NewService(filepath.Join(dir, "data.json"))
 	if err != nil {
 		return err
+	}
+	if language != "" {
+		if _, err := service.SetLanguage(language); err != nil {
+			return err
+		}
 	}
 	if sampleLang != "" {
 		if _, err := service.LoadSampleData(sampleLang); err != nil {
@@ -115,9 +120,12 @@ func (h *host) reset(dir, sampleLang string) error {
 func (h *host) handleReset(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Sample string `json:"sample"` // language code, empty for an empty planner
+		// Language is the saved UI language; empty leaves the setting unset,
+		// so the frontend uses its own default.
+		Language string `json:"language"`
 	}
 	_ = json.NewDecoder(r.Body).Decode(&body)
-	if err := h.reset("", body.Sample); err != nil {
+	if err := h.reset("", body.Sample, body.Language); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

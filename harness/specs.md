@@ -587,8 +587,10 @@ All settings are stored in `data.json` (see 6.1).
 
 - German and English; the dropdown in the top bar switches the language and
   the choice is saved.
-- **German is the default** until a choice has been made (empty value in the
-  file); an empty or unknown language maps to German.
+- **English is the default** until a choice has been made (empty value in the
+  file); an empty or unknown language maps to English. The default lives in
+  `defaultLocale` in `frontend/src/i18n/index.ts` and nowhere else; the
+  backend stores the empty value and never resolves it.
 - Number and currency formatting follow the language (`1.234,56 €` in
   German, `€1,234.56` in English); amounts can be typed with comma or point.
 - All texts, including backend error messages, come from language files with
@@ -655,7 +657,7 @@ rename) after every change, and human-readable (indented).
 - Ids are random 16-hex-character strings.
 - The order of `categories` (per kind) and of `entries` (per category) is the
   display order.
-- `language` and `theme` are empty until the user chose (empty means German
+- `language` and `theme` are empty until the user chose (empty means English
   and light). `dueMonth`, `paused` and `notes` are omitted at their zero
   value.
 
@@ -791,7 +793,7 @@ frontend/src/
 frontend/e2e/
   app.ts                   helpers; the copy comes from the language files
   *.spec.ts                end-to-end tests (entries, filter, selection,
-                           keyboard, settings, print)
+                           keyboard, settings, print, i18n)
 frontend/playwright.config.ts
 ```
 
@@ -843,6 +845,20 @@ frontend/playwright.config.ts
   media. Selectors are roles and accessible names, with the text imported
   from the language files, so reworded copy moves the tests instead of
   breaking them.
+- The suite runs in **English**, the default. `i18n.spec.ts` drives the whole
+  application in **German** instead: every dialog, the command palette and a
+  coded backend error are checked against the German file, and a **sweep**
+  asserts that no text of the other language is on the page — in both
+  directions, over the rendered text and over the `title`, `aria-label` and
+  `placeholder` attributes, so the tooltips are included. That is what
+  catches a string which never switches: a `t()` call with the wrong key, or
+  a literal that never reached the language files. The unit test in
+  `src/i18n/i18n.test.ts` proves both files define the same keys, but it
+  cannot see a key that is never used or one used in the wrong place. The
+  sweep skips values with a placeholder, values shorter than six characters,
+  and values that are part of their own counterpart — "Import" is the start
+  of "Importieren" and "Januar" of "January", so those cannot be told apart
+  by text alone.
 - Two traps when writing them: dialogs pop in over 140 ms, so a measurement
   taken straight after opening one is scaled by a percent or two and looks
   like a layout bug (`settled()` waits for the animations); and the printed

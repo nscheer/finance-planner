@@ -100,7 +100,7 @@ type WindowGeometry struct {
 type Settings struct {
 	// Language is the UI language code chosen by the user, e.g. "en" or
 	// "de". It stays empty until a choice was made; the frontend then uses
-	// its default language (German).
+	// its default language (English).
 	Language string `json:"language"`
 	// Theme is the color scheme: "light" (default when empty), "dark" or
 	// "system" (follow the operating system).

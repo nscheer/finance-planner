@@ -35,7 +35,7 @@ export const locales: readonly Locale[] = [
 ];
 
 /** Used until the user has chosen a language (empty language in data.json). */
-export const defaultLocale: LocaleCode = "de";
+export const defaultLocale: LocaleCode = "en";
 
 export function findLocale(code: string | undefined | null): Locale {
   return locales.find((l) => l.code === code) ?? locales.find((l) => l.code === defaultLocale)!;

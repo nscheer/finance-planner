@@ -551,10 +551,9 @@ func TestMergeMatchesByID(t *testing.T) {
 	}
 }
 
-// "The application should be multi-lingual ... The choice should be saved.
-// German should be the default language, if a choice has not been made and
-// saved." - the backend stores an empty language until the user chooses,
-// the frontend maps that to German (see frontend/src/i18n/index.ts).
+// The application is multi-lingual and the choice is saved. The backend
+// stores an empty language until the user chooses; the frontend maps that
+// to its default, English (see frontend/src/i18n/index.ts).
 func TestLanguageSetting(t *testing.T) {
 	s, path := newTestService(t)
 	if s.GetState().Settings.Language != "" {

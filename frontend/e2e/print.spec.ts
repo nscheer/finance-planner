@@ -9,11 +9,11 @@
  * with window.print() stubbed out — a print dialog would block the browser.
  */
 import { test, expect } from "@playwright/test";
-import { openApp, group, de } from "./app.ts";
+import { openApp, group, en } from "./app.ts";
 
 /** Presses Print and puts the page into print media, as the printer sees it. */
 async function print(page: import("@playwright/test").Page) {
-  await page.getByRole("button", { name: de["app.print"] }).click();
+  await page.getByRole("button", { name: en["app.print"] }).click();
   await page.emulateMedia({ media: "print" });
 }
 
@@ -29,21 +29,21 @@ test("the screen furniture is gone and the document header is there", async ({ p
 
   await expect(page.locator(".topbar")).toBeHidden();
   await expect(page.locator(".statusbar")).toBeHidden();
-  await expect(page.getByRole("button", { name: de["app.print"] })).toBeHidden();
+  await expect(page.getByRole("button", { name: en["app.print"] })).toBeHidden();
 
   const header = page.locator(".print-header");
   await expect(header).toBeVisible();
-  await expect(header).toContainText(de["app.title"]);
+  await expect(header).toContainText(en["app.title"]);
   await expect(header).toContainText("data.json");
 });
 
 test("every category prints expanded", async ({ page }) => {
   await openApp(page, { sample: true });
-  await group(page, "Wohnen").getByRole("button", { expanded: true }).click(); // collapse it
-  await expect(group(page, "Wohnen")).not.toContainText("Miete");
+  await group(page, "Housing").getByRole("button", { expanded: true }).click(); // collapse it
+  await expect(group(page, "Housing")).not.toContainText("Rent");
 
   await print(page);
-  await expect(group(page, "Wohnen")).toContainText("Miete");
+  await expect(group(page, "Housing")).toContainText("Rent");
 });
 
 test("the timeline prints its figures as a table", async ({ page }) => {
@@ -54,8 +54,8 @@ test("the timeline prints its figures as a table", async ({ page }) => {
   await expect(values).toBeVisible();
   // Two half years side by side, six months each.
   await expect(values.locator("tbody tr")).toHaveCount(6);
-  await expect(values).toContainText(de["month.1"].slice(0, 3));
-  await expect(values).toContainText(de["month.12"].slice(0, 3));
+  await expect(values).toContainText(en["month.1"].slice(0, 3));
+  await expect(values).toContainText(en["month.12"].slice(0, 3));
 });
 
 test("the page fits the width of a sheet of paper", async ({ page }) => {
