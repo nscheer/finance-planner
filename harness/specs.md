@@ -140,11 +140,16 @@ Derived statistics (see 3.7 for their presentation):
 - *to savings account* = sum of the monthly values of all other spendings
 - *average cost per month* = bank + savings; *saldo* = income − cost
 - *remaining after goal* = saldo per month − savings goal
-- *timeline*: for a scheduled entry with due month *d* and period *n* the
-  savings balance at the end of month *t* is monthly × ((t − d) mod n); the
-  due amount of month *t* is the full amount when (t − d) mod n = 0. Entries
-  without due month are not part of the timeline. *Peak buffer* = highest
-  balance of the twelve months.
+- *timeline*: a month shows the **high point** of the savings account, the
+  balance once that month's instalment has arrived and before the bill is
+  taken out. For a scheduled entry with due month *d* and period *n* that is
+  monthly × (((t − 1 − d) mod n) + 1), so a due month shows monthly × n, the
+  full amount saved for the bill, and the line meets the bar there. The due
+  amount of month *t* is the full amount when (t − d) mod n = 0. Entries
+  without a due month are not part of the timeline. *Peak buffer* = the
+  highest of those twelve figures, that is the most the account ever has to
+  hold. (The month-end balance would be the low point of each month and
+  would understate the buffer by whatever is paid out in the peak month.)
 - *biggest levers* = the five active spendings with the highest yearly cost
   (ties broken by name), with their share of all monthly spending and of the
   monthly income
@@ -291,8 +296,10 @@ A sticky box on the right with these sections, in this order:
    set, *remaining after goal* (red when negative); income per year, cost per
    year, saldo per year.
 3. **Payment timeline**: twelve columns (January–December) with bars for the
-   payments due per month and a step line for the savings balance at the end
-   of each month; the current month is printed bold. Hovering a month fills
+   payments due per month and a step line for the highest savings balance of
+   each month, reached once the instalment has arrived and before the bill is
+   paid, so in a due month the line meets the bar; the current month is
+   printed bold. Hovering a month fills
    the two fixed readout lines below (*due*, *on savings account*). Below:
    *Savings buffer needed (peak)* and notes on how many non-monthly entries
    have no due month and how many entries are paused.

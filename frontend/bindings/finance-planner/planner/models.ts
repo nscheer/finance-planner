@@ -321,8 +321,8 @@ export interface Stats {
     "timeline": TimelineMonth[];
 
     /**
-     * PeakBufferCents is the highest savings balance of the year, i.e. the
-     * buffer the savings account needs.
+     * PeakBufferCents is the highest balance of the year, i.e. the most the
+     * savings account ever has to hold.
      */
     "peakBufferCents": number;
 
@@ -354,8 +354,10 @@ export interface TimelineMonth {
     "dueCents": number;
 
     /**
-     * SavedCents is the balance the savings account holds at the end of the
-     * month, after the month's contribution and payments.
+     * SavedCents is the highest balance the savings account holds during the
+     * month: after this month's contribution has arrived and before the
+     * bills of the month are taken out. In a due month that is the full
+     * amount saved for the bill.
      */
     "savedCents": number;
 }

@@ -60,8 +60,10 @@ const TopEntryCount = 5
 type TimelineMonth struct {
 	// DueCents is the sum of non-monthly spendings that are paid in this month.
 	DueCents int64 `json:"dueCents"`
-	// SavedCents is the balance the savings account holds at the end of the
-	// month, after the month's contribution and payments.
+	// SavedCents is the highest balance the savings account holds during the
+	// month: after this month's contribution has arrived and before the
+	// bills of the month are taken out. In a due month that is the full
+	// amount saved for the bill.
 	SavedCents int64 `json:"savedCents"`
 }
 
@@ -94,8 +96,8 @@ type Stats struct {
 	// Timeline shows, per calendar month, what is due and how much the
 	// savings account holds. Only entries with a due month take part.
 	Timeline [12]TimelineMonth `json:"timeline"`
-	// PeakBufferCents is the highest savings balance of the year, i.e. the
-	// buffer the savings account needs.
+	// PeakBufferCents is the highest balance of the year, i.e. the most the
+	// savings account ever has to hold.
 	PeakBufferCents int64 `json:"peakBufferCents"`
 	// UnscheduledCount is the number of active non-monthly spendings without
 	// a due month (not part of the timeline).
@@ -217,19 +219,22 @@ func (d *Data) topSpendings(kinds map[string]Kind, spendingMonthly, incomeMonthl
 
 // addToTimeline adds a scheduled non-monthly spending to the timeline.
 //
-// Every month 1/n of the amount is put aside (n = months per payment); in a
-// due month the full amount is taken out again. In the steady state the
-// balance for this entry at the end of month t is therefore
-// monthly × ((t − due) mod n), which is 0 right after a payment and
-// monthly × (n − 1) just before the next one.
+// Every month 1/n of the amount is put aside (n = months per payment) and in
+// a due month the bill is taken out again. What the month shows is the high
+// point of that month: the balance once this month's instalment has arrived
+// and before the bill is paid. Counting from the month after the last
+// payment, that is monthly × (k + 1) with k = (t − 1 − due) mod n, so a due
+// month shows monthly × n, the full amount saved for the bill, which is
+// where the line meets the bar. (The month-end balance would be the low
+// point instead and would never show the money that is actually there.)
 func addToTimeline(tl *[12]TimelineMonth, e Entry) {
 	n := e.Period.Months()
 	monthly := e.MonthlyCents()
 	due := e.DueMonth - 1 // 0-based
 	for t := 0; t < 12; t++ {
-		k := ((t-due)%n + n) % n // months since the last payment
-		tl[t].SavedCents += monthly * int64(k)
-		if k == 0 {
+		k := ((t-1-due)%n + n) % n // months since the instalment run started
+		tl[t].SavedCents += monthly * int64(k+1)
+		if ((t-due)%n+n)%n == 0 {
 			tl[t].DueCents += e.AmountCents
 		}
 	}

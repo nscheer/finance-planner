@@ -865,10 +865,12 @@ func TestTimelineAndPeakBuffer(t *testing.T) {
 	if tl[0].DueCents != 30000 || tl[2].DueCents != 120000 || tl[3].DueCents != 30000 || tl[5].DueCents != 0 {
 		t.Fatalf("due wrong: %+v", tl)
 	}
-	// Car: balance at end of month t = 10000 * ((t-2) mod 12); Water: 10000 * (t mod 3).
+	// Each month shows its high point: the instalment has arrived, the bill
+	// has not been paid yet. Car: 10000 * (((t-3) mod 12) + 1), so 120000 in
+	// March. Water: 10000 * (((t-1) mod 3) + 1), so 30000 in its due months.
 	want := func(t int) int64 {
-		car := int64(((t-2)%12+12)%12) * 10000
-		water := int64(t%3) * 10000
+		car := int64(((t-3)%12+12)%12+1) * 10000
+		water := int64(((t-1)%3+3)%3+1) * 10000
 		return car + water
 	}
 	for m := 0; m < 12; m++ {
@@ -876,8 +878,9 @@ func TestTimelineAndPeakBuffer(t *testing.T) {
 			t.Fatalf("month %d saved = %d, want %d", m+1, tl[m].SavedCents, want(m))
 		}
 	}
-	// Peak: February = 110000 (car) + 10000 (water) = 120000.
-	if st.PeakBufferCents != 120000 {
+	// Peak: March, when the car bill is fully saved (120000) and the water
+	// entry stands at 20000.
+	if st.PeakBufferCents != 140000 {
 		t.Fatalf("peak buffer = %d", st.PeakBufferCents)
 	}
 	if st.UnscheduledCount != 1 {
@@ -1345,5 +1348,37 @@ func TestMonthlyRoundingIsPerEntry(t *testing.T) {
 	}
 	if st.Stats.SpendingMonthlyCents*12 == st.Stats.SpendingYearlyCents {
 		t.Fatal("this data must show the deliberate gap between 12 x monthly and the exact year")
+	}
+}
+
+// The timeline shows the high point of each month, so in a due month the
+// savings line meets the bar instead of dropping to the balance that is left
+// after paying. Reported case: one quarterly bill due in January.
+func TestTimelineShowsMonthHighPoint(t *testing.T) {
+	s, _ := newTestService(t)
+	cat := mustCategory(t, s, KindSpending, "Reserves")
+	if _, err := s.AddEntry(EntryInput{CategoryID: cat.ID, Name: "Quarterly", AmountCents: 30000, Period: PeriodQuarterly, DueMonth: 1}); err != nil {
+		t.Fatal(err)
+	}
+
+	st := s.GetState().Stats
+	// 300,00 € split into three instalments of 100,00 €: the pot is full in
+	// every due month. The month-end reading used to show 0 / 100 / 200 here,
+	// which never showed the money and made the buffer 100,00 € too low.
+	wantSaved := []int64{30000, 10000, 20000, 30000, 10000, 20000, 30000, 10000, 20000, 30000, 10000, 20000}
+	for m := 0; m < 12; m++ {
+		if st.Timeline[m].SavedCents != wantSaved[m] {
+			t.Fatalf("month %d saved = %d, want %d", m+1, st.Timeline[m].SavedCents, wantSaved[m])
+		}
+		wantDue := int64(0)
+		if m%3 == 0 {
+			wantDue = 30000
+		}
+		if st.Timeline[m].DueCents != wantDue {
+			t.Fatalf("month %d due = %d, want %d", m+1, st.Timeline[m].DueCents, wantDue)
+		}
+	}
+	if st.PeakBufferCents != 30000 {
+		t.Fatalf("buffer = %d, want 30000: the account must hold the whole bill", st.PeakBufferCents)
 	}
 }

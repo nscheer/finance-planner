@@ -327,7 +327,7 @@ export const en = {
   "tip.saldoPerYear": "Income per year − cost per year.\nFrom the exact yearly amounts, not twelve times the monthly saldo.",
   "tip.peakBuffer": "Highest balance the savings account reaches during the year.\nThis is the buffer the account needs so that every scheduled payment is covered.",
   "tip.timelineDue": "Sum of the non-monthly spendings paid in this month.",
-  "tip.timelineSaved": "Balance of the savings account at the end of this month:\nwhat was put aside minus what was paid out.",
+  "tip.timelineSaved": "Highest balance of the savings account this month:\nafter this month's instalment, before the bill is paid.\nIn a due month that is the full amount saved for it.",
   "tip.lever": "{yearly} per year\n{monthly} per month\n{share} of all monthly spending\n{income} of the monthly income\n\nClick to edit.",
   "tip.leverNoIncome": "{yearly} per year\n{monthly} per month\n{share} of all monthly spending\n\nClick to edit.",
   "tip.donutSlice": "{name}\n{amount} per month\n{percent} of all monthly spending",

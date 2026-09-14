@@ -308,7 +308,7 @@ export const de: Messages = {
   "tip.saldoPerYear": "Einnahmen pro Jahr − Kosten pro Jahr.\nAus den exakten Jahresbeträgen, nicht zwölfmal der Monatssaldo.",
   "tip.peakBuffer": "Höchster Stand des Sparkontos im Jahresverlauf.\nDas ist der Puffer, den das Konto braucht, damit jede geplante Zahlung gedeckt ist.",
   "tip.timelineDue": "Summe der nicht monatlichen Ausgaben, die in diesem Monat bezahlt werden.",
-  "tip.timelineSaved": "Stand des Sparkontos am Monatsende:\nZurückgelegtes minus Ausgezahltes.",
+  "tip.timelineSaved": "Höchster Stand des Sparkontos in diesem Monat:\nnach der Rate dieses Monats, bevor die Rechnung bezahlt wird.\nIm Fälligkeitsmonat ist das der gesamte angesparte Betrag.",
   "tip.lever": "{yearly} pro Jahr\n{monthly} pro Monat\n{share} aller monatlichen Ausgaben\n{income} der monatlichen Einnahmen\n\nZum Bearbeiten anklicken.",
   "tip.leverNoIncome": "{yearly} pro Jahr\n{monthly} pro Monat\n{share} aller monatlichen Ausgaben\n\nZum Bearbeiten anklicken.",
   "tip.donutSlice": "{name}\n{amount} pro Monat\n{percent} aller monatlichen Ausgaben",
