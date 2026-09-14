@@ -859,10 +859,23 @@ frontend/playwright.config.ts
 ### 7.7 Build, run and workflow
 
 ```sh
-wails3 dev          # run with hot reload
-wails3 build        # production build -> bin/finance-planner
-wails3 task test    # Go tests + frontend unit tests
-wails3 task test:e2e # end-to-end tests (builds the frontend, drives Chromium)
+# once after cloning
+cd frontend && npm install               # frontend and test dependencies
+npx playwright install chromium          # the browser for the end-to-end tests
+sudo npx playwright install-deps chromium  # its system libraries (Linux)
+
+# every day
+wails3 dev                               # run with hot reload
+wails3 build                             # production build -> bin/finance-planner
+wails3 task run                          # build and start the application
+wails3 task test                         # Go tests + frontend unit tests
+wails3 task test:e2e                     # end-to-end tests in Chromium
+cd frontend && npm run check             # svelte-check: no errors, no warnings
+
+# after a change that needs it
+wails3 generate bindings -ts -i -clean=true   # a service signature changed
+wails3 task common:update:build-assets        # build/config.yml changed
+cp frontend/src/i18n/en.ts frontend/src/i18n/de.ts harness/   # a text changed
 ```
 
 - `wails3 task test` runs `go test ./planner/...` and `npm test`
@@ -872,14 +885,21 @@ wails3 task test:e2e # end-to-end tests (builds the frontend, drives Chromium)
   and excludes `*.test.ts` from `svelte-check`.
 - `wails3 task test:e2e` builds the frontend and runs `playwright test`.
   It stays out of `wails3 task test` so the fast suite stays fast. The
-  browser needs its system libraries once
-  (`sudo npx playwright install-deps chromium`).
+  browser is a one-time setup: `npx playwright install chromium` downloads
+  it, and on Linux `sudo npx playwright install-deps chromium` adds the
+  system libraries it links against (without them it exits with
+  `libnspr4.so: cannot open shared object file`).
+- `npm run check` is not part of any task target; it is run by hand and must
+  report no errors and no warnings (7.6).
 - `data.json` is git-ignored; `bin/` holds the built binary and, in
   development, its data file and backups. Playwright's `test-results/` and
   `playwright-report/` are ignored too.
 - Work happens on the `main` branch, structured in commits after stages that
   make sense; every commit builds and passes all tests.
 - Regenerate bindings before building when the Go service changed.
+- The Taskfile also carries the targets the Wails template generates —
+  `package`, `setup:docker`, `build:server`, `run:server`, `build:docker`,
+  `run:docker`. They are untouched and unused by this project.
 
 ### 7.8 Packaging and icon
 
