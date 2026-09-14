@@ -40,6 +40,11 @@ tasks:
       - go test ./planner/...
       - cd frontend && npm test
 
+  test:e2e:
+    summary: Runs the end-to-end tests (builds the frontend, drives it in Chromium)
+    cmds:
+      - cd frontend && npm run test:e2e
+
   dev:
     summary: Runs the application in development mode
     cmds:

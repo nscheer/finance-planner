@@ -704,9 +704,13 @@ The backend never returns free-text errors for user mistakes. It returns a
 
 - **Wails v3** (Go) for the desktop shell, native dialogs and the service
   layer; **Svelte 5** with **TypeScript** and Vite for the frontend.
-- No additional npm packages beyond the Wails Svelte template. Charts are
-  inline SVG, drag & drop uses the native HTML5 drag events, tests use Node's
-  built-in test runner. Anything that has to be installed is asked for first.
+- No additional npm packages beyond the Wails Svelte template in the
+  application itself: charts are inline SVG, drag & drop uses the native
+  HTML5 drag events, unit tests use Node's built-in test runner. The single
+  exception is the **dev** dependency `@playwright/test`, which drives the
+  end-to-end tests (7.6); `dependencies` stays as the template left it, so
+  nothing ships with the application. Anything that has to be installed is
+  asked for first.
 
 ### 7.2 Architecture
 
@@ -753,6 +757,8 @@ The backend never returns free-text errors for user mistakes. It returns a
 ### 7.3 Project layout
 
 ```
+cmd/e2e-host/
+  main.go                  test host: serves the frontend and the service over HTTP
 harness/
   specs.md                 this specification
   en.ts, de.ts             reference copies of the language files (see 7.10)
@@ -779,8 +785,14 @@ frontend/src/
   lib/reorder.ts           drag index arithmetic
   components/              Block, CategoryGroup, EntryRow, StatsPanel, Timeline,
                            Charts, SelectionBar, CommandPalette, Toasts, Modal,
-                           Icon, and the dialogs (Entry, Category, SavingsGoal,
-                           Import, Backups, Shortcuts, Confirm, Alert)
+                           Menu, StatusBar, Icon, and the dialogs (Entry,
+                           Category, SavingsGoal, Import, Backups, Shortcuts,
+                           Confirm, Alert)
+frontend/e2e/
+  app.ts                   helpers; the copy comes from the language files
+  *.spec.ts                end-to-end tests (entries, filter, selection,
+                           keyboard, settings, print)
+frontend/playwright.config.ts
 ```
 
 ### 7.4 Persistence details
@@ -818,6 +830,30 @@ frontend/src/
   language file completeness and interpolation, a compile-level test that
   dialog props in the shell are not bound directly to the mutable dialog
   state, and the harness sync test (see 7.10).
+- **End-to-end**: the built frontend runs in Chromium against the real Go
+  service, so section 3 is tested by clicking rather than by eye. `cmd/e2e-host`
+  serves `frontend/dist` and answers `/wails/runtime` — the transport is plain
+  HTTP and a method is addressed by the FNV-1a hash of its fully qualified Go
+  name, so the shipped Svelte code and the generated bindings run unmodified.
+  `POST /test/reset` starts each test with a fresh planner (optionally the
+  example plan), `POST /test/dialog` queues the answer of the next native file
+  dialog. The suites cover entries and the entry dialog, search and filter,
+  selection and bulk actions, shortcuts, the command palette and the data
+  menu, settings and the status bar, and the printed document under print
+  media. Selectors are roles and accessible names, with the text imported
+  from the language files, so reworded copy moves the tests instead of
+  breaking them.
+- Two traps when writing them: dialogs pop in over 140 ms, so a measurement
+  taken straight after opening one is scaled by a percent or two and looks
+  like a layout bug (`settled()` waits for the animations); and the printed
+  page needs both print media *and* the `printing` flag that the Print button
+  sets, because the expanded categories come from that flag, not from CSS —
+  the tests press the real button with `window.print` stubbed out.
+- Deliberately **not** covered end to end: drag & drop (HTML5 drag events
+  need synthetic `dataTransfer` objects under automation; the index
+  arithmetic is unit-tested and the rest is checked by hand), the native file
+  dialogs beyond the queued answer, and screenshot comparison (text renders
+  differently per platform).
 - `svelte-check` must report no errors and no warnings.
 
 ### 7.7 Build, run and workflow
@@ -826,6 +862,7 @@ frontend/src/
 wails3 dev          # run with hot reload
 wails3 build        # production build -> bin/finance-planner
 wails3 task test    # Go tests + frontend unit tests
+wails3 task test:e2e # end-to-end tests (builds the frontend, drives Chromium)
 ```
 
 - `wails3 task test` runs `go test ./planner/...` and `npm test`
@@ -833,8 +870,13 @@ wails3 task test    # Go tests + frontend unit tests
   directly, so relative imports inside `frontend/src/i18n` carry the `.ts`
   extension; `tsconfig.json` sets `allowImportingTsExtensions` and `noEmit`
   and excludes `*.test.ts` from `svelte-check`.
+- `wails3 task test:e2e` builds the frontend and runs `playwright test`.
+  It stays out of `wails3 task test` so the fast suite stays fast. The
+  browser needs its system libraries once
+  (`sudo npx playwright install-deps chromium`).
 - `data.json` is git-ignored; `bin/` holds the built binary and, in
-  development, its data file and backups.
+  development, its data file and backups. Playwright's `test-results/` and
+  `playwright-report/` are ignored too.
 - Work happens on the `main` branch, structured in commits after stages that
   make sense; every commit builds and passes all tests.
 - Regenerate bindings before building when the Go service changed.

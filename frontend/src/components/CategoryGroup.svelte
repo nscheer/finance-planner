@@ -68,6 +68,7 @@
 <section
   class="group"
   id="category-{category.id}"
+  data-testid="category-group"
   class:collapsed={category.collapsed}
   class:dragging={isDraggedCategory(category)}
   class:drop-target={isCategoryHighlighted(category.id)}

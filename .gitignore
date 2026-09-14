@@ -11,3 +11,10 @@ build/android/overlay.json
 build/android/gen/
 # Planner data file (lives next to the binary)
 data.json
+
+# Playwright output
+frontend/test-results/
+frontend/playwright-report/
+
+# Stray binary from "go build ./cmd/..."
+/e2e-host

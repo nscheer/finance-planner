@@ -86,6 +86,7 @@
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <div
   class="row"
+  data-testid="entry-row"
   class:dragging={isDraggedEntry(entry)}
   class:paused={entry.paused}
   class:locked={!draggable}

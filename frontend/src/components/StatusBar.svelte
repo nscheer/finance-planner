@@ -29,18 +29,18 @@
 
 <footer class="statusbar">
   {#if app.state}
-    <button class="path" type="button" title={t("status.pathTitle", { path: app.state.dataPath })} onclick={copyPath}>
+    <button class="path" type="button" data-testid="status-path" title={t("status.pathTitle", { path: app.state.dataPath })} onclick={copyPath}>
       <Icon name="folder" size={13} />
       <span class="path-text">{app.state.dataPath}</span>
     </button>
-    <span class="counts">
+    <span class="counts" data-testid="status-counts">
       {plural("status.categories", categoryCount)} · {plural("status.entries", entryCount)}
     </span>
   {:else}
     <span></span>
     <span></span>
   {/if}
-  <span class="version">{t("app.title")} {app.state?.appVersion ?? ""}</span>
+  <span class="version" data-testid="status-version">{t("app.title")} {app.state?.appVersion ?? ""}</span>
 </footer>
 
 <style>
