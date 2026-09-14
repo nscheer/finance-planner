@@ -93,6 +93,7 @@ wails3 dev                   # run with hot reload
 wails3 build                 # production build -> bin/finance-planner
 wails3 task test             # Go tests + frontend unit tests
 wails3 task test:e2e         # end-to-end tests in a browser
+wails3 task test:e2e:report  # open the report of the last end-to-end run
 ```
 
 The tests can also be run directly:
@@ -102,6 +103,7 @@ go test ./planner/...          # backend: model, calculations, persistence, serv
 cd frontend && npm test        # frontend helpers (Node's built-in test runner)
 cd frontend && npm run check   # svelte-check / TypeScript
 cd frontend && npx playwright test   # end-to-end, needs a built frontend
+cd frontend && npx playwright show-report   # the report of the last run
 ```
 
 The end-to-end tests drive the real application in Chromium: `cmd/e2e-host`

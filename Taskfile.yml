@@ -45,6 +45,11 @@ tasks:
     cmds:
       - cd frontend && npm run test:e2e
 
+  test:e2e:report:
+    summary: Opens the report of the last end-to-end run
+    cmds:
+      - cd frontend && npm run test:e2e:report
+
   dev:
     summary: Runs the application in development mode
     cmds:

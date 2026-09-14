@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "test": "node --test \"src/**/*.test.ts\"",
-    "test:e2e": "npm run build && playwright test"
+    "test:e2e": "npm run build && playwright test",
+    "test:e2e:report": "playwright show-report"
   },
   "dependencies": {
     "@wailsio/runtime": "latest"

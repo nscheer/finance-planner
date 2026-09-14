@@ -870,6 +870,7 @@ wails3 build                             # production build -> bin/finance-plann
 wails3 task run                          # build and start the application
 wails3 task test                         # Go tests + frontend unit tests
 wails3 task test:e2e                     # end-to-end tests in Chromium
+wails3 task test:e2e:report              # open the report of the last e2e run
 cd frontend && npm run check             # svelte-check: no errors, no warnings
 
 # after a change that needs it
@@ -889,6 +890,11 @@ cp frontend/src/i18n/en.ts frontend/src/i18n/de.ts harness/   # a text changed
   it, and on Linux `sudo npx playwright install-deps chromium` adds the
   system libraries it links against (without them it exits with
   `libnspr4.so: cannot open shared object file`).
+- The end-to-end run writes an HTML report with traces of failed tests to
+  `frontend/playwright-report/`. Playwright ends with the hint
+  `npx playwright show-report`, which only works inside `frontend/` — from
+  the repository root there is no `node_modules` and npx offers to download
+  the package instead. `wails3 task test:e2e:report` opens it from anywhere.
 - `npm run check` is not part of any task target; it is run by hand and must
   report no errors and no warnings (7.6).
 - `data.json` is git-ignored; `bin/` holds the built binary and, in
