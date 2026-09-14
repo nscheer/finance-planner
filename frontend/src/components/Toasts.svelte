@@ -25,7 +25,7 @@
   .toasts {
     position: fixed;
     right: 20px;
-    bottom: 20px;
+    bottom: calc(20px + var(--statusbar-h)); /* above the status bar */
     z-index: 200;
     display: flex;
     flex-direction: column;

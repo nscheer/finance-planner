@@ -1382,3 +1382,32 @@ func TestTimelineShowsMonthHighPoint(t *testing.T) {
 		t.Fatalf("buffer = %d, want 30000: the account must hold the whole bill", st.PeakBufferCents)
 	}
 }
+
+// The version in build/config.yml is the single source of the application's
+// metadata (specification 7.8); AppVersion repeats it for the running program.
+// This test is the guard that keeps the copy honest.
+func TestAppVersionMatchesBuildConfig(t *testing.T) {
+	raw, err := os.ReadFile(filepath.Join("..", "build", "config.yml"))
+	if err != nil {
+		t.Fatalf("read build/config.yml: %v", err)
+	}
+	// The file also carries a top-level "version: '3'" (the Taskfile format),
+	// so take the first version below the "info:" block.
+	inInfo := false
+	for _, line := range strings.Split(string(raw), "\n") {
+		if strings.HasPrefix(line, "info:") {
+			inInfo = true
+			continue
+		}
+		if !inInfo || !strings.HasPrefix(strings.TrimSpace(line), "version:") {
+			continue
+		}
+		value := strings.TrimSpace(strings.SplitN(strings.SplitN(line, ":", 2)[1], "#", 2)[0])
+		value = strings.Trim(value, `"'`)
+		if value != AppVersion {
+			t.Fatalf("build/config.yml has version %q, planner.AppVersion is %q", value, AppVersion)
+		}
+		return
+	}
+	t.Fatal("no version found below info: in build/config.yml")
+}

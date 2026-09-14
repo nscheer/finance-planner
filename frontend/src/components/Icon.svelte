@@ -5,7 +5,7 @@
   export type IconName =
     | "plus" | "edit" | "trash" | "chevron" | "grip" | "download" | "upload"
     | "expand" | "collapse" | "close" | "info" | "check" | "alert" | "globe"
-    | "pause" | "play" | "copy" | "note" | "search" | "keyboard" | "history" | "sparkles" | "target" | "sun" | "printer" | "command" | "checkbox";
+    | "pause" | "play" | "copy" | "note" | "search" | "keyboard" | "history" | "sparkles" | "target" | "sun" | "printer" | "command" | "checkbox" | "folder";
 
   const paths: Record<IconName, string> = {
     plus: "M12 5v14M5 12h14",
@@ -36,6 +36,7 @@
     // terminal prompt: ">_" – the usual sign for a command palette
     command: "M4 17l6-5-6-5M12 19h8",
     checkbox: "M4 6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zM8 12l3 3 5-6",
+    folder: "M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z",
   };
 </script>
 

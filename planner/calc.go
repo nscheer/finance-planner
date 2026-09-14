@@ -110,12 +110,14 @@ type Stats struct {
 
 // State is everything the frontend needs to render the main view.
 type State struct {
-	Version  int            `json:"version"`
-	DataPath string         `json:"dataPath"`
-	Settings Settings       `json:"settings"`
-	Income   []CategoryView `json:"income"`
-	Spending []CategoryView `json:"spending"`
-	Stats    Stats          `json:"stats"`
+	Version int `json:"version"`
+	// AppVersion is the version of the application (see version.go).
+	AppVersion string         `json:"appVersion"`
+	DataPath   string         `json:"dataPath"`
+	Settings   Settings       `json:"settings"`
+	Income     []CategoryView `json:"income"`
+	Spending   []CategoryView `json:"spending"`
+	Stats      Stats          `json:"stats"`
 }
 
 // BuildViews returns the categories of a kind with entries and subtotals.
@@ -250,11 +252,12 @@ func (d *Data) BuildState(dataPath string) State {
 		}
 	}
 	return State{
-		Version:  d.Version,
-		DataPath: dataPath,
-		Settings: d.Settings,
-		Income:   d.BuildViews(KindIncome),
-		Spending: spending,
-		Stats:    stats,
+		Version:    d.Version,
+		AppVersion: AppVersion,
+		DataPath:   dataPath,
+		Settings:   d.Settings,
+		Income:     d.BuildViews(KindIncome),
+		Spending:   spending,
+		Stats:      stats,
 	}
 }

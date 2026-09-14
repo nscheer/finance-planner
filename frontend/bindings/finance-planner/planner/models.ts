@@ -264,6 +264,11 @@ export interface Settings {
  */
 export interface State {
     "version": number;
+
+    /**
+     * AppVersion is the version of the application (see version.go).
+     */
+    "appVersion": string;
     "dataPath": string;
     "settings": Settings;
     "income": CategoryView[] | null;

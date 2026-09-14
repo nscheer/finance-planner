@@ -19,6 +19,8 @@
   import ShortcutsDialog from "./components/ShortcutsDialog.svelte";
   import SelectionBar from "./components/SelectionBar.svelte";
   import CommandPalette from "./components/CommandPalette.svelte";
+  import Menu from "./components/Menu.svelte";
+  import StatusBar from "./components/StatusBar.svelte";
   import {
     app,
     Kind,
@@ -83,6 +85,16 @@
 
   let searchEl: HTMLInputElement | undefined = $state();
 
+  // The file actions live in one menu: as single buttons the row is wider
+  // than the window in German and the buttons overlap the search box.
+  let dataMenuOpen = $state(false);
+  const dataMenuItems = $derived([
+    { label: t("app.import"), icon: "upload" as const, run: startImport },
+    { label: t("app.export"), icon: "download" as const, run: exportData },
+    { label: t("app.exportCsv"), icon: "download" as const, run: exportCSV },
+    { label: t("app.backups"), icon: "history" as const, run: () => openDialog({ type: "backups" }) },
+  ]);
+
   const periodFilters: { value: PeriodFilter; label: string }[] = $derived([
     { value: "all", label: t("app.filter.all") },
     { value: Period.PeriodMonthly, label: t("entry.monthly") },
@@ -136,7 +148,7 @@
       }
       return;
     }
-    if (app.dialog || inField || event.ctrlKey || event.metaKey || event.altKey) return;
+    if (app.dialog || dataMenuOpen || inField || event.ctrlKey || event.metaKey || event.altKey) return;
     if (!app.state) return;
 
     switch (event.key) {
@@ -188,9 +200,6 @@
   <header class="topbar">
     <div class="brand">
       <h1>{t("app.title")}</h1>
-      {#if app.state}
-        <span class="path" title={app.state.dataPath}>{app.state.dataPath}</span>
-      {/if}
     </div>
     <div class="filters">
       <div class="search" class:active={app.filter.query.trim() !== ""}>
@@ -220,10 +229,7 @@
       {/if}
     </div>
     <div class="actions">
-      <button class="btn btn-sm" type="button" onclick={startImport}><Icon name="upload" size={14} /> {t("app.import")}</button>
-      <button class="btn btn-sm" type="button" onclick={exportData}><Icon name="download" size={14} /> {t("app.export")}</button>
-      <button class="btn btn-sm" type="button" onclick={exportCSV}><Icon name="download" size={14} /> {t("app.exportCsv")}</button>
-      <button class="btn btn-sm" type="button" onclick={() => openDialog({ type: "backups" })}><Icon name="history" size={14} /> {t("app.backups")}</button>
+      <Menu label={t("app.data")} title={t("app.dataMenu")} items={dataMenuItems} onOpenChange={(open) => (dataMenuOpen = open)} />
       <button class="btn btn-sm" type="button" onclick={printPlanner}><Icon name="printer" size={14} /> {t("app.print")}</button>
       <button class="icon-btn" type="button" title="{t('shortcuts.palette')} (Ctrl+K)" aria-label={t("shortcuts.palette")} onclick={() => openDialog({ type: "palette" })}><Icon name="command" size={16} /></button>
       <button class="icon-btn" type="button" title={t("app.shortcuts")} aria-label={t("app.shortcuts")} onclick={() => openDialog({ type: "shortcuts" })}><Icon name="keyboard" size={16} /></button>
@@ -296,6 +302,8 @@
     {/if}
     </div>
   </main>
+
+  <StatusBar />
 </div>
 
 <!--
@@ -359,13 +367,6 @@
     font-size: 18px;
     letter-spacing: -0.01em;
   }
-  .path {
-    font-size: 12px;
-    color: var(--text-3);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
   .actions {
     display: flex;
     align-items: center;
@@ -383,9 +384,11 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    flex: 1;
+    /* Both must be able to shrink: a group that cannot is painted over by
+       the actions next to it instead of getting narrower. */
+    flex: 1 1 200px;
     max-width: 420px;
-    min-width: 200px;
+    min-width: 140px;
     padding: 2px 4px 2px 8px;
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
@@ -396,7 +399,7 @@
     border-color: var(--accent);
   }
   .period-filter {
-    flex-shrink: 0;
+    min-width: 0;
   }
   .search-icon {
     display: flex;
@@ -474,7 +477,7 @@
   }
   /* Room to scroll the last rows above the floating selection toolbar. */
   .page.has-selection {
-    padding-bottom: 96px;
+    padding-bottom: calc(96px + var(--statusbar-h));
   }
   .banner {
     display: flex;

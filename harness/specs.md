@@ -184,22 +184,35 @@ Derived statistics (see 3.7 for their presentation):
   its layout instead of squishing. The full-width main area scrolls, so the
   scrollbar sits at the window edge.
 - Layout: a top bar, below it the income block, the spending block and,
-  on the right, the sticky statistics box.
+  on the right, the sticky statistics box; along the bottom edge the status
+  bar (3.11). Top bar and status bar keep their height, the area between
+  them scrolls.
 
 ### 3.2 Top bar
 
 From left to right:
 
-1. Application title and the path of the data file.
+1. Application title. The path of the data file is not here but in the
+   status bar (3.11).
 2. **Search box** with its own clear button, and next to it the **period
    filter** dropdown (all periods, monthly, quarterly, half-yearly, yearly,
    paused only). While a filter is active a hint shows "x of y entries
    shown" and a reset button clears search and filter (see 3.6).
-3. Buttons **Import**, **Export**, **Export CSV**, **Backups**, **Print**;
-   icon buttons for the **command palette** (prompt icon `>_`) and the
-   **shortcut list** (keyboard icon).
+3. The **Data** menu, the button **Print**, and icon buttons for the
+   **command palette** (prompt icon `>_`) and the **shortcut list**
+   (keyboard icon).
 4. The **appearance** dropdown (sun icon) and the **language** dropdown
    (globe icon).
+
+The four file actions **Import**, **Export**, **Export CSV** and **Backups**
+are items of the *Data* menu rather than buttons of their own: as buttons the
+row is wider than the window at German label lengths, and the actions then
+overlap the search box. The menu opens on click or *Arrow Down*, closes on
+*Esc*, on *Tab* and on a press outside, returns the focus to its button, and
+moves the highlight with the arrow keys, *Home* and *End*. While it is open
+the single-key shortcuts are suppressed, as they are while a dialog is open.
+Every group of the bar can shrink, so a narrow window truncates instead of
+letting one group cover another.
 
 ### 3.3 Main view
 
@@ -463,6 +476,20 @@ spending table and the statistics.
 - A category never breaks across pages, and a block heading or a column
   header never ends a page on its own. A block longer than a page splits
   normally.
+
+### 3.11 Status bar
+
+A thin bar along the bottom edge of the window, above everything that floats
+there. Three slots, so something can be added later without moving what is
+already shown:
+
+- **left**: a folder icon and the path of the data file. Clicking it copies
+  the path to the clipboard and confirms with a toast; the tooltip shows the
+  full path and says so. The text truncates before the bar grows.
+- **middle**: how much is planned, as "6 categories · 23 entries".
+- **right**: the application title and the version (7.8).
+
+The bar is not printed; the printed header carries the path instead (3.10).
 
 ---
 
@@ -781,7 +808,8 @@ frontend/src/
   rules, validation, conversions and rounding, statistics, timeline, levers,
   ordering and moves, bulk operations, restore, collapse state, persistence,
   versioning and migration, import merge/replace rules, backups, CSV, sample
-  data, language, theme and window settings, coded errors).
+  data, language, theme and window settings, coded errors), and that
+  `AppVersion` still matches `build/config.yml` (7.8).
 - **Node**: money parsing and formatting per locale, drag index arithmetic,
   language file completeness and interpolation, a compile-level test that
   dialog props in the shell are not bound directly to the mutable dialog
@@ -815,6 +843,12 @@ wails3 task test    # Go tests + frontend unit tests
   "Plan monthly and yearly income and spendings", version 1.0.0. The Wails
   application uses the same name and description; the window background
   colour is `rgb(245, 246, 250)` (the light page background).
+- The running program cannot read `config.yml`, so the version is repeated as
+  the constant `planner.AppVersion` and travels to the frontend as
+  `state.appVersion` for the status bar (3.11). The Go test
+  `TestAppVersionMatchesBuildConfig` reads the first `version:` below `info:`
+  in `build/config.yml` and fails when the two drift apart, so raising the
+  version stays a one-line change plus a failing test that names the copy.
 - Everything else that carries metadata is **generated** from that file by
   `wails3 task common:update:build-assets`: the Windows version resource
   `build/windows/info.json` (which the linker embeds, so it is what the
@@ -916,7 +950,8 @@ cp frontend/src/i18n/en.ts frontend/src/i18n/de.ts harness/
 | Page max / min width | 1600 px / 1140 px, centered, 24 px side padding |
 | Content grid | the full-width main area is the scroll container (scrollbar at the window edge); inside it a centered page wrapper holds two columns: tables `minmax(0, 1fr)`, statistics 320 px, 20 px gap |
 | Statistics box | sticky; both columns start 20 px below the top bar (margin on the columns) |
-| Top bar | 10 px 24 px padding; title left; search box (200–420 px) and the period filter dropdown as separate controls in the middle; buttons, icon buttons, appearance and language dropdowns right |
+| Top bar | 10 px 24 px padding; title left; search box (140–420 px, shrinkable) and the period filter dropdown as separate controls in the middle; data menu, print button, icon buttons, appearance and language dropdowns right |
+| Status bar | 26 px high (`--statusbar-h`), 0 24 px padding, 11.5 px muted text, 1 px top border; the selection toolbar and the toasts float `20px + --statusbar-h` above the bottom |
 | Table columns | `28px minmax(150px, 1fr) 120px 110px 125px 125px 120px` (handle, name, frequency, due, per month, per year, actions) |
 | Row height | 38 px min; category header 40 px |
 | Block header | 28 px gap between the block header (title, totals, buttons) and the column titles (20 px margin + 8 px padding) |
@@ -1048,6 +1083,13 @@ between slices, the hovered slice grows to 14; the timeline uses thin bars
 - **Dialogs**: centered panel on a dark translucent backdrop
   (`rgba(10,13,20,.55)`), 12 px radius, title row with close icon, body,
   footer with right-aligned buttons; short fade and pop-in animation.
+- **Menu**: a small button with a chevron that turns down when open; the
+  list is an absolutely positioned panel below it, surface background,
+  strong border, large shadow, 10 px radius, 4 px padding, items as icon and
+  label rows that highlight in accent-soft.
+- **Status bar**: three-column grid (`1fr auto 1fr`), the path left as a
+  borderless button that brightens on hover and truncates with an ellipsis,
+  the counts centred, the version right.
 - **Command palette**: dialog with the search input on top, results list
   (max 360 px, scrolls) grouped by uppercase section labels, active item in
   accent-soft, hint line with the key legend.

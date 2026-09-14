@@ -45,7 +45,7 @@
   .selection-bar {
     position: fixed;
     left: 50%;
-    bottom: 20px;
+    bottom: calc(20px + var(--statusbar-h)); /* above the status bar */
     z-index: 90;
     transform: translateX(-50%);
     display: flex;
