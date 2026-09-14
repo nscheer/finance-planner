@@ -49,6 +49,20 @@ put on the savings account, so that the full amount is available when the
 payment is due and can be moved from the savings account to the bank account.
 This is a sliding window: after a payment the saving starts again from zero.
 
+The model describes a plan that is **already running**. The timeline and the
+peak buffer are steady-state figures: they assume every entry has been saved
+up for at least one full cycle, so the money is on the account from the start.
+Whoever begins with an empty account is short until then. For a start in month
+*m* the account would have to hold monthly × ((m − 1 − d) mod n) for each
+scheduled entry — for a quarterly 300 € bill due in January and a start in
+January that is 200 €. The gap is a one-off: never more than the peak buffer
+less one month of instalments, and gone after one cycle of the longest period,
+a year at most. It does not make the plan more expensive, it only shifts money
+into the first cycle. Entries without a due month are not in the timeline at
+all and in the worst case need their full amount straight away. The tooltip of
+*Savings buffer needed (peak)* states the assumption; the calculation does not
+try to cover the transition.
+
 The statistics box makes both transfers visible, and the payment timeline
 shows the resulting balance of the savings account over a year.
 
@@ -148,7 +162,8 @@ Derived statistics (see 3.7 for their presentation):
   amount of month *t* is the full amount when (t − d) mod n = 0. Entries
   without a due month are not part of the timeline. *Peak buffer* = the
   highest of those twelve figures, that is the most the account ever has to
-  hold. (The month-end balance would be the low point of each month and
+  hold. The twelve figures are steady-state values: the plan is presumed to
+  be running already (1.2). (The month-end balance would be the low point of each month and
   would understate the buffer by whatever is paid out in the peak month.)
 - *biggest levers* = the five active spendings with the highest yearly cost
   (ties broken by name), with their share of all monthly spending and of the
@@ -301,8 +316,9 @@ A sticky box on the right with these sections, in this order:
    paid, so in a due month the line meets the bar; the current month is
    printed bold. Hovering a month fills
    the two fixed readout lines below (*due*, *on savings account*). Below:
-   *Savings buffer needed (peak)* and notes on how many non-monthly entries
-   have no due month and how many entries are paused.
+   *Savings buffer needed (peak)*, whose tooltip names the steady-state
+   assumption of 1.2, and notes on how many non-monthly entries have no due
+   month and how many entries are paused.
 4. **Spending by category**: a donut (largest first, at most eight slices,
    the rest folded into "Other") with a legend naming every slice and its
    amount; hovering highlights a slice and shows its share in the center.
